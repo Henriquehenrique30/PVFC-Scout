@@ -12,16 +12,32 @@ interface PlayerDetailsProps {
 const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   const [report, setReport] = useState<string>('Decodificando métricas de performance...');
   const [loading, setLoading] = useState(true);
+  const [isKeyMissing, setIsKeyMissing] = useState(false);
 
   const hasData = !!player.aiContextData;
 
   const fetchReport = async () => {
     setLoading(true);
+    setIsKeyMissing(false);
+    
+    // Fix: Use hasSelectedApiKey to check if user has selected an API key
+    if (window.aistudio && !(await window.aistudio.hasSelectedApiKey())) {
+      setIsKeyMissing(true);
+      setReport("POR FAVOR, SELECIONE UMA CHAVE API: Para realizar análises avançadas com o Gemini 3 Pro, você deve selecionar sua chave no painel.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await getScoutReport(player);
       setReport(res);
-    } catch (err) {
-      setReport("Erro ao carregar análise técnica.");
+    } catch (err: any) {
+      if (err.message === 'API_KEY_MISSING') {
+        setIsKeyMissing(true);
+        setReport("CHAVE INVÁLIDA OU NÃO SELECIONADA: Por favor, selecione sua chave de API do Google AI Studio novamente.");
+      } else {
+        setReport("Erro ao carregar análise técnica. Verifique sua conexão.");
+      }
     } finally {
       setLoading(false);
     }
@@ -32,12 +48,11 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   }, [player]);
 
   const handleOpenConfig = async () => {
+    // Fix: Use openSelectKey as instructed for Gemini 3 series models
     if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
       await window.aistudio.openSelectKey();
-      // Após selecionar a chave, tentamos rodar o relatório novamente
+      // Proceed immediately to retry fetching after selection
       fetchReport();
-    } else {
-      alert("O seletor de chaves nativo não está disponível neste ambiente.");
     }
   };
 
@@ -59,7 +74,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/98 backdrop-blur-2xl overflow-hidden">
       <div className="relative w-full max-w-6xl overflow-hidden rounded-[3rem] bg-[#050807] shadow-[0_0_100px_rgba(0,104,55,0.15)] border border-[#006837]/40 max-h-[94vh] flex flex-col animate-in fade-in zoom-in duration-500">
         
-        {/* Botão Fechar */}
         <button 
           onClick={onClose}
           className="absolute right-8 top-8 z-30 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900/50 text-white hover:bg-red-600 transition-all border border-white/10 group shadow-2xl"
@@ -69,7 +83,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-12 h-full">
           
-          {/* LADO ESQUERDO: PERFIL DO ATLETA (33%) */}
           <div className="md:col-span-4 p-10 bg-[#0a0f0d] border-r border-white/5 flex flex-col items-center overflow-y-auto custom-scrollbar">
             <div className="relative group">
               <div className="absolute -inset-2 bg-gradient-to-tr from-[#006837] via-[#f1c40f] to-[#006837] rounded-[2.5rem] blur-md opacity-20 group-hover:opacity-40 transition-all"></div>
@@ -78,7 +91,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                 alt={player.name} 
                 className="relative h-56 w-56 rounded-[2.5rem] object-cover border-4 border-[#050807] shadow-2xl"
               />
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-6 py-2 rounded-full text-[10px] font-black text-slate-950 uppercase shadow-2xl border-4 border-[#0a0f0d] tracking-widest">
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-6 py-2 rounded-full text-[10px] font-black text-slate-950 uppercase shadow-2xl border-4 border-[#0a0f0d] tracking-widest text-center min-w-[120px]">
                 {player.recommendation}
               </div>
             </div>
@@ -124,7 +137,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             </div>
           </div>
 
-          {/* LADO DIREITO: DASHBOARD ANALÍTICO (66%) */}
           <div className="md:col-span-8 p-14 flex flex-col h-full bg-[#050807] overflow-y-auto custom-scrollbar">
             
             <div className="flex items-center justify-between mb-10 pb-8 border-b border-white/5">
@@ -133,23 +145,26 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                   <i className="fas fa-brain"></i>
                 </div>
                 <div>
-                  <h3 className="font-oswald text-3xl font-bold uppercase text-white tracking-wide">Relatório Scout Porto Vitória</h3>
+                  <h3 className="font-oswald text-3xl font-bold uppercase text-white tracking-wide">Relatório Técnico IA</h3>
                   <p className="text-[11px] font-black text-[#006837] uppercase tracking-[0.5em] mt-1 flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Gemini 3 Pro Analytics v8.0
+                    Gemini 3 Pro
                   </p>
                 </div>
               </div>
               
               <button 
                 onClick={handleOpenConfig}
-                className="flex items-center gap-3 bg-slate-900/80 hover:bg-[#f1c40f] hover:text-black transition-all px-6 py-3 rounded-2xl border border-white/10 text-[10px] font-black uppercase text-white tracking-widest shadow-xl"
+                className={`flex items-center gap-3 transition-all px-6 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest shadow-xl ${
+                  isKeyMissing 
+                  ? 'bg-red-600 text-white border-red-500 animate-pulse' 
+                  : 'bg-slate-900/80 hover:bg-[#f1c40f] hover:text-black text-white border-white/10'
+                }`}
               >
-                <i className="fas fa-key"></i> Configurar IA
+                <i className="fas fa-key"></i> {isKeyMissing ? 'Selecionar Chave' : 'Configurar Chave'}
               </button>
             </div>
 
-            {/* RELATÓRIO DA IA */}
             <div className={`relative rounded-[3rem] border p-12 flex-grow transition-all flex flex-col shadow-2xl ${
               hasData ? 'border-[#006837]/30 bg-gradient-to-br from-[#0a0f0d] to-transparent' : 'border-slate-800 bg-slate-900/10'
             }`}>
@@ -157,74 +172,42 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                 <div className="flex flex-col items-center justify-center h-full gap-8 py-20">
                   <div className="h-16 w-16 animate-spin rounded-full border-[6px] border-[#f1c40f] border-t-transparent shadow-[0_0_30px_rgba(241,196,15,0.2)]"></div>
                   <div className="text-center">
-                    <span className="text-sm font-black uppercase text-white tracking-[0.6em] block mb-2">Analisando Métricas da Planilha</span>
-                    <span className="text-[10px] text-slate-500 uppercase font-bold">Extraindo BI e Inteligência de Mercado...</span>
+                    <span className="text-sm font-black uppercase text-white tracking-[0.6em] block mb-2">Analisando Scouting</span>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold">Processando Big Data da Planilha...</span>
                   </div>
                 </div>
               ) : (
                 <div className="relative overflow-y-auto custom-scrollbar pr-6">
                   <i className="fas fa-quote-left text-7xl text-[#006837]/10 absolute -top-6 -left-4"></i>
                   <div className="relative z-10">
-                    <p className="text-xl leading-relaxed text-slate-100 font-medium whitespace-pre-line tracking-tight">
+                    <p className={`text-xl leading-relaxed font-medium whitespace-pre-line tracking-tight ${isKeyMissing ? 'text-red-400 italic' : 'text-slate-100'}`}>
                       {report}
                     </p>
+                    {isKeyMissing && (
+                      <div className="mt-10 p-6 bg-red-600/10 rounded-2xl border border-red-500/20 text-center">
+                         <p className="text-xs text-red-500 font-bold uppercase mb-4">Ação Necessária:</p>
+                         <p className="text-[11px] text-slate-300 uppercase mb-4">
+                           Clique no botão "Selecionar Chave" acima e escolha uma chave de API válida com faturamento ativado para usar o Gemini 3 Pro.
+                         </p>
+                         <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-[9px] text-[#f1c40f] underline uppercase">Ver documentação de faturamento</a>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-
-            {/* INFO EXTRA */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-[#0a0f0d] p-8 rounded-[2.5rem] border border-white/5 shadow-xl">
-                 <h4 className="text-[11px] font-black text-[#006837] uppercase tracking-[0.3em] mb-4 flex items-center gap-3">
-                   <i className="fas fa-search"></i> Histórico de Observação
-                 </h4>
-                 <p className="text-base text-slate-400 leading-relaxed">
-                    Atleta observado presencialmente em <span className="text-white font-black underline underline-offset-8 decoration-[#006837]">{player.gamesWatched} jogos</span> na <span className="text-[#f1c40f] font-bold">{player.competition}</span> ({player.scoutYear}).
-                 </p>
-              </div>
-
-              <div className="bg-[#0a0f0d] p-8 rounded-[2.5rem] border border-white/5 shadow-xl">
-                 <h4 className="text-[11px] font-black text-[#f1c40f] uppercase tracking-[0.3em] mb-4 flex items-center gap-3">
-                   <i className="fas fa-id-badge"></i> Representação
-                 </h4>
-                 <div className="space-y-3">
-                    <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                      <span className="text-[9px] text-slate-600 uppercase font-black">Agente/Empresa</span>
-                      <span className="text-sm text-white font-bold">{player.agent || 'Negociação Direta'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[9px] text-slate-600 uppercase font-black">Telefone</span>
-                      <span className="text-sm text-white font-mono">{player.contact || 'S/ Informação'}</span>
-                    </div>
-                 </div>
-              </div>
-            </div>
-
-            {/* AÇÕES */}
+            
             <div className="mt-12 flex gap-6">
               {player.videoUrl && (
-                <a 
-                  href={player.videoUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-4 rounded-3xl bg-red-600 px-8 py-6 text-sm font-black text-white hover:bg-red-500 hover:scale-[1.02] transition-all shadow-[0_15px_40px_rgba(220,38,38,0.25)] uppercase tracking-widest"
-                >
-                  <i className="fab fa-youtube text-2xl"></i> Vídeo de Scout
+                <a href={player.videoUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-4 rounded-3xl bg-red-600 px-8 py-6 text-sm font-black text-white hover:bg-red-500 transition-all shadow-2xl uppercase tracking-widest">
+                  <i className="fab fa-youtube text-2xl"></i> Vídeo
                 </a>
               )}
               {player.ogolUrl && (
-                <a 
-                  href={player.ogolUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-4 rounded-3xl bg-white px-8 py-6 text-sm font-black text-[#006837] hover:bg-slate-100 hover:scale-[1.02] transition-all shadow-2xl uppercase tracking-widest border border-slate-200"
-                >
-                  <i className="fas fa-database text-lg"></i> Base oGol
+                <a href={player.ogolUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-4 rounded-3xl bg-white px-8 py-6 text-sm font-black text-[#006837] hover:bg-slate-100 transition-all shadow-2xl uppercase tracking-widest border border-slate-200">
+                  <i className="fas fa-database text-lg"></i> oGol
                 </a>
               )}
-            </div>
-
-            <div className="mt-12 pt-8 border-t border-white/5 text-center">
-              <p className="text-[10px] text-slate-700 uppercase tracking-[0.5em] font-black">
-                PORTO VITÓRIA FC • DEPARTAMENTO DE SCOUT • CONFIDENCIAL
-              </p>
             </div>
           </div>
         </div>
