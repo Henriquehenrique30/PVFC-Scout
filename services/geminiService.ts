@@ -3,37 +3,48 @@ import { GoogleGenAI } from "@google/genai";
 import { Player } from "../types";
 
 export const getScoutReport = async (player: Player): Promise<string> => {
-  // Fallback imediato se não houver dados
   if (!player.aiContextData) {
-    return "ANÁLISE PENDENTE: Vincule a planilha de scout para gerar o parecer técnico detalhado.";
+    return "AVISO: Nenhum dado de planilha detectado. Para uma análise profunda, anexe o arquivo Excel/CSV no cadastro do atleta.";
   }
 
   try {
-    // Inicialização segura
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || "" });
+    // Inicialização rigorosa conforme documentação
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    const prompt = `Atue como Head Scout do Porto Vitória FC. Analise: ${player.name} (${player.position1}). Métricas: ${player.aiContextData.slice(0, 3000)}. Gere um parecer de elite (2 frases curtas) sobre mercado e tática.`;
+    // Preparação do contexto técnico
+    const technicalContext = player.aiContextData.slice(0, 8000); // Limite de segurança para tokens
 
-    const result = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ 
+        parts: [{ 
+          text: `Você é o Analista de Desempenho Sênior do Porto Vitória FC. 
+          Tarefa: Analise os dados técnicos brutos (CSV) abaixo do atleta ${player.name} (${player.position1}).
+          
+          DADOS DA PLANILHA:
+          ${technicalContext}
+          
+          REQUISITOS DA RESPOSTA:
+          1. Identifique os 3 principais indicadores de performance (KPIs) positivos nos dados.
+          2. Aponte uma fragilidade tática ou métrica abaixo da média.
+          3. Conclua se o atleta atende ao nível "Elite" do Porto Vitória.
+          4. Use linguagem técnica de scout (ex: 'terço final', 'transição', 'xG', 'interceptações').
+          5. Máximo de 3 parágrafos curtos.` 
+        }] 
+      }],
       config: {
-        temperature: 0.6,
-        topP: 0.9,
-      }
+        temperature: 0.4, // Menos criativo, mais analítico/factual
+        topP: 0.8,
+      },
     });
 
-    const responseText = result.text;
-    
-    if (!responseText) throw new Error("Resposta vazia");
-    
-    return responseText;
+    const report = response.text;
+    if (!report) throw new Error("IA retornou resposta vazia");
 
-  } catch (error) {
-    console.error("Erro na IA:", error);
-    
-    // Fallback Inteligente: Se a IA falhar, gera um parecer baseado nos stats fixos do jogador
-    const avg = (player.stats.pace + player.stats.shooting + player.stats.passing + player.stats.dribbling + player.stats.defending + player.stats.physical) / 6;
-    return `PARECER TÉCNICO: Atleta com média de rendimento ${avg.toFixed(1)}/5.0. Apresenta valências compatíveis com o modelo de jogo do Porto Vitória, com destaque para sua capacidade de ${player.stats.pace > 4 ? 'aceleração' : 'equilíbrio tático'} no setor de ${player.position1}.`;
+    return report;
+
+  } catch (error: any) {
+    console.error("Gemini API Error:", error);
+    return `ERRO DE PROCESSAMENTO: Não foi possível ler os dados da planilha via IA. Verifique se o arquivo Excel contém dados legíveis ou se a chave de API está ativa. Detalhes: ${error.message}`;
   }
 };
