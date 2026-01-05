@@ -7,24 +7,24 @@ export const getScoutReport = async (player: Player): Promise<string> => {
     return "RELATÓRIO PENDENTE: Vincule a planilha de scouting no cadastro do atleta para processar a análise tática.";
   }
 
-  // 1. Recuperação da chave injetada pelo Vite/Vercel
+  // 1. Recuperação da chave via process.env.API_KEY (injetada pelo Vite define)
   const apiKey = process.env.API_KEY;
 
-  // 2. Debug da Chave (Mascarado)
-  if (apiKey) {
-    console.log(`[DEBUG IA] Chave detectada (início): ${apiKey.substring(0, 5)}...`);
-  } else {
-    console.warn("[DEBUG IA] Nenhuma chave detectada em process.env.API_KEY");
+  // 2. Log de Diagnóstico solicitado pelo usuário
+  console.log("Status da Chave:", apiKey ? `Carregada (${apiKey.substring(0, 5)}...)` : "Não encontrada");
+
+  if (!apiKey) {
+    throw new Error("API_KEY_MISSING");
   }
 
   try {
-    // Inicialização obrigatória conforme as diretrizes
-    const ai = new GoogleGenAI({ apiKey: apiKey || '' });
+    // Inicialização conforme diretrizes oficiais
+    const ai = new GoogleGenAI({ apiKey });
     
     /**
-     * MODELO: gemini-3-flash-preview 
-     * Escolhido por ser o modelo de última geração com maior estabilidade para chaves free/tier 1.
-     * Substitui o pro-preview para evitar erros de permissão de faturamento.
+     * MODELO: gemini-3-flash-preview
+     * Este é o modelo de alto desempenho e compatibilidade universal.
+     * Substitui o 1.5-flash com maior inteligência e suporte a system instructions.
      */
     const modelName = 'gemini-3-flash-preview';
 
@@ -46,23 +46,27 @@ export const getScoutReport = async (player: Player): Promise<string> => {
       },
     });
 
+    // Acesso direto à propriedade .text conforme as diretrizes do SDK
     const report = response.text;
     if (!report) throw new Error("A IA retornou uma resposta vazia.");
 
     return report;
 
   } catch (error: any) {
-    // 3. Log de Erro Real para Diagnóstico no Vercel/Navegador
+    // 3. Log de Erro Real/Detalhado da API Google solicitado para diagnóstico
     console.error("Erro detalhado da API Google:", error);
     
-    // Identificação de erro de autenticação ou modelo inexistente
+    // Tratamento de erros de autenticação ou quota
     if (
       error.message?.includes("API key") || 
-      error.message?.includes("Requested entity was not found") || 
       error.message?.includes("403") ||
-      !apiKey
+      error.message?.includes("401")
     ) {
       throw new Error("API_KEY_MISSING");
+    }
+
+    if (error.message?.includes("404") || error.message?.includes("model")) {
+      return "FALHA TÉCNICA: O modelo solicitado não foi encontrado ou não está disponível para esta chave.";
     }
     
     return `FALHA NA ANÁLISE: Erro ao processar dados. (Status: ${error.message || 'Erro Desconhecido'})`;
