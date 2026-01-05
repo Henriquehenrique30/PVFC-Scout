@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, FilterState, User, Recommendation, Position } from './types';
 import PlayerCard from './components/PlayerCard';
@@ -34,9 +35,13 @@ const App: React.FC = () => {
     scoutYears: [],
   });
 
-  const loadData = async () => {
+  const loadData = async (isAutoRefresh = false) => {
+    // Se for um refresh automático e o usuário estiver editando algo, IGNORE para não perder dados
+    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer)) return;
+
     if (!isCloudActive()) return;
-    setLoading(true);
+    if (!isAutoRefresh) setLoading(true);
+
     try {
       const [allPlayers, allUsers] = await Promise.all([
         dbService.getPlayers(),
@@ -47,15 +52,16 @@ const App: React.FC = () => {
     } catch (err) {
       console.error("Falha na sincronização cloud", err);
     } finally {
-      setLoading(false);
+      if (!isAutoRefresh) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30000);
+    // Atualiza a cada 45 segundos, mas a lógica dentro de loadData protege o formulário
+    const interval = setInterval(() => loadData(true), 45000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isModalOpen, isAdminPanelOpen, selectedPlayer]);
 
   useEffect(() => {
     if (currentUser) {
@@ -65,10 +71,9 @@ const App: React.FC = () => {
     }
   }, [currentUser]);
 
-  // Extração dinâmica de opções para filtros baseada nos dados existentes
+  // Extração dinâmica de opções para filtros baseada nos dados existentes na nuvem
   const dynamicOptions = useMemo(() => {
     const competitions = [...new Set(players.map(p => p.competition))].filter(Boolean).sort();
-    // Fix: Explicitly typing sort parameters to avoid arithmetic operation errors on inferred types
     const years = [...new Set(players.map(p => p.scoutYear))].sort((a: number, b: number) => b - a);
     return { competitions, years };
   }, [players]);
@@ -102,11 +107,13 @@ const App: React.FC = () => {
   const handleAddPlayer = async (newPlayer: Player) => {
     await dbService.savePlayer(newPlayer);
     await loadData();
+    setIsModalOpen(false);
   };
 
   const handleUpdatePlayer = async (updatedPlayer: Player) => {
     await dbService.savePlayer(updatedPlayer);
     await loadData();
+    setIsModalOpen(false);
   };
 
   const handleDeletePlayer = async (id: string) => {
@@ -181,7 +188,7 @@ const App: React.FC = () => {
       <div className="fixed inset-0 flex items-center justify-center bg-[#050807] text-white">
         <div className="flex flex-col items-center gap-6">
            <div className="h-12 w-12 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin"></div>
-           <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Sincronizando Banco de Dados...</p>
+           <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Sincronizando Base de Dados...</p>
         </div>
       </div>
     );
@@ -204,18 +211,20 @@ const App: React.FC = () => {
                 Porto Vitória <span className="text-[#f1c40f]">FC</span>
               </h1>
               <span className="text-[8px] font-black text-[#006837] uppercase tracking-widest flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Scout Pro v2
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Scout Pro v2.1
               </span>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <button onClick={loadData} className="p-2 text-slate-500 hover:text-white transition-colors" title="Recarregar"><i className="fas fa-sync-alt text-xs"></i></button>
+            <button onClick={() => loadData()} className="p-2 text-slate-500 hover:text-white transition-colors" title="Sincronizar Agora">
+              <i className="fas fa-sync-alt text-xs"></i>
+            </button>
             {currentUser.role === 'admin' && (
-              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">Admin</button>
+              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20 transition-all hover:bg-orange-500/20">Admin</button>
             )}
-            <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="bg-[#006837] px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white hover:bg-[#008a4a] transition-all">Novo Atleta</button>
-            <button onClick={handleLogout} className="p-2 text-red-500/50 hover:text-red-500"><i className="fas fa-power-off text-xs"></i></button>
+            <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="bg-[#006837] px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white hover:bg-[#008a4a] transition-all shadow-lg shadow-[#006837]/20">Novo Atleta</button>
+            <button onClick={handleLogout} className="p-2 text-red-500/50 hover:text-red-500 transition-colors"><i className="fas fa-power-off text-xs"></i></button>
           </div>
         </div>
       </header>
@@ -226,15 +235,15 @@ const App: React.FC = () => {
           {/* SIDEBAR DE FILTROS REFINADA */}
           <aside className="lg:w-72 shrink-0">
             <div className="sticky top-28 space-y-6">
-              <div className="bg-[#0a0f0d] p-6 rounded-[2rem] border border-white/5 shadow-2xl space-y-8 overflow-y-auto max-h-[80vh] custom-scrollbar">
+              <div className="bg-[#0a0f0d] p-6 rounded-[2.5rem] border border-white/5 shadow-2xl space-y-8 overflow-y-auto max-h-[80vh] custom-scrollbar">
                 <div className="flex items-center justify-between border-b border-white/5 pb-4">
                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Painel de Scout</h3>
-                  <button onClick={clearFilters} className="text-[8px] font-black text-[#f1c40f] uppercase hover:underline">Limpar</button>
+                  <button onClick={clearFilters} className="text-[8px] font-black text-[#f1c40f] uppercase hover:underline">Resetar</button>
                 </div>
 
                 {/* Busca Textual */}
                 <section>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Identificação</label>
+                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Busca Inteligente</label>
                   <div className="relative">
                     <input 
                       type="text" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} 
@@ -245,18 +254,18 @@ const App: React.FC = () => {
                   </div>
                 </section>
 
-                {/* Qualificação */}
+                {/* Qualificação Porto */}
                 <section>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Qualificação Porto</label>
-                  <div className="grid grid-cols-1 gap-2">
+                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Nível Porto Vitória</label>
+                  <div className="flex flex-col gap-2">
                     {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
                       <button 
                         key={rec}
                         onClick={() => toggleFilter('recommendations', rec)}
-                        className={`text-left px-3 py-2.5 rounded-xl text-[9px] font-black uppercase border transition-all flex items-center justify-between ${
+                        className={`text-left px-4 py-2.5 rounded-xl text-[9px] font-black uppercase border transition-all flex items-center justify-between ${
                           filters.recommendations.includes(rec as Recommendation) 
                           ? 'bg-[#006837] border-[#006837] text-white' 
-                          : 'bg-black border-white/5 text-slate-500'
+                          : 'bg-black border-white/5 text-slate-500 hover:border-white/10'
                         }`}
                       >
                         {rec}
@@ -266,27 +275,33 @@ const App: React.FC = () => {
                   </div>
                 </section>
 
-                {/* Idade */}
+                {/* Idade Mínima/Máxima */}
                 <section>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Faixa Etária: {filters.minAge} - {filters.maxAge}</label>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="number" min="10" max="45" value={filters.minAge} 
-                      onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value)}))}
-                      className="w-full bg-black border border-white/5 rounded-lg p-2 text-[10px] text-center text-white outline-none" 
-                    />
-                    <span className="text-slate-700">|</span>
-                    <input 
-                      type="number" min="10" max="45" value={filters.maxAge} 
-                      onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value)}))}
-                      className="w-full bg-black border border-white/5 rounded-lg p-2 text-[10px] text-center text-white outline-none" 
-                    />
+                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Idade ({filters.minAge} - {filters.maxAge})</label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <input 
+                        type="number" min="10" max="45" value={filters.minAge} 
+                        onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value) || 10}))}
+                        className="w-full bg-black border border-white/5 rounded-lg p-2.5 text-[10px] text-center text-white outline-none focus:border-[#f1c40f]" 
+                      />
+                      <span className="block text-[7px] text-center mt-1 uppercase text-slate-700 font-bold">Mín</span>
+                    </div>
+                    <div className="h-px w-4 bg-slate-800"></div>
+                    <div className="flex-1">
+                      <input 
+                        type="number" min="10" max="45" value={filters.maxAge} 
+                        onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value) || 45}))}
+                        className="w-full bg-black border border-white/5 rounded-lg p-2.5 text-[10px] text-center text-white outline-none focus:border-[#f1c40f]" 
+                      />
+                      <span className="block text-[7px] text-center mt-1 uppercase text-slate-700 font-bold">Máx</span>
+                    </div>
                   </div>
                 </section>
 
                 {/* Posição */}
                 <section>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Setor do Campo</label>
+                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Posicionamento</label>
                   <div className="grid grid-cols-3 gap-2">
                     {Object.values(Position).map(pos => (
                       <button 
@@ -295,7 +310,7 @@ const App: React.FC = () => {
                         className={`py-2 rounded-lg text-[9px] font-black uppercase border transition-all ${
                           filters.positions.includes(pos) 
                           ? 'bg-[#f1c40f] border-[#f1c40f] text-black' 
-                          : 'bg-black border-white/5 text-slate-500'
+                          : 'bg-black border-white/5 text-slate-500 hover:text-white'
                         }`}
                       >
                         {pos}
@@ -304,11 +319,11 @@ const App: React.FC = () => {
                   </div>
                 </section>
 
-                {/* Competição Dinâmica */}
+                {/* Competição (Dinâmica da Nuvem) */}
                 {dynamicOptions.competitions.length > 0 && (
                   <section>
-                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Competições Ativas</label>
-                    <div className="space-y-2">
+                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Competições Observadas</label>
+                    <div className="flex flex-col gap-1.5">
                       {dynamicOptions.competitions.map(comp => (
                         <button 
                           key={comp}
@@ -316,7 +331,7 @@ const App: React.FC = () => {
                           className={`w-full text-left px-3 py-2 rounded-lg text-[8px] font-bold uppercase truncate border transition-all ${
                             filters.competitions.includes(comp) 
                             ? 'bg-[#006837]/20 border-[#006837] text-white' 
-                            : 'bg-black border-white/5 text-slate-600'
+                            : 'bg-black border-white/5 text-slate-600 hover:text-slate-400'
                           }`}
                         >
                           {comp}
@@ -326,10 +341,10 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {/* Temporada Dinâmica */}
+                {/* Ano de Avaliação (Temporada) */}
                 {dynamicOptions.years.length > 0 && (
                   <section>
-                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Ano do Scout</label>
+                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Temporada Scout</label>
                     <div className="flex flex-wrap gap-2">
                       {dynamicOptions.years.map(year => (
                         <button 
@@ -349,11 +364,11 @@ const App: React.FC = () => {
                 )}
               </div>
 
-              {/* Estatísticas Rápidas */}
-              <div className="bg-[#006837]/5 rounded-3xl p-6 border border-[#006837]/10">
+              {/* Status da Base */}
+              <div className="bg-[#006837]/5 rounded-[2rem] p-6 border border-[#006837]/10">
                  <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-500 tracking-widest mb-2">
-                    <span>Base Filtrada</span>
-                    <span className="text-[#f1c40f]">{filteredPlayers.length} Atletas</span>
+                    <span>Resultados Atuais</span>
+                    <span className="text-[#f1c40f]">{filteredPlayers.length} de {players.length}</span>
                  </div>
                  <div className="w-full bg-slate-900 h-1 rounded-full overflow-hidden">
                     <div 
@@ -367,10 +382,11 @@ const App: React.FC = () => {
 
           {/* GRID DE RESULTADOS */}
           <div className="flex-1">
-            <div className="mb-6 flex items-center justify-between">
-               <h2 className="font-oswald text-2xl font-bold uppercase text-white">Resultados <span className="text-slate-700 ml-2">/ Database</span></h2>
-               <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                  Total na Nuvem: {players.length}
+            <div className="mb-8 flex items-center justify-between">
+               <h2 className="font-oswald text-3xl font-bold uppercase text-white tracking-tight">Database <span className="text-slate-700 ml-1">/ Scout</span></h2>
+               <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tempo Real</span>
                </div>
             </div>
 
@@ -380,17 +396,29 @@ const App: React.FC = () => {
                   <div key={player.id} className="group relative">
                     <PlayerCard player={player} onClick={setSelectedPlayer} />
                     <div className="absolute bottom-6 right-6 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
-                      <button onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); setIsModalOpen(true); }} className="h-8 w-8 bg-white/10 backdrop-blur-md text-white rounded-lg flex items-center justify-center border border-white/10 hover:bg-[#f1c40f] hover:text-black transition-all"><i className="fas fa-pen text-[10px]"></i></button>
-                      <button onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }} className="h-8 w-8 bg-red-600/10 backdrop-blur-md text-red-500 rounded-lg flex items-center justify-center border border-red-500/20 hover:bg-red-600 hover:text-white transition-all"><i className="fas fa-trash text-[10px]"></i></button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); setIsModalOpen(true); }} 
+                        className="h-9 w-9 bg-white/10 backdrop-blur-md text-white rounded-xl flex items-center justify-center border border-white/10 hover:bg-[#f1c40f] hover:text-black transition-all"
+                      >
+                        <i className="fas fa-pen text-[10px]"></i>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }} 
+                        className="h-9 w-9 bg-red-600/10 backdrop-blur-md text-red-500 rounded-xl flex items-center justify-center border border-red-500/20 hover:bg-red-600 hover:text-white transition-all"
+                      >
+                        <i className="fas fa-trash text-[10px]"></i>
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-40 bg-[#0a0f0d]/50 rounded-[3rem] border border-dashed border-white/5">
-                <i className="fas fa-filter text-3xl text-slate-800 mb-4"></i>
+                <div className="h-20 w-20 rounded-full bg-slate-900 flex items-center justify-center mb-6">
+                   <i className="fas fa-filter text-2xl text-slate-700"></i>
+                </div>
                 <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Nenhum atleta corresponde aos filtros</p>
-                <button onClick={clearFilters} className="mt-4 text-[10px] font-black text-[#f1c40f] uppercase hover:underline">Resetar Filtros</button>
+                <button onClick={clearFilters} className="mt-4 text-[10px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Limpar todos os filtros</button>
               </div>
             )}
           </div>
@@ -398,8 +426,23 @@ const App: React.FC = () => {
       </main>
 
       {selectedPlayer && <PlayerDetails player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
-      {isModalOpen && <AddPlayerModal player={editingPlayer || undefined} onClose={() => setIsModalOpen(false)} onAdd={handleAddPlayer} onUpdate={handleUpdatePlayer} />}
-      {isAdminPanelOpen && <AdminUserManagement users={users} players={players} onUpdateStatus={handleUpdateUserStatus} onUpdateUser={handleUpdateUser} onClose={() => setIsAdminPanelOpen(false)} />}
+      {isModalOpen && (
+        <AddPlayerModal 
+          player={editingPlayer || undefined} 
+          onClose={() => setIsModalOpen(false)} 
+          onAdd={handleAddPlayer} 
+          onUpdate={handleUpdatePlayer} 
+        />
+      )}
+      {isAdminPanelOpen && (
+        <AdminUserManagement 
+          users={users} 
+          players={players} 
+          onUpdateStatus={handleUpdateUserStatus} 
+          onUpdateUser={handleUpdateUser} 
+          onClose={() => setIsAdminPanelOpen(false)} 
+        />
+      )}
     </div>
   );
 };
