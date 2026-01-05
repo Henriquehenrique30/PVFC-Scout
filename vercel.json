@@ -1,6 +1,8 @@
 
 {
   "version": 2,
+  "buildCommand": "npm install && vite build",
+  "outputDirectory": "dist",
   "cleanUrls": true,
   "rewrites": [
     {
