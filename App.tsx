@@ -411,6 +411,14 @@ const App: React.FC = () => {
         </div>
       </main>
 
+      <footer className="mt-auto py-8 border-t border-[#006837]/10 bg-[#0a0f0d]/50">
+        <div className="mx-auto max-w-7xl px-6 text-center">
+          <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
+            Desenvolvido por <span className="text-white">Henrique Bravim</span> - contato: <a href="mailto:hsbravim@gmail.com" className="hover:text-[#f1c40f] transition-colors">hsbravim@gmail.com</a>
+          </p>
+        </div>
+      </footer>
+
       {selectedPlayer && <PlayerDetails player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
       {isModalOpen && (
         <AddPlayerModal 
