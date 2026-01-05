@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Player, FilterState, Position, Recommendation, User } from './types.ts';
-import PlayerCard from './components/PlayerCard.tsx';
-import PlayerDetails from './components/PlayerDetails.tsx';
-import AddPlayerModal from './components/AddPlayerModal.tsx';
-import Auth from './components/Auth.tsx';
-import AdminUserManagement from './components/AdminUserManagement.tsx';
+import { Player, FilterState, User } from './types';
+import PlayerCard from './components/PlayerCard';
+import PlayerDetails from './components/PlayerDetails';
+import AddPlayerModal from './components/AddPlayerModal';
+import Auth from './components/Auth';
+import AdminUserManagement from './components/AdminUserManagement';
 
 const App: React.FC = () => {
   const STORAGE_KEY = 'porto_vitoria_database_v2';
