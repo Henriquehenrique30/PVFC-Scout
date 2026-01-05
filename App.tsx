@@ -25,20 +25,19 @@ const App: React.FC = () => {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
+  // Filtros padrão ajustados para serem mais amplos (Idade 0-50)
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     positions: [],
-    minAge: 14,
-    maxAge: 40,
+    minAge: 0,
+    maxAge: 50,
     recommendations: [],
     competitions: [],
     scoutYears: [],
   });
 
   const loadData = async (isAutoRefresh = false) => {
-    // Se for um refresh automático e o usuário estiver editando algo, IGNORE para não perder dados
     if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer)) return;
-
     if (!isCloudActive()) return;
     if (!isAutoRefresh) setLoading(true);
 
@@ -50,7 +49,7 @@ const App: React.FC = () => {
       setPlayers(allPlayers);
       setUsers(allUsers);
     } catch (err) {
-      console.error("Falha na sincronização cloud", err);
+      console.error("Erro ao carregar dados da nuvem:", err);
     } finally {
       if (!isAutoRefresh) setLoading(false);
     }
@@ -58,7 +57,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // Atualiza a cada 45 segundos, mas a lógica dentro de loadData protege o formulário
     const interval = setInterval(() => loadData(true), 45000);
     return () => clearInterval(interval);
   }, [isModalOpen, isAdminPanelOpen, selectedPlayer]);
@@ -71,7 +69,6 @@ const App: React.FC = () => {
     }
   }, [currentUser]);
 
-  // Extração dinâmica de opções para filtros baseada nos dados existentes na nuvem
   const dynamicOptions = useMemo(() => {
     const competitions = [...new Set(players.map(p => p.competition))].filter(Boolean).sort();
     const years = [...new Set(players.map(p => p.scoutYear))].sort((a: number, b: number) => b - a);
@@ -82,44 +79,70 @@ const App: React.FC = () => {
   const handleLogout = () => setCurrentUser(null);
   
   const handleRegister = async (newUser: User) => {
-    await dbService.saveUser(newUser);
-    await loadData();
+    try {
+      await dbService.saveUser(newUser);
+      await loadData();
+    } catch (err: any) {
+      alert("Erro ao registrar: " + err.message);
+    }
   };
   
   const handleUpdateUserStatus = async (userId: string, status: 'approved' | 'rejected') => {
-    if (status === 'approved') {
-      const user = users.find(u => u.id === userId);
-      if (user) {
-        await dbService.saveUser({ ...user, status: 'approved' as const });
+    try {
+      if (status === 'approved') {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+          await dbService.saveUser({ ...user, status: 'approved' as const });
+        }
+      } else {
+        await dbService.deleteUser(userId);
       }
-    } else {
-      await dbService.deleteUser(userId);
+      await loadData();
+    } catch (err: any) {
+      alert("Erro ao atualizar status: " + err.message);
     }
-    await loadData();
   };
 
   const handleUpdateUser = async (updatedUser: User) => {
-    await dbService.saveUser(updatedUser);
-    if (currentUser?.id === updatedUser.id) setCurrentUser(updatedUser);
-    await loadData();
+    try {
+      await dbService.saveUser(updatedUser);
+      if (currentUser?.id === updatedUser.id) setCurrentUser(updatedUser);
+      await loadData();
+    } catch (err: any) {
+      alert("Erro ao atualizar usuário: " + err.message);
+    }
   };
 
   const handleAddPlayer = async (newPlayer: Player) => {
-    await dbService.savePlayer(newPlayer);
-    await loadData();
-    setIsModalOpen(false);
+    try {
+      await dbService.savePlayer(newPlayer);
+      await loadData(); // Recarrega imediatamente para ver o novo jogador
+      setIsModalOpen(false);
+      console.log("Jogador salvo com sucesso!");
+    } catch (err: any) {
+      console.error("Erro ao salvar jogador:", err);
+      alert(`ERRO AO SALVAR: ${err.message}. Verifique se a tabela 'players' e 'users' existem no seu Supabase.`);
+    }
   };
 
   const handleUpdatePlayer = async (updatedPlayer: Player) => {
-    await dbService.savePlayer(updatedPlayer);
-    await loadData();
-    setIsModalOpen(false);
+    try {
+      await dbService.savePlayer(updatedPlayer);
+      await loadData();
+      setIsModalOpen(false);
+    } catch (err: any) {
+      alert(`ERRO AO ATUALIZAR: ${err.message}`);
+    }
   };
 
   const handleDeletePlayer = async (id: string) => {
-    if(window.confirm("Apagar permanentemente este atleta na nuvem para toda a equipe?")) {
-      await dbService.deletePlayer(id);
-      await loadData();
+    if(window.confirm("Apagar permanentemente este atleta na nuvem?")) {
+      try {
+        await dbService.deletePlayer(id);
+        await loadData();
+      } catch (err: any) {
+        alert("Erro ao deletar: " + err.message);
+      }
     }
   };
 
@@ -152,8 +175,8 @@ const App: React.FC = () => {
     setFilters({
       search: '',
       positions: [],
-      minAge: 14,
-      maxAge: 40,
+      minAge: 0,
+      maxAge: 50,
       recommendations: [],
       competitions: [],
       scoutYears: [],
@@ -169,13 +192,10 @@ const App: React.FC = () => {
            </div>
            <h2 className="font-oswald text-2xl uppercase font-bold tracking-widest text-white">Nuvem Pendente</h2>
            <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 space-y-4 text-left">
-              <p className="text-slate-400 text-xs leading-relaxed">
-                As credenciais da nuvem precisam do prefixo <code className="text-[#f1c40f]">VITE_</code> para serem acessadas pelo navegador.
-              </p>
+              <p className="text-slate-400 text-xs leading-relaxed">As credenciais do Supabase não foram detectadas.</p>
               <ul className="text-[10px] text-slate-500 uppercase font-black space-y-2">
-                <li className="flex items-center gap-2"><i className="fas fa-check text-[#006837]"></i> Renomear para VITE_SUPABASE_URL</li>
-                <li className="flex items-center gap-2"><i className="fas fa-check text-[#006837]"></i> Renomear para VITE_SUPABASE_KEY</li>
-                <li className="flex items-center gap-2"><i className="fas fa-sync text-orange-500"></i> Fazer Redeploy na Vercel</li>
+                <li className="flex items-center gap-2"><i className="fas fa-check text-[#006837]"></i> Adicionar VITE_SUPABASE_URL</li>
+                <li className="flex items-center gap-2"><i className="fas fa-check text-[#006837]"></i> Adicionar VITE_SUPABASE_KEY</li>
               </ul>
            </div>
         </div>
@@ -188,7 +208,7 @@ const App: React.FC = () => {
       <div className="fixed inset-0 flex items-center justify-center bg-[#050807] text-white">
         <div className="flex flex-col items-center gap-6">
            <div className="h-12 w-12 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin"></div>
-           <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Sincronizando Base de Dados...</p>
+           <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Conectando ao Porto Vitória Cloud...</p>
         </div>
       </div>
     );
@@ -211,17 +231,17 @@ const App: React.FC = () => {
                 Porto Vitória <span className="text-[#f1c40f]">FC</span>
               </h1>
               <span className="text-[8px] font-black text-[#006837] uppercase tracking-widest flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Scout Pro v2.1
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Scout Pro v2.3
               </span>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <button onClick={() => loadData()} className="p-2 text-slate-500 hover:text-white transition-colors" title="Sincronizar Agora">
+            <button onClick={() => loadData()} className="p-2 text-slate-500 hover:text-white transition-colors">
               <i className="fas fa-sync-alt text-xs"></i>
             </button>
             {currentUser.role === 'admin' && (
-              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20 transition-all hover:bg-orange-500/20">Admin</button>
+              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">Admin</button>
             )}
             <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="bg-[#006837] px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white hover:bg-[#008a4a] transition-all shadow-lg shadow-[#006837]/20">Novo Atleta</button>
             <button onClick={handleLogout} className="p-2 text-red-500/50 hover:text-red-500 transition-colors"><i className="fas fa-power-off text-xs"></i></button>
@@ -232,7 +252,6 @@ const App: React.FC = () => {
       <main className="flex-grow mx-auto max-w-7xl px-6 py-10 w-full">
         <div className="flex flex-col lg:flex-row gap-10">
           
-          {/* SIDEBAR DE FILTROS REFINADA */}
           <aside className="lg:w-72 shrink-0">
             <div className="sticky top-28 space-y-6">
               <div className="bg-[#0a0f0d] p-6 rounded-[2.5rem] border border-white/5 shadow-2xl space-y-8 overflow-y-auto max-h-[80vh] custom-scrollbar">
@@ -241,7 +260,6 @@ const App: React.FC = () => {
                   <button onClick={clearFilters} className="text-[8px] font-black text-[#f1c40f] uppercase hover:underline">Resetar</button>
                 </div>
 
-                {/* Busca Textual */}
                 <section>
                   <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Busca Inteligente</label>
                   <div className="relative">
@@ -254,7 +272,6 @@ const App: React.FC = () => {
                   </div>
                 </section>
 
-                {/* Qualificação Porto */}
                 <section>
                   <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Nível Porto Vitória</label>
                   <div className="flex flex-col gap-2">
@@ -275,31 +292,27 @@ const App: React.FC = () => {
                   </div>
                 </section>
 
-                {/* Idade Mínima/Máxima */}
                 <section>
                   <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Idade ({filters.minAge} - {filters.maxAge})</label>
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
                       <input 
-                        type="number" min="10" max="45" value={filters.minAge} 
-                        onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value) || 10}))}
+                        type="number" min="0" max="60" value={filters.minAge} 
+                        onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value) || 0}))}
                         className="w-full bg-black border border-white/5 rounded-lg p-2.5 text-[10px] text-center text-white outline-none focus:border-[#f1c40f]" 
                       />
-                      <span className="block text-[7px] text-center mt-1 uppercase text-slate-700 font-bold">Mín</span>
                     </div>
                     <div className="h-px w-4 bg-slate-800"></div>
                     <div className="flex-1">
                       <input 
-                        type="number" min="10" max="45" value={filters.maxAge} 
-                        onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value) || 45}))}
+                        type="number" min="0" max="60" value={filters.maxAge} 
+                        onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value) || 60}))}
                         className="w-full bg-black border border-white/5 rounded-lg p-2.5 text-[10px] text-center text-white outline-none focus:border-[#f1c40f]" 
                       />
-                      <span className="block text-[7px] text-center mt-1 uppercase text-slate-700 font-bold">Máx</span>
                     </div>
                   </div>
                 </section>
 
-                {/* Posição */}
                 <section>
                   <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Posicionamento</label>
                   <div className="grid grid-cols-3 gap-2">
@@ -319,10 +332,9 @@ const App: React.FC = () => {
                   </div>
                 </section>
 
-                {/* Competição (Dinâmica da Nuvem) */}
                 {dynamicOptions.competitions.length > 0 && (
                   <section>
-                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Competições Observadas</label>
+                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Competições Ativas</label>
                     <div className="flex flex-col gap-1.5">
                       {dynamicOptions.competitions.map(comp => (
                         <button 
@@ -340,53 +352,23 @@ const App: React.FC = () => {
                     </div>
                   </section>
                 )}
-
-                {/* Ano de Avaliação (Temporada) */}
-                {dynamicOptions.years.length > 0 && (
-                  <section>
-                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Temporada Scout</label>
-                    <div className="flex flex-wrap gap-2">
-                      {dynamicOptions.years.map(year => (
-                        <button 
-                          key={year}
-                          onClick={() => toggleFilter('scoutYears', year)}
-                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black border transition-all ${
-                            filters.scoutYears.includes(year) 
-                            ? 'bg-[#f1c40f] border-[#f1c40f] text-black' 
-                            : 'bg-black border-white/5 text-slate-500'
-                          }`}
-                        >
-                          {year}
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
               </div>
 
-              {/* Status da Base */}
               <div className="bg-[#006837]/5 rounded-[2rem] p-6 border border-[#006837]/10">
                  <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-500 tracking-widest mb-2">
-                    <span>Resultados Atuais</span>
-                    <span className="text-[#f1c40f]">{filteredPlayers.length} de {players.length}</span>
-                 </div>
-                 <div className="w-full bg-slate-900 h-1 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-[#f1c40f] h-full transition-all duration-1000" 
-                      style={{width: `${(filteredPlayers.length / (players.length || 1)) * 100}%`}}
-                    ></div>
+                    <span>Base na Nuvem</span>
+                    <span className="text-[#f1c40f]">{players.length} Atletas</span>
                  </div>
               </div>
             </div>
           </aside>
 
-          {/* GRID DE RESULTADOS */}
           <div className="flex-1">
             <div className="mb-8 flex items-center justify-between">
                <h2 className="font-oswald text-3xl font-bold uppercase text-white tracking-tight">Database <span className="text-slate-700 ml-1">/ Scout</span></h2>
                <div className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tempo Real</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sincronizado</span>
                </div>
             </div>
 
@@ -415,10 +397,16 @@ const App: React.FC = () => {
             ) : (
               <div className="flex flex-col items-center justify-center py-40 bg-[#0a0f0d]/50 rounded-[3rem] border border-dashed border-white/5">
                 <div className="h-20 w-20 rounded-full bg-slate-900 flex items-center justify-center mb-6">
-                   <i className="fas fa-filter text-2xl text-slate-700"></i>
+                   <i className="fas fa-database text-2xl text-slate-700"></i>
                 </div>
-                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Nenhum atleta corresponde aos filtros</p>
-                <button onClick={clearFilters} className="mt-4 text-[10px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Limpar todos os filtros</button>
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                  {players.length === 0 ? "Banco de dados vazio na nuvem" : "Nenhum atleta nesta filtragem"}
+                </p>
+                {players.length === 0 ? (
+                  <button onClick={() => setIsModalOpen(true)} className="mt-4 px-6 py-2 bg-[#006837] rounded-lg text-[10px] font-black text-white uppercase hover:bg-[#008a4a]">Cadastrar Atleta</button>
+                ) : (
+                  <button onClick={clearFilters} className="mt-4 text-[10px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Resetar Filtros</button>
+                )}
               </div>
             )}
           </div>
