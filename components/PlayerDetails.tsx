@@ -20,23 +20,15 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     setLoading(true);
     setIsKeyMissing(false);
     
-    // Fix: Use hasSelectedApiKey to check if user has selected an API key
-    if (window.aistudio && !(await window.aistudio.hasSelectedApiKey())) {
-      setIsKeyMissing(true);
-      setReport("POR FAVOR, SELECIONE UMA CHAVE API: Para realizar análises avançadas com o Gemini 3 Pro, você deve selecionar sua chave no painel.");
-      setLoading(false);
-      return;
-    }
-
     try {
       const res = await getScoutReport(player);
       setReport(res);
     } catch (err: any) {
       if (err.message === 'API_KEY_MISSING') {
         setIsKeyMissing(true);
-        setReport("CHAVE INVÁLIDA OU NÃO SELECIONADA: Por favor, selecione sua chave de API do Google AI Studio novamente.");
+        setReport("CHAVE INVÁLIDA OU NÃO CONFIGURADA: Verifique se a variável VITE_GEMINI_API_KEY foi adicionada corretamente ao painel da Vercel e se o modelo está disponível em sua região.");
       } else {
-        setReport("Erro ao carregar análise técnica. Verifique sua conexão.");
+        setReport("Erro ao carregar análise técnica. Verifique o console do navegador para detalhes.");
       }
     } finally {
       setLoading(false);
@@ -48,10 +40,8 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   }, [player]);
 
   const handleOpenConfig = async () => {
-    // Fix: Use openSelectKey as instructed for Gemini 3 series models
     if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
       await window.aistudio.openSelectKey();
-      // Proceed immediately to retry fetching after selection
       fetchReport();
     }
   };
@@ -148,7 +138,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                   <h3 className="font-oswald text-3xl font-bold uppercase text-white tracking-wide">Relatório Técnico IA</h3>
                   <p className="text-[11px] font-black text-[#006837] uppercase tracking-[0.5em] mt-1 flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Gemini 3 Pro
+                    Gemini 3 Flash
                   </p>
                 </div>
               </div>
@@ -161,7 +151,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                   : 'bg-slate-900/80 hover:bg-[#f1c40f] hover:text-black text-white border-white/10'
                 }`}
               >
-                <i className="fas fa-key"></i> {isKeyMissing ? 'Selecionar Chave' : 'Configurar Chave'}
+                <i className="fas fa-microchip"></i> {isKeyMissing ? 'Erro de Autenticação' : 'Análise Flash Ativa'}
               </button>
             </div>
 
@@ -180,16 +170,18 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                 <div className="relative overflow-y-auto custom-scrollbar pr-6">
                   <i className="fas fa-quote-left text-7xl text-[#006837]/10 absolute -top-6 -left-4"></i>
                   <div className="relative z-10">
-                    <p className={`text-xl leading-relaxed font-medium whitespace-pre-line tracking-tight ${isKeyMissing ? 'text-red-400 italic' : 'text-slate-100'}`}>
+                    <p className={`text-xl leading-relaxed font-medium whitespace-pre-line tracking-tight ${isKeyMissing ? 'text-red-400 italic font-bold text-center' : 'text-slate-100'}`}>
                       {report}
                     </p>
                     {isKeyMissing && (
                       <div className="mt-10 p-6 bg-red-600/10 rounded-2xl border border-red-500/20 text-center">
-                         <p className="text-xs text-red-500 font-bold uppercase mb-4">Ação Necessária:</p>
+                         <p className="text-xs text-red-500 font-bold uppercase mb-4">Ação Técnica Requerida:</p>
                          <p className="text-[11px] text-slate-300 uppercase mb-4">
-                           Clique no botão "Selecionar Chave" acima e escolha uma chave de API válida com faturamento ativado para usar o Gemini 3 Pro.
+                           Acesse o painel da Vercel e confirme se VITE_GEMINI_API_KEY está salva. Se o erro persistir, gere uma nova chave no Google AI Studio.
                          </p>
-                         <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-[9px] text-[#f1c40f] underline uppercase">Ver documentação de faturamento</a>
+                         <button onClick={handleOpenConfig} className="text-[9px] bg-[#f1c40f] text-black px-6 py-2 rounded-lg font-black uppercase tracking-widest hover:scale-105 transition-transform">
+                           Tentar Selecionar Chave Novamente
+                         </button>
                       </div>
                     )}
                   </div>
