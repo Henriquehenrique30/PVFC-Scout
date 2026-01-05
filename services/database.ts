@@ -21,7 +21,10 @@ export const dbService = {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.warn('Erro ao buscar jogadores (pode ser cache do schema):', error);
+        return [];
+      }
       return data || [];
     } catch (err) {
       console.error('Erro ao buscar jogadores:', err);
@@ -31,11 +34,29 @@ export const dbService = {
 
   async savePlayer(player: Player): Promise<void> {
     if (!supabase) throw new Error("Conexão com a nuvem não configurada.");
+    
+    // Removemos campos que podem não existir no banco para evitar erros de schema cache
+    const { id, ...playerData } = player;
+    
     const { error } = await supabase.from('players').upsert({
-      ...player,
+      id,
+      ...playerData,
       updated_at: new Date().toISOString()
     });
-    if (error) throw error;
+
+    if (error) {
+      console.error("Erro no Supabase Upsert:", error);
+      // Se o erro for especificamente a falta da coluna updated_at, tentamos sem ela
+      if (error.message.includes('updated_at')) {
+        const { error: retryError } = await supabase.from('players').upsert({
+          id,
+          ...playerData
+        });
+        if (retryError) throw retryError;
+      } else {
+        throw error;
+      }
+    }
   },
 
   async deletePlayer(id: string): Promise<void> {

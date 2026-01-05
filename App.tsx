@@ -25,7 +25,6 @@ const App: React.FC = () => {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
-  // Filtros padrão ajustados para serem mais amplos (Idade 0-50)
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     positions: [],
@@ -116,12 +115,11 @@ const App: React.FC = () => {
   const handleAddPlayer = async (newPlayer: Player) => {
     try {
       await dbService.savePlayer(newPlayer);
-      await loadData(); // Recarrega imediatamente para ver o novo jogador
+      await loadData(); 
       setIsModalOpen(false);
-      console.log("Jogador salvo com sucesso!");
     } catch (err: any) {
       console.error("Erro ao salvar jogador:", err);
-      alert(`ERRO AO SALVAR: ${err.message}. Verifique se a tabela 'players' e 'users' existem no seu Supabase.`);
+      alert(`ERRO DE BANCO DE DADOS: ${err.message}. \n\nDICA: Vá no SQL Editor do Supabase e execute o comando ALTER TABLE para adicionar a coluna 'updated_at'.`);
     }
   };
 
@@ -231,7 +229,7 @@ const App: React.FC = () => {
                 Porto Vitória <span className="text-[#f1c40f]">FC</span>
               </h1>
               <span className="text-[8px] font-black text-[#006837] uppercase tracking-widest flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Scout Pro v2.3
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Scout Pro v2.4
               </span>
             </div>
           </div>
