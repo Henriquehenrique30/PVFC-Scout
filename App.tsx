@@ -229,7 +229,7 @@ const App: React.FC = () => {
                 Porto Vitória <span className="text-[#f1c40f]">FC</span>
               </h1>
               <span className="text-[8px] font-black text-[#006837] uppercase tracking-widest flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Scout Pro v2.4
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Departamento de Análise de Mercado
               </span>
             </div>
           </div>
