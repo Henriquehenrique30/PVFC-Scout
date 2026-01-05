@@ -119,7 +119,7 @@ const App: React.FC = () => {
       setIsModalOpen(false);
     } catch (err: any) {
       console.error("Erro ao salvar jogador:", err);
-      alert(`ERRO DE BANCO DE DADOS: ${err.message}. \n\nDICA: Vá no SQL Editor do Supabase e execute o comando ALTER TABLE para adicionar a coluna 'updated_at'.`);
+      alert(`ERRO DE BANCO DE DADOS: ${err.message}`);
     }
   };
 
@@ -181,240 +181,216 @@ const App: React.FC = () => {
     });
   };
 
-  if (!isCloudActive()) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#050807] text-white p-6">
-        <div className="max-w-md text-center space-y-6">
-           <div className="h-24 w-24 rounded-3xl bg-red-600/10 border border-red-500/20 flex items-center justify-center mx-auto text-red-500 text-4xl shadow-2xl">
-              <i className="fas fa-cloud-slash"></i>
-           </div>
-           <h2 className="font-oswald text-2xl uppercase font-bold tracking-widest text-white">Nuvem Pendente</h2>
-           <div className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 space-y-4 text-left">
-              <p className="text-slate-400 text-xs leading-relaxed">As credenciais do Supabase não foram detectadas.</p>
-              <ul className="text-[10px] text-slate-500 uppercase font-black space-y-2">
-                <li className="flex items-center gap-2"><i className="fas fa-check text-[#006837]"></i> Adicionar VITE_SUPABASE_URL</li>
-                <li className="flex items-center gap-2"><i className="fas fa-check text-[#006837]"></i> Adicionar VITE_SUPABASE_KEY</li>
-              </ul>
-           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading && players.length === 0) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#050807] text-white">
-        <div className="flex flex-col items-center gap-6">
-           <div className="h-12 w-12 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin"></div>
-           <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Conectando ao Porto Vitória Cloud...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (!currentUser) {
     return <Auth onLogin={handleLogin} users={users} onRegister={handleRegister} />;
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#050807]">
-      <header className="sticky top-0 z-40 border-b border-[#006837]/20 bg-[#0a0f0d]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 flex items-center justify-center rounded-full bg-white border-2 border-[#006837]">
-               <i className="fas fa-ship text-[#006837] text-lg"></i>
+    <div className="flex flex-col min-h-screen">
+      {/* Main Professional Header */}
+      <header className="sticky top-0 z-40 glass-panel border-b border-white/5 py-4">
+        <div className="mx-auto max-w-[1600px] flex items-center justify-between px-8">
+          <div className="flex items-center gap-6">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white border-2 border-[#006837] shadow-[0_0_20px_rgba(0,104,55,0.2)]">
+               <i className="fas fa-ship text-[#006837] text-2xl"></i>
             </div>
             <div>
-              <h1 className="font-oswald text-xl font-bold uppercase text-white">
-                Porto Vitória <span className="text-[#f1c40f]">FC</span>
-              </h1>
-              <span className="text-[8px] font-black text-[#006837] uppercase tracking-widest flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Departamento de Análise de Mercado
-              </span>
+              <div className="flex items-center gap-2">
+                <h1 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight">
+                  Porto Vitória <span className="text-[#f1c40f]">FC</span>
+                </h1>
+                <span className="bg-[#006837]/20 text-[#006837] text-[8px] font-black px-2 py-0.5 rounded border border-[#006837]/30 uppercase tracking-widest">Market Intelligence</span>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Base de Dados Ativa</span>
+                </div>
+                <div className="h-3 w-px bg-slate-800"></div>
+                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Sincronizado: {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <button onClick={() => loadData()} className="p-2 text-slate-500 hover:text-white transition-colors">
-              <i className="fas fa-sync-alt text-xs"></i>
-            </button>
-            {currentUser.role === 'admin' && (
-              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">Admin</button>
-            )}
-            <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="bg-[#006837] px-4 py-2 rounded-lg text-[10px] font-black uppercase text-white hover:bg-[#008a4a] transition-all shadow-lg shadow-[#006837]/20">Novo Atleta</button>
-            <button onClick={handleLogout} className="p-2 text-red-500/50 hover:text-red-500 transition-colors"><i className="fas fa-power-off text-xs"></i></button>
+          <div className="flex items-center gap-6">
+            <div className="hidden lg:flex items-center gap-8 mr-4">
+               <div className="text-right">
+                  <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Analista Logado</p>
+                  <p className="text-[10px] font-bold text-white uppercase">{currentUser.name}</p>
+               </div>
+               <div className="h-8 w-px bg-white/5"></div>
+            </div>
+            <div className="flex items-center gap-3">
+              {currentUser.role === 'admin' && (
+                <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2.5 rounded-xl bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20 hover:bg-orange-500/20 transition-all">Central Admin</button>
+              )}
+              <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="bg-[#006837] px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-white hover:bg-[#008a4a] transition-all shadow-xl shadow-[#006837]/20 border border-[#006837]/30">Adicionar Atleta</button>
+              <button onClick={handleLogout} className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all border border-red-500/20"><i className="fas fa-power-off"></i></button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-grow mx-auto max-w-7xl px-6 py-10 w-full">
-        <div className="flex flex-col lg:flex-row gap-10">
-          
-          <aside className="lg:w-72 shrink-0">
-            <div className="sticky top-28 space-y-6">
-              <div className="bg-[#0a0f0d] p-6 rounded-[2.5rem] border border-white/5 shadow-2xl space-y-8 overflow-y-auto max-h-[80vh] custom-scrollbar">
-                <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Painel de Scout</h3>
-                  <button onClick={clearFilters} className="text-[8px] font-black text-[#f1c40f] uppercase hover:underline">Resetar</button>
+      <main className="flex-grow mx-auto max-w-[1600px] px-8 py-10 w-full flex flex-col lg:flex-row gap-12">
+        
+        {/* Sidebar de Filtros - "Technical dossier search" */}
+        <aside className="lg:w-80 shrink-0">
+          <div className="sticky top-28 space-y-6">
+            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 shadow-3xl space-y-10">
+              <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                <div className="flex items-center gap-3">
+                  <i className="fas fa-filter text-[#006837]"></i>
+                  <h3 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Filtros de Scout</h3>
                 </div>
-
-                <section>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Busca Inteligente</label>
-                  <div className="relative">
-                    <input 
-                      type="text" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} 
-                      placeholder="Nome ou Clube..." 
-                      className="w-full bg-black border border-white/5 rounded-xl py-3 pl-10 pr-4 text-xs text-white outline-none focus:ring-1 focus:ring-[#f1c40f]" 
-                    />
-                    <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[10px]"></i>
-                  </div>
-                </section>
-
-                <section>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Nível Porto Vitória</label>
-                  <div className="flex flex-col gap-2">
-                    {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
-                      <button 
-                        key={rec}
-                        onClick={() => toggleFilter('recommendations', rec)}
-                        className={`text-left px-4 py-2.5 rounded-xl text-[9px] font-black uppercase border transition-all flex items-center justify-between ${
-                          filters.recommendations.includes(rec as Recommendation) 
-                          ? 'bg-[#006837] border-[#006837] text-white' 
-                          : 'bg-black border-white/5 text-slate-500 hover:border-white/10'
-                        }`}
-                      >
-                        {rec}
-                        {filters.recommendations.includes(rec as Recommendation) && <i className="fas fa-check-circle text-[10px]"></i>}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                <section>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Idade ({filters.minAge} - {filters.maxAge})</label>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <input 
-                        type="number" min="0" max="60" value={filters.minAge} 
-                        onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value) || 0}))}
-                        className="w-full bg-black border border-white/5 rounded-lg p-2.5 text-[10px] text-center text-white outline-none focus:border-[#f1c40f]" 
-                      />
-                    </div>
-                    <div className="h-px w-4 bg-slate-800"></div>
-                    <div className="flex-1">
-                      <input 
-                        type="number" min="0" max="60" value={filters.maxAge} 
-                        onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value) || 60}))}
-                        className="w-full bg-black border border-white/5 rounded-lg p-2.5 text-[10px] text-center text-white outline-none focus:border-[#f1c40f]" 
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                <section>
-                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Posicionamento</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {Object.values(Position).map(pos => (
-                      <button 
-                        key={pos} 
-                        onClick={() => toggleFilter('positions', pos)}
-                        className={`py-2 rounded-lg text-[9px] font-black uppercase border transition-all ${
-                          filters.positions.includes(pos) 
-                          ? 'bg-[#f1c40f] border-[#f1c40f] text-black' 
-                          : 'bg-black border-white/5 text-slate-500 hover:text-white'
-                        }`}
-                      >
-                        {pos}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                {dynamicOptions.competitions.length > 0 && (
-                  <section>
-                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Competições Ativas</label>
-                    <div className="flex flex-col gap-1.5">
-                      {dynamicOptions.competitions.map(comp => (
-                        <button 
-                          key={comp}
-                          onClick={() => toggleFilter('competitions', comp)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-[8px] font-bold uppercase truncate border transition-all ${
-                            filters.competitions.includes(comp) 
-                            ? 'bg-[#006837]/20 border-[#006837] text-white' 
-                            : 'bg-black border-white/5 text-slate-600 hover:text-slate-400'
-                          }`}
-                        >
-                          {comp}
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-                )}
+                <button onClick={clearFilters} className="text-[9px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Limpar</button>
               </div>
 
-              <div className="bg-[#006837]/5 rounded-[2rem] p-6 border border-[#006837]/10">
-                 <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-500 tracking-widest mb-2">
-                    <span>Base na Nuvem</span>
-                    <span className="text-[#f1c40f]">{players.length} Atletas</span>
-                 </div>
-              </div>
+              <section>
+                <label className="block text-[9px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">Busca Nominal / Clube</label>
+                <div className="relative group">
+                  <input 
+                    type="text" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} 
+                    placeholder="Filtrar base..." 
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-xs text-white outline-none focus:ring-1 focus:ring-[#006837] transition-all" 
+                  />
+                  <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 text-[11px] group-focus-within:text-[#006837] transition-colors"></i>
+                </div>
+              </section>
+
+              <section>
+                <label className="block text-[9px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">Nível de Monitoramento</label>
+                <div className="space-y-2.5">
+                  {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
+                    <button 
+                      key={rec}
+                      onClick={() => toggleFilter('recommendations', rec)}
+                      className={`w-full text-left px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase border transition-all flex items-center justify-between group ${
+                        filters.recommendations.includes(rec as Recommendation) 
+                        ? 'bg-[#006837] border-[#006837] text-white shadow-lg shadow-[#006837]/20' 
+                        : 'bg-black/20 border-white/5 text-slate-600 hover:border-[#006837]/40 hover:text-slate-400'
+                      }`}
+                    >
+                      {rec}
+                      <div className={`h-1.5 w-1.5 rounded-full ${
+                        filters.recommendations.includes(rec as Recommendation) ? 'bg-white' : 'bg-slate-800'
+                      }`}></div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <label className="block text-[9px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">Posicionamento Tático</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.values(Position).map(pos => (
+                    <button 
+                      key={pos} 
+                      onClick={() => toggleFilter('positions', pos)}
+                      className={`py-3 rounded-xl text-[10px] font-black uppercase border transition-all ${
+                        filters.positions.includes(pos) 
+                        ? 'bg-[#f1c40f] border-[#f1c40f] text-black shadow-lg shadow-[#f1c40f]/20' 
+                        : 'bg-black/20 border-white/5 text-slate-600 hover:text-white'
+                      }`}
+                    >
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <label className="block text-[9px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">Range de Idade: {filters.minAge} - {filters.maxAge}</label>
+                <div className="flex items-center gap-4 bg-black/20 p-4 rounded-2xl border border-white/5">
+                  <input 
+                    type="number" min="0" max="60" value={filters.minAge} 
+                    onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value) || 0}))}
+                    className="w-full bg-transparent text-center text-xs font-black text-white outline-none" 
+                  />
+                  <div className="h-px w-6 bg-slate-800"></div>
+                  <input 
+                    type="number" min="0" max="60" value={filters.maxAge} 
+                    onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value) || 60}))}
+                    className="w-full bg-transparent text-center text-xs font-black text-white outline-none" 
+                  />
+                </div>
+              </section>
             </div>
-          </aside>
-
-          <div className="flex-1">
-            <div className="mb-8 flex items-center justify-between">
-               <h2 className="font-oswald text-3xl font-bold uppercase text-white tracking-tight">Database <span className="text-slate-700 ml-1">/ Scout</span></h2>
-               <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Sincronizado</span>
+            
+            {/* Quick Stats Summary */}
+            <div className="glass-panel p-6 rounded-3xl border border-white/5 flex items-center justify-between">
+               <div>
+                  <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Base Consolidada</p>
+                  <p className="text-xl font-black text-white">{players.length} Atletas</p>
+               </div>
+               <div className="h-10 w-10 rounded-xl bg-[#006837]/10 flex items-center justify-center text-[#006837]">
+                  <i className="fas fa-database text-lg"></i>
                </div>
             </div>
-
-            {filteredPlayers.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                {filteredPlayers.map(player => (
-                  <div key={player.id} className="group relative">
-                    <PlayerCard player={player} onClick={setSelectedPlayer} />
-                    <div className="absolute bottom-6 right-6 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); setIsModalOpen(true); }} 
-                        className="h-9 w-9 bg-white/10 backdrop-blur-md text-white rounded-xl flex items-center justify-center border border-white/10 hover:bg-[#f1c40f] hover:text-black transition-all"
-                      >
-                        <i className="fas fa-pen text-[10px]"></i>
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }} 
-                        className="h-9 w-9 bg-red-600/10 backdrop-blur-md text-red-500 rounded-xl flex items-center justify-center border border-red-500/20 hover:bg-red-600 hover:text-white transition-all"
-                      >
-                        <i className="fas fa-trash text-[10px]"></i>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-40 bg-[#0a0f0d]/50 rounded-[3rem] border border-dashed border-white/5">
-                <div className="h-20 w-20 rounded-full bg-slate-900 flex items-center justify-center mb-6">
-                   <i className="fas fa-database text-2xl text-slate-700"></i>
-                </div>
-                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
-                  {players.length === 0 ? "Banco de dados vazio na nuvem" : "Nenhum atleta nesta filtragem"}
-                </p>
-                {players.length === 0 ? (
-                  <button onClick={() => setIsModalOpen(true)} className="mt-4 px-6 py-2 bg-[#006837] rounded-lg text-[10px] font-black text-white uppercase hover:bg-[#008a4a]">Cadastrar Atleta</button>
-                ) : (
-                  <button onClick={clearFilters} className="mt-4 text-[10px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Resetar Filtros</button>
-                )}
-              </div>
-            )}
           </div>
+        </aside>
+
+        {/* Player Grid Area */}
+        <div className="flex-1 space-y-10">
+          <div className="flex items-end justify-between border-b border-white/5 pb-8">
+            <div>
+              <p className="text-[10px] font-black text-[#006837] uppercase tracking-[0.5em] mb-2">Technical Database</p>
+              <h2 className="font-oswald text-4xl font-bold uppercase text-white tracking-tight">Portfólio de Atletas</h2>
+            </div>
+            <div className="flex gap-4">
+               <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/5 flex items-center gap-3">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Filtros Ativos:</span>
+                  <span className="text-[10px] font-bold text-[#f1c40f] uppercase">{filteredPlayers.length} Resultados</span>
+               </div>
+            </div>
+          </div>
+
+          {loading && players.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-40">
+              <div className="h-12 w-12 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin mb-6"></div>
+              <p className="text-[10px] text-slate-600 uppercase font-black tracking-widest">Acessando Cloud do Porto Vitória...</p>
+            </div>
+          ) : filteredPlayers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+              {filteredPlayers.map(player => (
+                <div key={player.id} className="group relative">
+                  <PlayerCard player={player} onClick={setSelectedPlayer} />
+                  <div className="absolute bottom-6 right-6 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); setIsModalOpen(true); }} 
+                      className="h-10 w-10 bg-black/60 backdrop-blur-md text-white rounded-xl flex items-center justify-center border border-white/10 hover:bg-[#f1c40f] hover:text-black transition-all shadow-2xl"
+                    >
+                      <i className="fas fa-pen text-xs"></i>
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }} 
+                      className="h-10 w-10 bg-red-600/10 backdrop-blur-md text-red-500 rounded-xl flex items-center justify-center border border-red-500/20 hover:bg-red-600 hover:text-white transition-all shadow-2xl"
+                    >
+                      <i className="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-40 glass-panel rounded-[3rem] border border-dashed border-white/5">
+              <div className="h-20 w-20 rounded-3xl bg-slate-900 flex items-center justify-center mb-6 text-slate-700">
+                 <i className="fas fa-search text-3xl"></i>
+              </div>
+              <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em]">Nenhum atleta encontrado nos parâmetros atuais</p>
+              <button onClick={clearFilters} className="mt-6 text-[10px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-8 transition-all">Redefinir Filtros de Busca</button>
+            </div>
+          )}
         </div>
       </main>
 
-      <footer className="mt-auto py-8 border-t border-[#006837]/10 bg-[#0a0f0d]/50">
-        <div className="mx-auto max-w-7xl px-6 text-center">
-          <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
-            Desenvolvido por <span className="text-white">Henrique Bravim</span> - contato: <a href="mailto:hsbravim@gmail.com" className="hover:text-[#f1c40f] transition-colors">hsbravim@gmail.com</a>
+      {/* Footer minimalista de Software */}
+      <footer className="mt-auto py-10 border-t border-white/5 bg-black/40 backdrop-blur-md">
+        <div className="mx-auto max-w-[1600px] px-8 flex items-center justify-between">
+          <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em]">
+            Porto Vitória FC Intelligence System <span className="text-slate-800 ml-4">v1.2.4 Premium</span>
+          </p>
+          <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em]">
+            Analista: <span className="text-slate-500">{currentUser.name}</span>
           </p>
         </div>
       </footer>
