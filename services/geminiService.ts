@@ -1,11 +1,10 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { Player } from "../types";
 
+// Fix: Initializing GoogleGenAI with named parameters as per the latest SDK guidelines.
+// Assuming process.env.API_KEY is pre-configured and valid in the environment.
 const getAIInstance = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "undefined") return null;
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 };
 
 export const getScoutReport = async (player: Player): Promise<string> => {
@@ -15,7 +14,6 @@ export const getScoutReport = async (player: Player): Promise<string> => {
 
   try {
     const ai = getAIInstance();
-    if (!ai) return "AVISO: Configure a API_KEY na Vercel para ativar a análise inteligente.";
 
     const prompt = `
       Você é o Head of Scouting do Porto Vitória FC.
@@ -30,13 +28,17 @@ export const getScoutReport = async (player: Player): Promise<string> => {
       Foque no potencial de mercado.
     `;
 
+    // Fix: Selecting 'gemini-3-pro-preview' for advanced reasoning and tactical analysis tasks.
+    // Fix: Using the simplified generateContent call without pre-defining the model.
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3-pro-preview",
       contents: prompt,
     });
 
+    // Fix: Accessing .text as a property, not a method, as per the correct GenerateContentResponse interface.
     return response.text || "Análise concluída.";
   } catch (error) {
+    console.error("Gemini API Error:", error);
     return "SISTEMA INSTÁVEL: Erro ao processar IA.";
   }
 };

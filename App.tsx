@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, FilterState, User, Recommendation, Position } from './types';
 import PlayerCard from './components/PlayerCard';
@@ -9,7 +8,6 @@ import AdminUserManagement from './components/AdminUserManagement';
 import { dbService, isCloudActive } from './services/database';
 
 const App: React.FC = () => {
-  // SESSION_KEY mantido apenas para persistência temporária do login do navegador atual
   const SESSION_KEY = 'pvfc_auth_session';
 
   const [users, setUsers] = useState<User[]>([]);
@@ -40,7 +38,6 @@ const App: React.FC = () => {
     if (!isCloudActive()) return;
     setLoading(true);
     try {
-      // Busca dados reais diretamente do Supabase
       const [allPlayers, allUsers] = await Promise.all([
         dbService.getPlayers(),
         dbService.getUsers()
@@ -56,7 +53,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // Opcional: Polling simples a cada 30s para manter dados frescos entre scouts
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -68,6 +64,14 @@ const App: React.FC = () => {
       localStorage.removeItem(SESSION_KEY);
     }
   }, [currentUser]);
+
+  // Extração dinâmica de opções para filtros baseada nos dados existentes
+  const dynamicOptions = useMemo(() => {
+    const competitions = [...new Set(players.map(p => p.competition))].filter(Boolean).sort();
+    // Fix: Explicitly typing sort parameters to avoid arithmetic operation errors on inferred types
+    const years = [...new Set(players.map(p => p.scoutYear))].sort((a: number, b: number) => b - a);
+    return { competitions, years };
+  }, [players]);
 
   const handleLogin = (user: User) => setCurrentUser(user);
   const handleLogout = () => setCurrentUser(null);
@@ -118,9 +122,36 @@ const App: React.FC = () => {
                           p.club.toLowerCase().includes(filters.search.toLowerCase());
       const matchPos = filters.positions.length === 0 || filters.positions.includes(p.position1);
       const matchAge = p.age >= filters.minAge && p.age <= filters.maxAge;
-      return matchSearch && matchPos && matchAge;
+      const matchRec = filters.recommendations.length === 0 || filters.recommendations.includes(p.recommendation);
+      const matchComp = filters.competitions.length === 0 || filters.competitions.includes(p.competition);
+      const matchYear = filters.scoutYears.length === 0 || filters.scoutYears.includes(p.scoutYear);
+
+      return matchSearch && matchPos && matchAge && matchRec && matchComp && matchYear;
     });
   }, [filters, players]);
+
+  const toggleFilter = (key: keyof FilterState, value: any) => {
+    setFilters(prev => {
+      const current = prev[key] as any[];
+      const isPresent = current.includes(value);
+      return {
+        ...prev,
+        [key]: isPresent ? current.filter(v => v !== value) : [...current, value]
+      };
+    });
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      search: '',
+      positions: [],
+      minAge: 14,
+      maxAge: 40,
+      recommendations: [],
+      competitions: [],
+      scoutYears: [],
+    });
+  };
 
   if (!isCloudActive()) {
     return (
@@ -150,7 +181,7 @@ const App: React.FC = () => {
       <div className="fixed inset-0 flex items-center justify-center bg-[#050807] text-white">
         <div className="flex flex-col items-center gap-6">
            <div className="h-12 w-12 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin"></div>
-           <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Conectando ao Banco de Dados...</p>
+           <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em]">Sincronizando Banco de Dados...</p>
         </div>
       </div>
     );
@@ -173,13 +204,13 @@ const App: React.FC = () => {
                 Porto Vitória <span className="text-[#f1c40f]">FC</span>
               </h1>
               <span className="text-[8px] font-black text-[#006837] uppercase tracking-widest flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sistema Cloud Ativo
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Cloud Scout Pro v2
               </span>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <button onClick={loadData} className="p-2 text-slate-500 hover:text-white transition-colors"><i className="fas fa-sync-alt text-xs"></i></button>
+            <button onClick={loadData} className="p-2 text-slate-500 hover:text-white transition-colors" title="Recarregar"><i className="fas fa-sync-alt text-xs"></i></button>
             {currentUser.role === 'admin' && (
               <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">Admin</button>
             )}
@@ -191,35 +222,158 @@ const App: React.FC = () => {
 
       <main className="flex-grow mx-auto max-w-7xl px-6 py-10 w-full">
         <div className="flex flex-col lg:flex-row gap-10">
-          <aside className="lg:w-64 shrink-0 space-y-6">
-            <div className="bg-[#0a0f0d] p-6 rounded-3xl border border-white/5 shadow-xl">
-               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Filtros de Scout</h3>
-               <div className="space-y-6">
+          
+          {/* SIDEBAR DE FILTROS REFINADA */}
+          <aside className="lg:w-72 shrink-0">
+            <div className="sticky top-28 space-y-6">
+              <div className="bg-[#0a0f0d] p-6 rounded-[2rem] border border-white/5 shadow-2xl space-y-8 overflow-y-auto max-h-[80vh] custom-scrollbar">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Painel de Scout</h3>
+                  <button onClick={clearFilters} className="text-[8px] font-black text-[#f1c40f] uppercase hover:underline">Limpar</button>
+                </div>
+
+                {/* Busca Textual */}
+                <section>
+                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Identificação</label>
                   <div className="relative">
                     <input 
                       type="text" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} 
-                      placeholder="Buscar..." 
-                      className="w-full bg-slate-900 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-xs text-white outline-none focus:ring-1 focus:ring-[#f1c40f]" 
+                      placeholder="Nome ou Clube..." 
+                      className="w-full bg-black border border-white/5 rounded-xl py-3 pl-10 pr-4 text-xs text-white outline-none focus:ring-1 focus:ring-[#f1c40f]" 
                     />
                     <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[10px]"></i>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.values(Position).slice(0, 10).map(pos => (
+                </section>
+
+                {/* Qualificação */}
+                <section>
+                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Qualificação Porto</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
+                      <button 
+                        key={rec}
+                        onClick={() => toggleFilter('recommendations', rec)}
+                        className={`text-left px-3 py-2.5 rounded-xl text-[9px] font-black uppercase border transition-all flex items-center justify-between ${
+                          filters.recommendations.includes(rec as Recommendation) 
+                          ? 'bg-[#006837] border-[#006837] text-white' 
+                          : 'bg-black border-white/5 text-slate-500'
+                        }`}
+                      >
+                        {rec}
+                        {filters.recommendations.includes(rec as Recommendation) && <i className="fas fa-check-circle text-[10px]"></i>}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Idade */}
+                <section>
+                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Faixa Etária: {filters.minAge} - {filters.maxAge}</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="number" min="10" max="45" value={filters.minAge} 
+                      onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value)}))}
+                      className="w-full bg-black border border-white/5 rounded-lg p-2 text-[10px] text-center text-white outline-none" 
+                    />
+                    <span className="text-slate-700">|</span>
+                    <input 
+                      type="number" min="10" max="45" value={filters.maxAge} 
+                      onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value)}))}
+                      className="w-full bg-black border border-white/5 rounded-lg p-2 text-[10px] text-center text-white outline-none" 
+                    />
+                  </div>
+                </section>
+
+                {/* Posição */}
+                <section>
+                  <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Setor do Campo</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.values(Position).map(pos => (
                       <button 
                         key={pos} 
-                        onClick={() => setFilters(f => ({...f, positions: f.positions.includes(pos) ? f.positions.filter(p => p !== pos) : [...f.positions, pos]}))}
-                        className={`py-2 rounded-lg text-[9px] font-black uppercase border transition-all ${filters.positions.includes(pos) ? 'bg-[#f1c40f] border-[#f1c40f] text-black' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+                        onClick={() => toggleFilter('positions', pos)}
+                        className={`py-2 rounded-lg text-[9px] font-black uppercase border transition-all ${
+                          filters.positions.includes(pos) 
+                          ? 'bg-[#f1c40f] border-[#f1c40f] text-black' 
+                          : 'bg-black border-white/5 text-slate-500'
+                        }`}
                       >
                         {pos}
                       </button>
                     ))}
                   </div>
-               </div>
+                </section>
+
+                {/* Competição Dinâmica */}
+                {dynamicOptions.competitions.length > 0 && (
+                  <section>
+                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Competições Ativas</label>
+                    <div className="space-y-2">
+                      {dynamicOptions.competitions.map(comp => (
+                        <button 
+                          key={comp}
+                          onClick={() => toggleFilter('competitions', comp)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-[8px] font-bold uppercase truncate border transition-all ${
+                            filters.competitions.includes(comp) 
+                            ? 'bg-[#006837]/20 border-[#006837] text-white' 
+                            : 'bg-black border-white/5 text-slate-600'
+                          }`}
+                        >
+                          {comp}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Temporada Dinâmica */}
+                {dynamicOptions.years.length > 0 && (
+                  <section>
+                    <label className="block text-[9px] font-black text-slate-600 uppercase mb-3 tracking-widest">Ano do Scout</label>
+                    <div className="flex flex-wrap gap-2">
+                      {dynamicOptions.years.map(year => (
+                        <button 
+                          key={year}
+                          onClick={() => toggleFilter('scoutYears', year)}
+                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black border transition-all ${
+                            filters.scoutYears.includes(year) 
+                            ? 'bg-[#f1c40f] border-[#f1c40f] text-black' 
+                            : 'bg-black border-white/5 text-slate-500'
+                          }`}
+                        >
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </div>
+
+              {/* Estatísticas Rápidas */}
+              <div className="bg-[#006837]/5 rounded-3xl p-6 border border-[#006837]/10">
+                 <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-500 tracking-widest mb-2">
+                    <span>Base Filtrada</span>
+                    <span className="text-[#f1c40f]">{filteredPlayers.length} Atletas</span>
+                 </div>
+                 <div className="w-full bg-slate-900 h-1 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-[#f1c40f] h-full transition-all duration-1000" 
+                      style={{width: `${(filteredPlayers.length / (players.length || 1)) * 100}%`}}
+                    ></div>
+                 </div>
+              </div>
             </div>
           </aside>
 
+          {/* GRID DE RESULTADOS */}
           <div className="flex-1">
+            <div className="mb-6 flex items-center justify-between">
+               <h2 className="font-oswald text-2xl font-bold uppercase text-white">Resultados <span className="text-slate-700 ml-2">/ Database</span></h2>
+               <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                  Total na Nuvem: {players.length}
+               </div>
+            </div>
+
             {filteredPlayers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {filteredPlayers.map(player => (
@@ -234,8 +388,9 @@ const App: React.FC = () => {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-40 bg-[#0a0f0d]/50 rounded-[3rem] border border-dashed border-white/5">
-                <i className="fas fa-search text-3xl text-slate-800 mb-4"></i>
-                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Nenhum atleta encontrado</p>
+                <i className="fas fa-filter text-3xl text-slate-800 mb-4"></i>
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Nenhum atleta corresponde aos filtros</p>
+                <button onClick={clearFilters} className="mt-4 text-[10px] font-black text-[#f1c40f] uppercase hover:underline">Resetar Filtros</button>
               </div>
             )}
           </div>
