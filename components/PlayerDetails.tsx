@@ -18,12 +18,26 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   useEffect(() => {
     const fetchReport = async () => {
       setLoading(true);
-      const res = await getScoutReport(player);
-      setReport(res);
-      setLoading(false);
+      try {
+        const res = await getScoutReport(player);
+        setReport(res);
+      } catch (err) {
+        setReport("Erro ao carregar análise.");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchReport();
   }, [player]);
+
+  const handleFixKey = async () => {
+    if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
+      await window.aistudio.openSelectKey();
+      // Recarrega o parecer após selecionar a chave
+      const res = await getScoutReport(player);
+      setReport(res);
+    }
+  };
 
   const radarData = [
     { subject: 'VEL', A: player.stats.pace },
@@ -38,179 +52,136 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     switch(rec) {
       case 'G1 Elite': return 'Prioridade Elite';
       case 'G2 Titular': return 'Potencial Titular';
-      case 'G3 Monitoramento': return 'Em Observação';
+      case 'G3 Monitoramento': return 'Monitoramento';
       case 'Base': return 'Projeção Base';
       default: return rec;
     }
   };
 
-  const getFootLabel = (foot: string) => {
-    switch(foot) {
-      case 'Right': return 'Destro';
-      case 'Left': return 'Canhoto';
-      case 'Both': return 'Ambidestro';
-      default: return foot;
-    }
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-hidden">
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-[1.5rem] bg-[#0f1a16] shadow-2xl border border-[#006837]/30 max-h-[85vh] flex flex-col animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm overflow-hidden">
+      <div className="relative w-full max-w-4xl overflow-hidden rounded-[1.5rem] bg-[#050807] shadow-2xl border border-[#006837]/30 max-h-[88vh] flex flex-col animate-in fade-in zoom-in duration-200">
+        
         <button 
           onClick={onClose}
-          className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-[#006837] text-white hover:bg-[#f1c40f] hover:text-slate-950 transition-all shadow-lg"
+          className="absolute right-4 top-4 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-red-600 transition-all border border-white/10"
         >
-          <i className="fas fa-times text-[10px]"></i>
+          <i className="fas fa-times text-xs"></i>
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 overflow-y-auto custom-scrollbar h-full">
-          {/* LADO ESQUERDO: PERFIL (ULTRA COMPACTO) */}
-          <div className="md:col-span-5 p-4 bg-gradient-to-br from-[#0a0f0d] to-[#0f1a16] border-r border-white/5 flex flex-col items-center">
+        <div className="grid grid-cols-1 md:grid-cols-12 h-full overflow-hidden">
+          
+          {/* PERFIL (ESQUERDA) */}
+          <div className="md:col-span-5 p-5 bg-[#0a0f0d] border-r border-white/5 flex flex-col items-center">
             <div className="relative mt-2">
               <img 
                 src={player.photoUrl} 
                 alt={player.name} 
-                className="h-24 w-24 rounded-xl object-cover shadow-xl border border-[#006837]/50"
+                className="h-20 w-20 rounded-xl object-cover shadow-2xl border border-[#006837]/50"
               />
-              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-2 py-0.5 rounded-full text-[6px] font-black text-slate-950 uppercase shadow-lg whitespace-nowrap">
+              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-2 py-0.5 rounded-full text-[6px] font-black text-slate-950 uppercase shadow-xl">
                 {player.recommendation}
               </div>
             </div>
             
             <div className="mt-3 text-center">
-              <h2 className="font-oswald text-xl font-bold uppercase text-white leading-none">{player.name}</h2>
-              <div className="mt-1 flex items-center justify-center gap-1.5">
-                <span className="text-[9px] font-bold text-[#f1c40f] uppercase tracking-tighter">{player.position1}</span>
-                <span className="h-0.5 w-0.5 rounded-full bg-slate-700"></span>
-                <span className="text-[9px] text-slate-500 font-semibold">{player.club}</span>
-              </div>
+              <h2 className="font-oswald text-xl font-bold uppercase text-white leading-tight">{player.name}</h2>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                {player.position1} <span className="mx-1 text-slate-800">•</span> {player.club}
+              </p>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-1.5 w-full">
-              <div className="rounded-lg bg-slate-900/50 p-1.5 border border-[#006837]/10 text-center">
-                <div className="text-[6px] text-slate-500 uppercase font-black mb-0.5">Rating</div>
-                <div className="text-[9px] font-bold text-white truncate">{getRecLabel(player.recommendation)}</div>
-              </div>
-              <div className="rounded-lg bg-slate-900/50 p-1.5 border border-[#006837]/10 text-center">
-                <div className="text-[6px] text-slate-500 uppercase font-black mb-0.5">Ano</div>
-                <div className="text-[9px] font-bold text-[#f1c40f]">{player.scoutYear}</div>
-              </div>
-              <div className="rounded-lg bg-slate-900/50 p-1.5 border border-[#006837]/10 text-center">
-                <div className="text-[6px] text-slate-500 uppercase font-black mb-0.5">Altura</div>
-                <div className="text-[9px] font-bold text-white">{player.height} cm</div>
-              </div>
-              <div className="rounded-lg bg-slate-900/50 p-1.5 border border-[#006837]/10 text-center">
-                <div className="text-[6px] text-slate-500 uppercase font-black mb-0.5">Pé</div>
-                <div className="text-[9px] font-bold text-white">{getFootLabel(player.foot)}</div>
-              </div>
+              {[
+                { label: 'Rating', val: getRecLabel(player.recommendation) },
+                { label: 'Avaliação', val: player.scoutYear, color: 'text-[#f1c40f]' },
+                { label: 'Altura', val: `${player.height} cm` },
+                { label: 'Pé', val: player.foot === 'Right' ? 'Destro' : 'Canhoto' }
+              ].map((item, idx) => (
+                <div key={idx} className="rounded-lg bg-slate-950 p-2 border border-white/5 text-center">
+                  <div className="text-[6px] text-slate-600 uppercase font-black mb-0.5">{item.label}</div>
+                  <div className={`text-[9px] font-bold ${item.color || 'text-white'} truncate uppercase`}>{item.val}</div>
+                </div>
+              ))}
             </div>
 
-            <div className="mt-2 h-32 w-full">
+            <div className="mt-2 h-28 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="60%" data={radarData}>
                   <PolarGrid stroke="#006837" strokeOpacity={0.2} />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 6, fontWeight: 800 }} />
                   <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
-                  <Radar
-                    name={player.name}
-                    dataKey="A"
-                    stroke="#f1c40f"
-                    fill="#f1c40f"
-                    fillOpacity={0.3}
-                  />
+                  <Radar dataKey="A" stroke="#f1c40f" fill="#f1c40f" fillOpacity={0.3} />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* LADO DIREITO: DASHBOARD TÉCNICO */}
-          <div className="md:col-span-7 p-5 bg-[#050807] flex flex-col h-full overflow-y-auto custom-scrollbar">
-            <div className="flex items-center justify-between mb-3">
+          {/* DASHBOARD (DIREITA) */}
+          <div className="md:col-span-7 p-6 flex flex-col h-full bg-[#050807]">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-[#006837]/20 flex items-center justify-center text-[#f1c40f] text-sm border border-[#006837]/30">
-                  <i className="fas fa-robot"></i>
+                  <i className="fas fa-microchip"></i>
                 </div>
                 <div>
-                  <h3 className="font-oswald text-md font-bold uppercase text-white">Análise IA</h3>
-                  <p className="text-[6px] font-bold text-[#006837] uppercase tracking-[0.2em]">Intel v6.0</p>
+                  <h3 className="font-oswald text-md font-bold uppercase text-white leading-none">Análise Performance IA</h3>
+                  <p className="text-[6px] font-bold text-[#006837] uppercase tracking-[0.2em] mt-1">Scout Intel v6.2</p>
                 </div>
               </div>
-              {hasData && (
-                <div className="bg-[#f1c40f]/10 px-1.5 py-0.5 rounded border border-[#f1c40f]/20">
-                  <span className="text-[6px] font-black text-[#f1c40f] uppercase">Base Ativa</span>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handleFixKey}
+                  className="text-[6px] font-black text-slate-500 hover:text-[#f1c40f] uppercase tracking-widest border border-white/10 px-2 py-1 rounded"
+                >
+                  <i className="fas fa-key mr-1"></i> Configurar IA
+                </button>
+              </div>
             </div>
 
-            <div className={`rounded-lg border p-3 transition-all min-h-[60px] flex items-center ${
-              hasData 
-                ? 'border-[#006837]/30 bg-gradient-to-br from-[#006837]/10 to-transparent' 
-                : 'border-red-500/20 bg-red-500/5'
+            <div className={`rounded-xl border p-4 flex-1 flex flex-col justify-center min-h-0 ${
+              hasData ? 'border-[#006837]/20 bg-emerald-950/5' : 'border-slate-800 bg-slate-900/10'
             }`}>
               {loading ? (
-                <div className="flex flex-col items-center gap-1.5 py-2 w-full">
-                  <div className="h-4 w-4 animate-spin rounded-full border border-[#f1c40f] border-t-transparent"></div>
-                  <span className="text-[6px] font-black uppercase text-slate-600 tracking-widest">Sincronizando...</span>
+                <div className="flex flex-col items-center gap-2 py-4">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#f1c40f] border-t-transparent"></div>
+                  <span className="text-[7px] font-black uppercase text-slate-600 tracking-widest">Sincronizando Atleta...</span>
                 </div>
               ) : (
-                <div className="flex gap-2.5 items-start">
-                  {!hasData && <i className="fas fa-info-circle text-orange-500 text-[10px] mt-0.5 shrink-0"></i>}
-                  <p className={`text-[11px] leading-snug ${
-                    hasData ? 'text-slate-200 italic font-medium' : 'text-orange-200/70 font-bold'
-                  }`}>
+                <div className="overflow-y-auto custom-scrollbar pr-2">
+                  <p className="text-[12px] leading-relaxed text-slate-200 italic font-medium">
                     {hasData ? `"${report}"` : report}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div className="space-y-1.5">
-                <h4 className="text-[6px] font-black uppercase text-slate-600 tracking-[0.3em] flex items-center gap-1.5">
-                  <span className="h-px w-2 bg-[#006837]"></span> Scouting
-                </h4>
-                <div className="rounded-lg bg-slate-900/40 p-2.5 border border-white/5">
-                    <p className="text-[10px] text-slate-400">
-                      Visto em <span className="text-white font-bold">{player.gamesWatched} Jogos</span> - <span className="text-[#f1c40f] font-bold">{player.competition}</span>.
-                    </p>
-                </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="bg-slate-950/50 p-3 rounded-xl border border-white/5">
+                 <span className="text-[7px] font-black text-[#006837] uppercase block mb-1">Status Observação</span>
+                 <p className="text-[10px] text-slate-400">
+                    Visto em <span className="text-white font-bold">{player.gamesWatched} Jogos</span> na <span className="text-[#f1c40f]">{player.competition}</span>.
+                 </p>
               </div>
-
-              <div className="space-y-1.5">
-                <h4 className="text-[6px] font-black uppercase text-slate-600 tracking-[0.3em] flex items-center gap-1.5">
-                  <span className="h-px w-2 bg-[#f1c40f]"></span> Staff
-                </h4>
-                <div className="rounded-lg bg-slate-900/40 p-2.5 border border-white/5">
-                    <div className="mb-1">
-                      <p className="text-[9px] text-white font-bold truncate">Ag: {player.agent || 'N/A'}</p>
-                    </div>
-                    <p className="text-[9px] text-slate-400 truncate">Ct: {player.contact || 'N/A'}</p>
-                </div>
+              <div className="bg-slate-950/50 p-3 rounded-xl border border-white/5">
+                 <span className="text-[7px] font-black text-[#f1c40f] uppercase block mb-1">Staff / Contato</span>
+                 <p className="text-[10px] text-slate-400 truncate">Agente: <span className="text-white font-bold">{player.agent || 'N/A'}</span></p>
+                 <p className="text-[9px] text-slate-500 truncate">{player.contact || 'S/ Informação'}</p>
               </div>
             </div>
 
             <div className="mt-4 flex gap-2">
-              {player.videoUrl && (
-                <a 
-                  href={player.videoUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-[7px] font-black text-white hover:bg-red-500 transition-all shadow-lg uppercase tracking-wider"
-                >
-                  <i className="fab fa-youtube"></i> Vídeo
-                </a>
-              )}
-              {player.ogolUrl && (
-                <a 
-                  href={player.ogolUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-[7px] font-black text-[#006837] hover:bg-slate-100 transition-all shadow-lg uppercase tracking-wider border border-slate-200"
-                >
-                  <i className="fas fa-database"></i> oGol
-                </a>
-              )}
+              <a href={player.videoUrl} target="_blank" className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-600 py-3 text-[8px] font-black text-white hover:bg-red-500 transition-all uppercase tracking-widest shadow-lg">
+                <i className="fab fa-youtube"></i> Vídeo Scout
+              </a>
+              <a href={player.ogolUrl} target="_blank" className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-white py-3 text-[8px] font-black text-[#006837] hover:bg-slate-100 transition-all uppercase tracking-widest shadow-lg">
+                <i className="fas fa-database"></i> Perfil oGol
+              </a>
             </div>
 
-            <div className="mt-auto pt-4 text-center">
-              <p className="text-[5px] text-slate-800 uppercase tracking-[0.3em] border-t border-white/5 pt-2">
-                Confidencial Porto Vitória FC - Documento de Analítico
+            <div className="mt-4 pt-3 border-t border-white/5 text-center">
+              <p className="text-[6px] text-slate-700 uppercase tracking-[0.3em]">
+                Porto Vitória FC • Documento Interno • Analítico
               </p>
             </div>
           </div>
