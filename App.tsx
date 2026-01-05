@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Player, FilterState, User } from './types';
+import { Player, FilterState, User, Recommendation, Position } from './types';
 import PlayerCard from './components/PlayerCard';
 import PlayerDetails from './components/PlayerDetails';
 import AddPlayerModal from './components/AddPlayerModal';
@@ -42,10 +42,24 @@ const App: React.FC = () => {
     search: '',
     positions: [],
     minAge: 14,
-    maxAge: 45,
+    maxAge: 40,
     recommendations: [],
     competitions: [],
+    scoutYears: [],
   });
+
+  const dynamicOptions = useMemo(() => {
+    const comps = new Set<string>();
+    const years = new Set<number>();
+    players.forEach(p => {
+      if (p.competition) comps.add(p.competition);
+      if (p.scoutYear) years.add(p.scoutYear);
+    });
+    return {
+      competitions: Array.from(comps).sort(),
+      years: Array.from(years).sort((a, b) => b - a)
+    };
+  }, [players]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
@@ -118,15 +132,45 @@ const App: React.FC = () => {
   };
 
   const filteredPlayers = useMemo(() => {
+    // Mantém a ordem original (cadastro mais recente primeiro) e aplica filtros
     return players.filter(p => {
       const matchSearch = p.name.toLowerCase().includes(filters.search.toLowerCase()) || 
                           p.club.toLowerCase().includes(filters.search.toLowerCase());
-      const matchPos = filters.positions.length === 0 || filters.positions.includes(p.position1) || (p.position2 && filters.positions.includes(p.position2));
+      const matchPos = filters.positions.length === 0 || 
+                       filters.positions.includes(p.position1) || 
+                       (p.position2 && filters.positions.includes(p.position2 as Position));
       const matchAge = p.age >= filters.minAge && p.age <= filters.maxAge;
       const matchRec = filters.recommendations.length === 0 || filters.recommendations.includes(p.recommendation);
-      return matchSearch && matchPos && matchAge && matchRec;
+      const matchComp = filters.competitions.length === 0 || filters.competitions.includes(p.competition);
+      const matchYear = filters.scoutYears.length === 0 || filters.scoutYears.includes(p.scoutYear);
+      
+      return matchSearch && matchPos && matchAge && matchRec && matchComp && matchYear;
     });
   }, [filters, players]);
+
+  const toggleRecommendationFilter = (rec: Recommendation) => {
+    setFilters(f => {
+      const isSelected = f.recommendations.includes(rec);
+      return {
+        ...f,
+        recommendations: isSelected 
+          ? f.recommendations.filter(r => r !== rec)
+          : [...f.recommendations, rec]
+      };
+    });
+  };
+
+  const togglePositionFilter = (pos: Position) => {
+    setFilters(f => {
+      const isSelected = f.positions.includes(pos);
+      return {
+        ...f,
+        positions: isSelected 
+          ? f.positions.filter(p => p !== pos)
+          : [...f.positions, pos]
+      };
+    });
+  };
 
   if (!currentUser) {
     return <Auth onLogin={handleLogin} users={users} onRegister={handleRegister} />;
@@ -146,23 +190,34 @@ const App: React.FC = () => {
               </h1>
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Portal Oficial Scout</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Departamento de Análise de Mercado</p>
               </div>
             </div>
           </div>
+          
           <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-1 mr-4 border-r border-white/10 pr-4">
+              <button onClick={exportDatabase} className="p-2 text-slate-500 hover:text-[#f1c40f] transition-colors" title="Exportar Banco de Dados">
+                <i className="fas fa-file-export text-sm"></i>
+              </button>
+              <button onClick={() => fileImportRef.current?.click()} className="p-2 text-slate-500 hover:text-[#f1c40f] transition-colors" title="Importar Banco de Dados">
+                <i className="fas fa-file-import text-sm"></i>
+              </button>
+              <input type="file" ref={fileImportRef} onChange={importDatabase} className="hidden" accept=".json" />
+            </div>
+
             <div className="hidden md:flex flex-col items-end mr-4">
                <span className="text-[10px] font-black text-white uppercase">{currentUser.name}</span>
                <span className="text-[8px] font-bold text-[#006837] uppercase">{currentUser.role}</span>
             </div>
             
             {currentUser.role === 'admin' && (
-              <button onClick={() => setIsAdminPanelOpen(true)} className="p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-500 hover:bg-orange-500 hover:text-white transition-all">
+              <button onClick={() => setIsAdminPanelOpen(true)} className="p-2.5 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-500 hover:bg-orange-500 hover:text-white transition-all" title="Gerenciar Usuários">
                 <i className="fas fa-users-cog text-xs"></i>
               </button>
             )}
             
-            <button onClick={handleLogout} className="p-2.5 rounded-lg bg-red-600/10 border border-red-600/20 text-red-500 hover:bg-red-600 hover:text-white transition-all">
+            <button onClick={handleLogout} className="p-2.5 rounded-lg bg-red-600/10 border border-red-600/20 text-red-500 hover:bg-red-600 hover:text-white transition-all" title="Sair">
               <i className="fas fa-power-off text-xs"></i>
             </button>
             
@@ -176,58 +231,184 @@ const App: React.FC = () => {
       <main className="flex-grow mx-auto max-w-7xl px-4 py-8 md:px-8 w-full">
         <div className="flex flex-col gap-8 lg:flex-row">
           <aside className="w-full shrink-0 lg:w-72 space-y-6">
-            <div className="rounded-2xl bg-[#0a0f0d] p-6 border border-[#006837]/20 shadow-xl">
+            <div className="rounded-2xl bg-[#0a0f0d] p-6 border border-[#006837]/20 shadow-xl overflow-hidden">
               <h2 className="mb-6 font-oswald text-lg font-bold uppercase text-white border-b border-slate-800 pb-3 flex items-center gap-2">
-                <i className="fas fa-filter text-[#f1c40f]"></i> Filtros
+                <i className="fas fa-filter text-[#f1c40f]"></i> Filtros de Busca
               </h2>
-              <div className="space-y-6">
+              
+              <div className="space-y-8">
                 <div>
-                  <label className="mb-2 block text-[9px] font-black uppercase text-slate-500">Busca</label>
-                  <input 
-                    type="text" value={filters.search} onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-900 border border-[#006837]/20 py-3 px-4 text-xs text-white outline-none focus:ring-1 focus:ring-[#f1c40f]"
-                  />
+                  <label className="mb-2 block text-[9px] font-black uppercase text-slate-500 tracking-widest">Pesquisar Atleta/Clube</label>
+                  <div className="relative">
+                    <input 
+                      type="text" value={filters.search} onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
+                      placeholder="Nome do jogador..."
+                      className="w-full rounded-xl bg-slate-900 border border-[#006837]/20 py-3 pl-10 pr-4 text-xs text-white outline-none focus:ring-1 focus:ring-[#f1c40f]"
+                    />
+                    <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 text-[10px]"></i>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="rounded-2xl bg-gradient-to-br from-[#0a0f0d] to-[#006837]/10 p-6 border border-[#f1c40f]/20 shadow-xl">
-               <h3 className="text-[10px] font-black text-[#f1c40f] uppercase tracking-widest mb-4">Dados e Backup</h3>
-               <div className="grid grid-cols-1 gap-2">
-                  <button onClick={exportDatabase} className="flex items-center justify-center gap-2 w-full rounded-lg bg-white/5 border border-white/10 py-2.5 text-[9px] font-black text-white hover:bg-white hover:text-black transition-all">
-                    <i className="fas fa-download"></i> Exportar JSON
-                  </button>
-                  <button onClick={() => fileImportRef.current?.click()} className="flex items-center justify-center gap-2 w-full rounded-lg bg-white/5 border border-white/10 py-2.5 text-[9px] font-black text-white hover:bg-white hover:text-black transition-all">
-                    <i className="fas fa-upload"></i> Importar JSON
-                  </button>
-                  <input type="file" ref={fileImportRef} onChange={importDatabase} className="hidden" accept=".json" />
-               </div>
+                {/* FILTRO POR POSIÇÃO */}
+                <div>
+                  <label className="mb-3 block text-[9px] font-black uppercase text-slate-500 tracking-widest">Posições</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.values(Position).map((pos) => (
+                      <button
+                        key={pos}
+                        onClick={() => togglePositionFilter(pos)}
+                        className={`px-2 py-1 rounded-md text-[8px] font-black uppercase transition-all border ${
+                          filters.positions.includes(pos)
+                            ? 'bg-[#f1c40f] border-[#f1c40f] text-slate-950'
+                            : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'
+                        }`}
+                      >
+                        {pos}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-3 block text-[9px] font-black uppercase text-slate-500 tracking-widest">Qualificação (G1 a G3)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map((rec) => (
+                      <button
+                        key={rec}
+                        onClick={() => toggleRecommendationFilter(rec as Recommendation)}
+                        className={`py-2.5 rounded-lg text-[9px] font-black uppercase transition-all border ${
+                          filters.recommendations.includes(rec as Recommendation)
+                            ? 'bg-[#006837] border-[#006837] text-white shadow-lg shadow-[#006837]/20'
+                            : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'
+                        }`}
+                      >
+                        {rec.split(' ')[0]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-3 block text-[9px] font-black uppercase text-slate-500 tracking-widest">Faixa Etária</label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <input 
+                        type="number" value={filters.minAge} onChange={(e) => setFilters(f => ({ ...f, minAge: parseInt(e.target.value) || 0 }))}
+                        className="w-full rounded-xl bg-slate-900 border border-slate-800 py-2.5 px-3 text-xs text-white outline-none text-center"
+                        placeholder="Min"
+                      />
+                    </div>
+                    <span className="text-slate-700 text-xs">a</span>
+                    <div className="flex-1">
+                      <input 
+                        type="number" value={filters.maxAge} onChange={(e) => setFilters(f => ({ ...f, maxAge: parseInt(e.target.value) || 0 }))}
+                        className="w-full rounded-xl bg-slate-900 border border-slate-800 py-2.5 px-3 text-xs text-white outline-none text-center"
+                        placeholder="Max"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-[9px] font-black uppercase text-slate-500 tracking-widest">Competição Avaliada</label>
+                  <select 
+                    value={filters.competitions[0] || ''} 
+                    onChange={(e) => setFilters(f => ({ ...f, competitions: e.target.value ? [e.target.value] : [] }))}
+                    className="w-full rounded-xl bg-slate-900 border border-[#006837]/20 py-3 px-4 text-xs text-white outline-none focus:border-[#f1c40f]"
+                  >
+                    <option value="">Todas as Ligas</option>
+                    {dynamicOptions.competitions.map(comp => (
+                      <option key={comp} value={comp}>{comp}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-[9px] font-black uppercase text-slate-500 tracking-widest">Ano da Avaliação</label>
+                  <select 
+                    value={filters.scoutYears[0] || ''} 
+                    onChange={(e) => setFilters(f => ({ ...f, scoutYears: e.target.value ? [parseInt(e.target.value)] : [] }))}
+                    className="w-full rounded-xl bg-slate-900 border border-[#006837]/20 py-3 px-4 text-xs text-white outline-none focus:border-[#f1c40f]"
+                  >
+                    <option value="">Todos os Anos</option>
+                    {dynamicOptions.years.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button 
+                  onClick={() => setFilters({
+                    search: '',
+                    positions: [],
+                    minAge: 14,
+                    maxAge: 40,
+                    recommendations: [],
+                    competitions: [],
+                    scoutYears: [],
+                  })}
+                  className="w-full py-3 text-[9px] font-black uppercase text-red-500 hover:text-red-400 border border-red-500/20 rounded-xl transition-all"
+                >
+                  <i className="fas fa-undo-alt mr-2"></i> Limpar Filtros
+                </button>
+              </div>
             </div>
           </aside>
 
           <div className="flex-1">
+            <div className="mb-6 flex items-center justify-between">
+               <div className="flex items-center gap-3">
+                  <h3 className="font-oswald text-xl font-bold uppercase text-white tracking-wider">Atletas Encontrados</h3>
+                  <span className="rounded-full bg-[#006837] px-3 py-1 text-[10px] font-black text-white">{filteredPlayers.length}</span>
+               </div>
+               <div className="md:hidden flex gap-2">
+                 <button onClick={exportDatabase} className="p-3 rounded-xl bg-white/5 text-white"><i className="fas fa-file-export"></i></button>
+                 <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="p-3 rounded-xl bg-[#006837] text-white shadow-lg">
+                    <i className="fas fa-plus"></i>
+                 </button>
+               </div>
+            </div>
+
             {filteredPlayers.length > 0 ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {filteredPlayers.map(player => (
                   <div key={player.id} className="group relative">
                     <PlayerCard player={player} onClick={setSelectedPlayer} />
-                    <div className="absolute top-4 right-4 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                      <button onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); setIsModalOpen(true); }} className="h-8 w-8 bg-[#f1c40f] text-black rounded-lg flex items-center justify-center shadow-lg"><i className="fas fa-pen text-[10px]"></i></button>
-                      <button onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }} className="h-8 w-8 bg-red-600 text-white rounded-lg flex items-center justify-center shadow-lg"><i className="fas fa-trash text-[10px]"></i></button>
+                    <div className="absolute top-4 right-4 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
+                      <button onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); setIsModalOpen(true); }} className="h-9 w-9 bg-[#f1c40f] text-black rounded-xl flex items-center justify-center shadow-lg hover:rotate-6 transition-transform"><i className="fas fa-pen text-[11px]"></i></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }} className="h-9 w-9 bg-red-600 text-white rounded-xl flex items-center justify-center shadow-lg hover:-rotate-6 transition-transform"><i className="fas fa-trash text-[11px]"></i></button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-40 border border-dashed border-[#006837]/30 rounded-[3rem] bg-[#0a0f0d]/50">
-                <i className="fas fa-users text-4xl text-[#006837] mb-6 opacity-20"></i>
-                <h3 className="text-xl font-oswald font-bold text-white uppercase">Sem Resultados</h3>
-                <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="mt-8 px-8 py-3 bg-[#006837] text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#008a4a] transition-all">Cadastrar Atleta</button>
+                <div className="h-20 w-20 rounded-full bg-slate-900 flex items-center justify-center mb-6">
+                  <i className="fas fa-user-slash text-2xl text-slate-700"></i>
+                </div>
+                <h3 className="text-xl font-oswald font-bold text-white uppercase tracking-wider">Nenhum atleta nos critérios</h3>
+                <p className="text-xs text-slate-500 mt-2 uppercase font-bold">Tente ajustar os filtros ou cadastrar um novo</p>
+                <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="mt-8 px-8 py-3 bg-[#006837] text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#008a4a] transition-all">Novo Cadastro Porto</button>
               </div>
             )}
           </div>
         </div>
       </main>
+
+      <footer className="mt-auto border-t border-white/5 bg-[#0a0f0d] py-8">
+        <div className="mx-auto max-w-7xl px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 opacity-50">
+            <i className="fas fa-ship text-white text-xs"></i>
+            <span className="text-[10px] font-bold text-white uppercase tracking-widest">Porto Vitória FC © {new Date().getFullYear()}</span>
+          </div>
+          <div className="flex flex-col items-center md:items-end">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
+              Desenvolvido por <span className="text-[#f1c40f]">Henrique Bravim</span>
+            </p>
+            <p className="text-[8px] text-slate-700 uppercase mt-1">Sistema de Análise de Mercado</p>
+          </div>
+        </div>
+      </footer>
 
       {selectedPlayer && <PlayerDetails player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
       {isModalOpen && <AddPlayerModal player={editingPlayer || undefined} onClose={() => setIsModalOpen(false)} onAdd={handleAddPlayer} onUpdate={handleUpdatePlayer} />}

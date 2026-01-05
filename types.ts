@@ -56,16 +56,19 @@ export interface FilterState {
   maxAge: number;
   recommendations: Recommendation[];
   competitions: string[];
+  scoutYears: number[];
 }
 
-// Novos tipos para Autenticação
 export type UserRole = 'admin' | 'scout';
 export type UserStatus = 'pending' | 'approved';
 
 export interface User {
   id: string;
-  name: string;
-  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email?: string;
+  name: string; // Mantido para compatibilidade, será firstName + lastName
   password?: string;
   role: UserRole;
   status: UserStatus;

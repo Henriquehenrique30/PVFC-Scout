@@ -10,9 +10,11 @@ interface AuthProps {
 
 const Auth: React.FC<AuthProps> = ({ onLogin, users, onRegister }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -20,35 +22,58 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users, onRegister }) => {
     setError('');
 
     if (isLogin) {
-      const user = users.find(u => u.email === email && u.password === password);
+      // Login usando o formato Nome.Sobrenome
+      const user = users.find(u => 
+        (u.username?.toLowerCase() === username.toLowerCase() || u.email === username) && 
+        u.password === password
+      );
+
       if (user) {
         if (user.status === 'pending') {
-          setError('Seu acesso está pendente de aprovação pela diretoria.');
+          setError('Acesso pendente de aprovação pela diretoria.');
         } else {
           onLogin(user);
         }
       } else {
-        setError('E-mail ou senha incorretos.');
+        setError('Usuário ou senha incorretos.');
       }
     } else {
-      if (users.find(u => u.email === email)) {
-        setError('Este e-mail já está cadastrado.');
+      // Validação de Registro
+      if (password !== confirmPassword) {
+        setError('As senhas não são idênticas.');
         return;
       }
+
+      const generatedUsername = `${firstName.trim()}.${lastName.trim()}`;
       
+      if (users.find(u => u.username?.toLowerCase() === generatedUsername.toLowerCase())) {
+        setError('Este usuário já existe no sistema.');
+        return;
+      }
+
       const newUser: User = {
         id: Date.now().toString(),
-        name,
-        email,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        username: generatedUsername,
+        name: `${firstName.trim()} ${lastName.trim()}`,
         password,
-        role: users.length === 0 ? 'admin' : 'scout', // Primeiro é admin
-        status: users.length === 0 ? 'approved' : 'pending', // Admin já nasce aprovado
+        role: users.length === 0 ? 'admin' : 'scout',
+        status: users.length === 0 ? 'approved' : 'pending',
         createdAt: new Date().toISOString()
       };
-      
+
       onRegister(newUser);
       setIsLogin(true);
-      alert(newUser.role === 'admin' ? 'Conta Administrador criada!' : 'Cadastro efetuado! Aguarde aprovação do administrador.');
+      alert(newUser.role === 'admin' 
+        ? `Conta Administrador criada! Login: ${generatedUsername}` 
+        : `Cadastro solicitado! Seu login será: ${generatedUsername}. Aguarde aprovação.`);
+      
+      // Limpa campos após registro
+      setFirstName('');
+      setLastName('');
+      setPassword('');
+      setConfirmPassword('');
     }
   };
 
@@ -60,74 +85,103 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users, onRegister }) => {
          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#f1c40f] rounded-full blur-[120px]"></div>
       </div>
 
-      <div className="relative w-full max-w-md p-8">
-        <div className="flex flex-col items-center mb-10">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white p-2 shadow-2xl border-4 border-[#006837] mb-6">
-             <i className="fas fa-ship text-[#006837] text-3xl"></i>
+      <div className="relative w-full max-w-md p-6 md:p-8">
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white p-2 shadow-2xl border-4 border-[#006837] mb-4">
+             <i className="fas fa-ship text-[#006837] text-2xl"></i>
           </div>
-          <h1 className="font-oswald text-3xl font-bold uppercase tracking-tighter text-white">
+          <h1 className="font-oswald text-2xl font-bold uppercase tracking-tighter text-white">
             Porto Vitória <span className="text-[#f1c40f]">FC</span>
           </h1>
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2">Plataforma de Scouting Profissional</p>
+          <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em] mt-2">Plataforma de Mercado Pro</p>
         </div>
 
-        <div className="bg-[#0a0f0d] rounded-[2rem] border border-[#006837]/30 p-8 shadow-2xl">
+        <div className="bg-[#0a0f0d] rounded-[2rem] border border-[#006837]/30 p-8 shadow-2xl backdrop-blur-sm">
           <h2 className="text-xl font-bold text-white mb-6 uppercase tracking-wider font-oswald text-center">
-            {isLogin ? 'Acesso Restrito' : 'Solicitar Acesso'}
+            {isLogin ? 'Acesso Restrito' : 'Cadastro de Analista'}
           </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {!isLogin && (
-              <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Nome Completo</label>
-                <input 
-                  required type="text" value={name} onChange={e => setName(e.target.value)}
-                  className="w-full rounded-xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#006837] outline-none"
-                  placeholder="Seu nome"
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isLogin ? (
+              <>
+                <div>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase mb-1.5 tracking-widest">Usuário (Nome.Sobrenome)</label>
+                  <input 
+                    required type="text" value={username} onChange={e => setUsername(e.target.value)}
+                    className="w-full rounded-xl bg-slate-900/50 border border-slate-800 p-4 text-sm text-white focus:ring-1 focus:ring-[#f1c40f] outline-none transition-all"
+                    placeholder="Ex: João.Silva"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-black text-slate-500 uppercase mb-1.5 tracking-widest">Nome</label>
+                    <input 
+                      required type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
+                      className="w-full rounded-xl bg-slate-900/50 border border-slate-800 p-4 text-sm text-white focus:ring-1 focus:ring-[#006837] outline-none transition-all"
+                      placeholder="Nome"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black text-slate-500 uppercase mb-1.5 tracking-widest">Sobrenome</label>
+                    <input 
+                      required type="text" value={lastName} onChange={e => setLastName(e.target.value)}
+                      className="w-full rounded-xl bg-slate-900/50 border border-slate-800 p-4 text-sm text-white focus:ring-1 focus:ring-[#006837] outline-none transition-all"
+                      placeholder="Sobrenome"
+                    />
+                  </div>
+                </div>
+              </>
             )}
+
             <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">E-mail Profissional</label>
-              <input 
-                required type="email" value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full rounded-xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#006837] outline-none"
-                placeholder="seu@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Senha</label>
+              <label className="block text-[9px] font-black text-slate-500 uppercase mb-1.5 tracking-widest">Senha</label>
               <input 
                 required type="password" value={password} onChange={e => setPassword(e.target.value)}
-                className="w-full rounded-xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#006837] outline-none"
+                className="w-full rounded-xl bg-slate-900/50 border border-slate-800 p-4 text-sm text-white focus:ring-1 focus:ring-[#006837] outline-none transition-all"
                 placeholder="••••••••"
               />
             </div>
 
+            {!isLogin && (
+              <div>
+                <label className="block text-[9px] font-black text-slate-500 uppercase mb-1.5 tracking-widest">Confirmar Senha</label>
+                <input 
+                  required type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                  className={`w-full rounded-xl bg-slate-900/50 border p-4 text-sm text-white focus:ring-1 outline-none transition-all ${
+                    confirmPassword && password !== confirmPassword ? 'border-red-500/50 ring-red-500' : 'border-slate-800 focus:ring-[#006837]'
+                  }`}
+                  placeholder="Repita a senha"
+                />
+              </div>
+            )}
+
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase text-center">
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-bold uppercase text-center animate-pulse">
                 {error}
               </div>
             )}
 
             <button 
               type="submit"
-              className="w-full rounded-xl bg-[#006837] py-4 text-xs font-black text-white uppercase tracking-[0.2em] hover:bg-[#008a4a] transition-all shadow-lg shadow-[#006837]/20"
+              className="w-full rounded-xl bg-[#006837] py-4 text-[10px] font-black text-white uppercase tracking-[0.2em] hover:bg-[#008a4a] transition-all shadow-lg shadow-[#006837]/20 mt-2"
             >
-              {isLogin ? 'Entrar no Sistema' : 'Enviar Solicitação'}
+              {isLogin ? 'Entrar no Sistema' : 'Solicitar Cadastro'}
             </button>
           </form>
 
           <button 
             onClick={() => { setIsLogin(!isLogin); setError(''); }}
-            className="w-full mt-6 text-[10px] font-bold text-slate-500 hover:text-[#f1c40f] uppercase tracking-widest transition-colors"
+            className="w-full mt-6 text-[9px] font-bold text-slate-500 hover:text-[#f1c40f] uppercase tracking-widest transition-colors"
           >
             {isLogin ? 'Não tem conta? Solicite acesso' : 'Já tem cadastro? Faça login'}
           </button>
         </div>
         
-        <p className="mt-8 text-center text-[9px] text-slate-700 uppercase tracking-widest">
-          © {new Date().getFullYear()} Porto Vitória FC - Todos os direitos reservados
+        <p className="mt-8 text-center text-[9px] text-slate-700 uppercase tracking-widest font-medium">
+          © {new Date().getFullYear()} Porto Vitória FC - Departamento de Mercado
         </p>
       </div>
     </div>

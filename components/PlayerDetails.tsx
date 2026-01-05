@@ -54,8 +54,8 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
-      <div className="relative w-full max-w-6xl overflow-hidden rounded-[2.5rem] bg-[#0f1a16] shadow-2xl border border-[#006837]/30">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl overflow-y-auto">
+      <div className="relative w-full max-w-6xl my-8 overflow-hidden rounded-[2.5rem] bg-[#0f1a16] shadow-2xl border border-[#006837]/30">
         <button 
           onClick={onClose}
           className="absolute right-6 top-6 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#006837] text-white hover:bg-[#f1c40f] hover:text-slate-950 transition-all shadow-lg"
@@ -73,7 +73,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                   alt={player.name} 
                   className="h-48 w-48 rounded-3xl object-cover shadow-2xl border-4 border-[#006837]/50"
                 />
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-6 py-1 rounded-full text-[10px] font-black text-slate-950 uppercase shadow-xl">
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-6 py-1 rounded-full text-[10px] font-black text-slate-950 uppercase shadow-xl whitespace-nowrap">
                   {player.recommendation}
                 </div>
               </div>
@@ -90,11 +90,11 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
 
             <div className="mt-12 grid grid-cols-2 gap-4">
               <div className="rounded-2xl bg-slate-900/50 p-5 border border-[#006837]/20">
-                <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Status Mercado</div>
+                <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Qualificação</div>
                 <div className="text-sm font-bold text-white">{getRecLabel(player.recommendation)}</div>
               </div>
               <div className="rounded-2xl bg-slate-900/50 p-5 border border-[#006837]/20">
-                <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Ano Scout</div>
+                <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Ano Avaliação</div>
                 <div className="text-lg font-bold text-[#f1c40f]">{player.scoutYear}</div>
               </div>
               <div className="rounded-2xl bg-slate-900/50 p-5 border border-[#006837]/20">
@@ -167,17 +167,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               )}
             </div>
 
-            {!hasData && (
-              <div className="mt-4 p-4 rounded-xl bg-slate-900/50 border border-white/5 flex items-center gap-4">
-                <div className="h-10 w-10 shrink-0 bg-[#006837]/20 rounded-lg flex items-center justify-center text-[#006837]">
-                   <i className="fas fa-upload"></i>
-                </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed tracking-wider">
-                  Dica: Anexe o relatório de scout (Excel ou CSV) no cadastro para que a IA possa realizar cruzamento de dados métricos e gerar um perfil tático assertivo.
-                </p>
-              </div>
-            )}
-
             <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-6">
                 <h4 className="text-xs font-black uppercase text-slate-500 tracking-[0.4em] flex items-center gap-3">
@@ -185,7 +174,10 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                 </h4>
                 <div className="rounded-2xl bg-slate-900/40 p-6 border border-white/5 h-full">
                     <span className="text-[10px] font-black text-[#006837] uppercase block mb-2">Monitoramento</span>
-                    <p className="text-sm text-slate-300">Observado em <span className="text-white font-bold">{player.gamesWatched} partidas</span> na competição <span className="text-[#f1c40f]">{player.competition}</span>.</p>
+                    <p className="text-sm text-slate-300">
+                      Observado em <span className="text-white font-bold">{player.gamesWatched} Jogos Assistidos</span> na competição <span className="text-[#f1c40f] font-bold">{player.competition}</span>.
+                    </p>
+                    <p className="text-[10px] mt-4 text-slate-500 uppercase font-bold tracking-widest">Temporada: {player.scoutYear}</p>
                 </div>
               </div>
 
@@ -206,11 +198,11 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               </div>
             </div>
 
-            <div className="mt-12 flex gap-4">
+            <div className="mt-12 flex flex-wrap gap-4">
               {player.videoUrl && (
                 <a 
                   href={player.videoUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-red-600 px-6 py-5 text-xs font-black text-white hover:bg-red-500 transition-all shadow-xl shadow-red-600/20 uppercase tracking-widest"
+                  className="flex-1 min-w-[200px] flex items-center justify-center gap-3 rounded-2xl bg-red-600 px-6 py-5 text-xs font-black text-white hover:bg-red-500 transition-all shadow-xl shadow-red-600/20 uppercase tracking-widest"
                 >
                   <i className="fab fa-youtube text-lg"></i> Vídeo de Scout
                 </a>
@@ -218,7 +210,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               {player.ogolUrl && (
                 <a 
                   href={player.ogolUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-white px-6 py-5 text-xs font-black text-[#006837] hover:bg-slate-100 transition-all shadow-xl shadow-white/5 uppercase tracking-widest border border-slate-200"
+                  className="flex-1 min-w-[200px] flex items-center justify-center gap-3 rounded-2xl bg-white px-6 py-5 text-xs font-black text-[#006837] hover:bg-slate-100 transition-all shadow-xl shadow-white/5 uppercase tracking-widest border border-slate-200"
                 >
                   <i className="fas fa-database text-lg"></i> Perfil oGol
                 </a>
