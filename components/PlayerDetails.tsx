@@ -45,7 +45,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     }
   };
 
-  // Função para renderizar o texto com suporte básico a markdown (negritos)
   const renderReportText = (text: string) => {
     const parts = text.split(/(\*\*.*?\*\*)/g);
     return parts.map((part, i) => {
@@ -72,32 +71,32 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/98 backdrop-blur-3xl overflow-hidden">
-      <div className="relative w-full max-w-6xl overflow-hidden rounded-[2.5rem] bg-[#050807] shadow-[0_0_80px_rgba(0,104,55,0.1)] border border-white/5 max-h-[94vh] flex flex-col animate-in fade-in zoom-in duration-500">
+      <div className="relative w-full max-w-6xl overflow-hidden rounded-[2.5rem] bg-[#050807] shadow-[0_0_80px_rgba(0,104,55,0.1)] border border-white/5 h-[90vh] max-h-[850px] flex flex-col animate-in fade-in zoom-in duration-500">
         
         <button 
           onClick={onClose}
-          className="absolute right-6 top-6 z-40 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/80 text-white hover:bg-red-600 transition-all border border-white/10 group shadow-2xl"
+          className="absolute right-6 top-6 z-50 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/80 text-white hover:bg-red-600 transition-all border border-white/10 group shadow-2xl"
         >
           <i className="fas fa-times group-hover:rotate-90 transition-transform"></i>
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 h-full">
+        <div className="grid grid-cols-1 md:grid-cols-12 h-full overflow-hidden">
           
-          {/* SIDEBAR ESQUERDA */}
-          <div className="md:col-span-4 p-8 bg-[#0a0f0d] border-r border-white/5 flex flex-col items-center overflow-y-auto custom-scrollbar">
-            <div className="relative group">
+          {/* SIDEBAR ESQUERDA (ESTÁTICA/INDIVIDUAL SCROLL) */}
+          <div className="md:col-span-4 p-8 bg-[#0a0f0d] border-r border-white/5 flex flex-col items-center overflow-y-auto custom-scrollbar h-full">
+            <div className="relative group shrink-0">
               <div className="absolute -inset-1.5 bg-gradient-to-tr from-[#006837] via-[#f1c40f] to-[#006837] rounded-[2.2rem] blur-sm opacity-10"></div>
               <img 
                 src={player.photoUrl} 
                 alt={player.name} 
-                className="relative h-48 w-48 rounded-[2rem] object-cover border-4 border-[#050807] shadow-2xl"
+                className="relative h-44 w-44 rounded-[2rem] object-cover border-4 border-[#050807] shadow-2xl"
               />
               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-5 py-1.5 rounded-full text-[9px] font-black text-slate-950 uppercase shadow-2xl border-4 border-[#0a0f0d] tracking-widest text-center min-w-[110px]">
                 {player.recommendation}
               </div>
             </div>
             
-            <div className="mt-10 text-center">
+            <div className="mt-10 text-center shrink-0">
               <h2 className="font-oswald text-3xl font-bold uppercase text-white tracking-tighter leading-tight">{player.name}</h2>
               <div className="mt-3 flex items-center justify-center gap-3">
                 <span className="text-[11px] font-black text-[#006837] uppercase tracking-[0.2em]">{player.position1}</span>
@@ -106,23 +105,23 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               </div>
             </div>
 
-            <div className="mt-8 grid grid-cols-2 gap-3 w-full">
+            <div className="mt-8 grid grid-cols-2 gap-3 w-full shrink-0">
               {[
                 { label: 'OVR', val: averageRating, color: 'text-[#f1c40f]' },
                 { label: 'AVALIAÇÃO', val: player.scoutYear },
                 { label: 'IDADE', val: player.age },
                 { label: 'ALTURA', val: `${player.height}cm` }
               ].map((item, idx) => (
-                <div key={idx} className="rounded-xl bg-white/5 p-4 border border-white/5 text-center transition-all hover:bg-white/10 hover:border-white/10">
+                <div key={idx} className="rounded-xl bg-white/5 p-4 border border-white/5 text-center">
                   <div className="text-[8px] text-slate-600 uppercase font-black mb-0.5 tracking-widest">{item.label}</div>
                   <div className={`text-xl font-black ${item.color || 'text-white'}`}>{item.val}</div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-8 h-64 w-full">
+            <div className="mt-8 h-56 w-full shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                   <PolarGrid stroke="#006837" strokeOpacity={0.1} />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 10, fontWeight: 900 }} />
                   <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
@@ -131,73 +130,80 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                     dataKey="A"
                     stroke="#f1c40f"
                     fill="#f1c40f"
-                    fillOpacity={0.2}
+                    fillOpacity={0.15}
                   />
                 </RadarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* ÁREA DO RELATÓRIO */}
-          <div className="md:col-span-8 p-10 flex flex-col h-full bg-[#050807] overflow-y-auto custom-scrollbar">
+          {/* CONTEÚDO DIREITA (FIXO + SCROLL INTERNO) */}
+          <div className="md:col-span-8 flex flex-col h-full bg-[#050807] overflow-hidden">
             
-            <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
-              <div className="flex items-center gap-5">
-                <div className="h-14 w-14 rounded-2xl bg-[#006837]/10 flex items-center justify-center text-[#f1c40f] text-2xl border border-[#006837]/20 shadow-inner">
-                  <i className="fas fa-brain"></i>
-                </div>
-                <div>
-                  <h3 className="font-oswald text-2xl font-bold uppercase text-white tracking-wide">Relatório Técnico IA</h3>
-                  <p className="text-[9px] font-black text-[#006837] uppercase tracking-[0.4em] mt-0.5 flex items-center gap-2">
-                    <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Gemini 3 Flash Active
-                  </p>
-                </div>
-              </div>
-              
-              <button 
-                onClick={handleOpenConfig}
-                className="flex items-center gap-2 transition-all px-4 py-2 rounded-xl border border-white/5 bg-slate-900/50 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-slate-800 shadow-xl"
-              >
-                <i className="fas fa-cog"></i> Configurar
-              </button>
-            </div>
-
-            <div className={`relative rounded-[2rem] border p-10 flex-grow transition-all flex flex-col shadow-2xl ${
-              hasData ? 'border-[#006837]/20 bg-gradient-to-br from-[#0a0f0d] to-transparent' : 'border-slate-800 bg-slate-900/10'
-            }`}>
-              {loading ? (
-                <div className="flex flex-col items-center justify-center h-full gap-6 py-20">
-                  <div className="h-12 w-12 animate-spin rounded-full border-[4px] border-[#f1c40f] border-t-transparent"></div>
-                  <div className="text-center">
-                    <span className="text-[10px] font-black uppercase text-white tracking-[0.5em] block mb-1">Processando Métricas</span>
-                    <span className="text-[9px] text-slate-600 uppercase font-bold tracking-widest">Aguarde a análise do scout...</span>
+            {/* Header Fixo */}
+            <div className="p-8 pb-4 border-b border-white/5 shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-5">
+                  <div className="h-12 w-12 rounded-xl bg-[#006837]/10 flex items-center justify-center text-[#f1c40f] text-xl border border-[#006837]/20">
+                    <i className="fas fa-brain"></i>
+                  </div>
+                  <div>
+                    <h3 className="font-oswald text-2xl font-bold uppercase text-white tracking-wide">Relatório Técnico IA</h3>
+                    <p className="text-[9px] font-black text-[#006837] uppercase tracking-[0.4em] mt-0.5 flex items-center gap-2">
+                      <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Gemini 3 Flash Analysis
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <div className="relative overflow-y-auto custom-scrollbar pr-4">
-                  <i className="fas fa-quote-left text-6xl text-[#006837]/5 absolute -top-4 -left-2 pointer-events-none"></i>
-                  <div className="relative z-10">
-                    <div className={`text-[13px] sm:text-sm leading-relaxed tracking-normal whitespace-pre-line ${isKeyMissing ? 'text-red-400 italic text-center' : 'text-slate-300 font-normal'}`}>
+                <button 
+                  onClick={handleOpenConfig}
+                  className="flex items-center gap-2 transition-all px-4 py-2 rounded-xl border border-white/5 bg-slate-900/50 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white hover:bg-slate-800"
+                >
+                  <i className="fas fa-cog"></i> Configurar
+                </button>
+              </div>
+            </div>
+
+            {/* Área de Texto com Scroll Independente */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+              <div className={`relative rounded-[2rem] border p-8 shadow-2xl h-fit min-h-full transition-all ${
+                hasData ? 'border-[#006837]/10 bg-gradient-to-br from-[#0a0f0d] to-transparent' : 'border-slate-800 bg-slate-900/10'
+              }`}>
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center min-h-[300px] gap-6">
+                    <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-[#f1c40f] border-t-transparent"></div>
+                    <div className="text-center">
+                      <span className="text-[9px] font-black uppercase text-white tracking-[0.5em] block mb-1">Processando Métricas</span>
+                      <span className="text-[8px] text-slate-600 uppercase font-bold tracking-widest">Aguarde a análise do scout...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <i className="fas fa-quote-left text-5xl text-[#006837]/5 absolute -top-4 -left-2 pointer-events-none"></i>
+                    <div className={`text-[12.5px] leading-relaxed tracking-tight whitespace-pre-line ${isKeyMissing ? 'text-red-400 italic text-center' : 'text-slate-300 font-normal'}`}>
                       {renderReportText(report)}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
             
-            <div className="mt-8 flex gap-4">
-              {player.videoUrl && (
-                <a href={player.videoUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-red-600/90 px-6 py-4 text-[10px] font-black text-white hover:bg-red-600 transition-all shadow-xl uppercase tracking-widest">
-                  <i className="fab fa-youtube text-lg"></i> Assistir Vídeo
-                </a>
-              )}
-              {player.ogolUrl && (
-                <a href={player.ogolUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-white px-6 py-4 text-[10px] font-black text-[#006837] hover:bg-slate-100 transition-all shadow-xl uppercase tracking-widest border border-slate-200">
-                  <i className="fas fa-database text-sm"></i> Base oGol
-                </a>
-              )}
+            {/* Footer de Ações Fixo */}
+            <div className="p-8 pt-4 border-t border-white/5 shrink-0 bg-[#050807]/80 backdrop-blur-md">
+              <div className="flex gap-4">
+                {player.videoUrl && (
+                  <a href={player.videoUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-red-600/90 px-6 py-4 text-[10px] font-black text-white hover:bg-red-600 transition-all shadow-xl uppercase tracking-widest">
+                    <i className="fab fa-youtube text-lg"></i> Vídeo
+                  </a>
+                )}
+                {player.ogolUrl && (
+                  <a href={player.ogolUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-white/5 px-6 py-4 text-[10px] font-black text-[#006837] hover:bg-white/10 hover:text-white transition-all shadow-xl uppercase tracking-widest border border-white/5">
+                    <i className="fas fa-database text-sm"></i> oGol Data
+                  </a>
+                )}
+              </div>
             </div>
+
           </div>
         </div>
       </div>
