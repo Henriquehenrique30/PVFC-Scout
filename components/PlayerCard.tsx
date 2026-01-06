@@ -66,7 +66,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           <div className="px-2 py-0.5 rounded bg-[#006837]/20 border border-[#006837]/30 text-[9px] font-black text-[#006837] uppercase tracking-widest">
             {player.position1}
           </div>
-          <span className="text-[10px] font-bold text-slate-500 uppercase">{player.age}y</span>
+          <span className="text-[10px] font-bold text-slate-500 uppercase">{player.age} anos</span>
           <span className="h-1 w-1 rounded-full bg-slate-800"></span>
           <span className="text-[10px] font-bold text-slate-500 uppercase">{player.height}cm</span>
         </div>
@@ -79,8 +79,30 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           {player.club}
         </p>
 
+        {/* --- AQUI ESTÁ A NOVIDADE: DADOS DO SCOUT --- */}
+        <div className="mt-3 flex flex-wrap gap-2">
+            {/* Competição */}
+            <div className="px-2 py-1 rounded bg-white/5 border border-white/5 text-[8px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5" title="Competição Avaliada">
+                <i className="fas fa-trophy text-[#f1c40f] text-[7px]"></i>
+                {player.competition || 'N/A'}
+            </div>
+            
+            {/* Ano */}
+            <div className="px-2 py-1 rounded bg-white/5 border border-white/5 text-[8px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5" title="Ano de Avaliação">
+                <i className="fas fa-calendar text-[#006837] text-[7px]"></i>
+                {player.scoutYear}
+            </div>
+
+            {/* Jogos Observados */}
+            <div className="px-2 py-1 rounded bg-white/5 border border-white/5 text-[8px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5" title="Jogos Observados">
+                <i className="fas fa-eye text-slate-500 text-[7px]"></i>
+                {player.gamesWatched}J
+            </div>
+        </div>
+        {/* ------------------------------------------- */}
+
         {/* Metric Grid - High Contrast */}
-        <div className="mt-6 pt-6 border-t border-white/5 grid grid-cols-3 gap-y-4">
+        <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-3 gap-y-4">
           {[
             { label: 'Ritmo', val: player.stats.pace },
             { label: 'Passe', val: player.stats.passing },
