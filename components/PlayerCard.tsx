@@ -1,6 +1,7 @@
 import React from 'react';
 import { Player } from '../types';
 
+// Force update: v2.1
 interface PlayerCardProps {
   player: Player;
   onClick: (player: Player) => void;
@@ -8,7 +9,6 @@ interface PlayerCardProps {
 
 const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
   
-  // Cálculo da média para o badge
   const averageRating = Math.round(
     (player.stats.pace + player.stats.shooting + player.stats.passing + 
      player.stats.dribbling + player.stats.defending + player.stats.physical) / 6
@@ -20,18 +20,23 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
       className="group relative w-full bg-[#0a0f0d] rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-[#f1c40f]/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(241,196,15,0.1)] cursor-pointer"
     >
       {/* --- ÁREA DA FOTO --- */}
-      <div className="relative h-72 w-full bg-[#1a1d1c]">
-        {/* CORREÇÃO DO CORTE: 'object-top' alinha a foto pelo topo (cabelo) */}
+      {/* AUMENTEI A ALTURA PARA h-80 PARA DAR MAIS RESPIRO AO ROSTO */}
+      <div className="relative h-80 w-full bg-[#1a1d1c]">
+        
         <img 
           src={player.photoUrl} 
-          alt={player.name} 
-          className="h-full w-full object-cover object-top opacity-90 group-hover:opacity-100 transition-opacity" 
+          alt={player.name}
+          loading="lazy"
+          // USANDO STYLE INLINE PARA GARANTIR QUE O ALINHAMENTO FUNCIONE INDEPENDENTE DO TAILWIND
+          // 50% 15% significa: Centralizado horizontalmente, e focado a 15% do topo (altura dos olhos/testa)
+          style={{ objectPosition: '50% 15%' }}
+          className="h-full w-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
         />
         
-        {/* Degradê inferior para suavizar a transição para o preto */}
+        {/* Degradê inferior */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0d] via-[#0a0f0d]/20 to-transparent"></div>
 
-        {/* Badge: Recomendação (Canto Esquerdo) */}
+        {/* Badge: Recomendação */}
         <div className="absolute top-4 left-4">
           <div className={`px-3 py-1.5 rounded-lg border backdrop-blur-md text-[8px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1.5 ${
             player.recommendation.includes('Elite') ? 'bg-[#f1c40f] text-black border-[#f1c40f]' : 
@@ -43,7 +48,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           </div>
         </div>
 
-        {/* Badge: Rating (Canto Direito) */}
+        {/* Badge: Rating */}
         <div className="absolute top-4 right-4">
           <div className="h-10 w-10 rounded-xl bg-[#f1c40f] flex flex-col items-center justify-center shadow-lg border-2 border-[#f1c40f] group-hover:scale-110 transition-transform">
              <span className="text-lg font-black text-black leading-none">{averageRating}</span>
@@ -55,7 +60,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
       {/* --- CONTEÚDO DO CARD --- */}
       <div className="relative px-6 pb-6 -mt-10">
         
-        {/* Info Principal */}
         <div className="mb-6">
            <div className="flex items-center gap-2 mb-2">
               <span className="px-2 py-0.5 rounded bg-[#006837] text-white text-[9px] font-black uppercase tracking-wider">{player.position1}</span>
@@ -66,7 +70,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{player.club}</p>
         </div>
 
-        {/* Tags de Contexto (Competição/Ano) */}
         <div className="flex flex-wrap gap-2 mb-6">
            {player.competition && (
              <div className="px-2 py-1 rounded border border-white/10 bg-white/5 text-[8px] font-bold text-[#f1c40f] uppercase tracking-wider flex items-center gap-1.5">
@@ -78,7 +81,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
            </div>
         </div>
 
-        {/* Mini Grid de Stats */}
         <div className="grid grid-cols-3 gap-2 border-t border-white/5 pt-4">
            {[
              { l: 'RITMO', v: player.stats.pace },
