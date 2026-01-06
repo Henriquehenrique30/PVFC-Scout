@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Player, User } from '../types'; // Importe User aqui
+import { Player, User } from '../types';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 interface ShadowTeamModalProps {
   players: Player[];
-  currentUser: User; // Recebe o usuário para salvar na chave correta
+  currentUser: User;
   onClose: () => void;
 }
 
-// --- CONFIGURAÇÃO DE POSIÇÕES ---
+// --- CONFIGURAÇÃO DE POSIÇÕES OTIMIZADA ---
 const FORMATION_SLOTS = [
   { id: 'ata', label: 'ATA', top: '5%', left: '50%' }, 
   { id: 'ext_esq', label: 'EXT', top: '18%', left: '8%' }, 
@@ -25,7 +25,7 @@ const FORMATION_SLOTS = [
 ];
 
 const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser, onClose }) => {
-  // CHAVE ÚNICA POR USUÁRIO: Evita perder dados ou misturar times
+  // CHAVE ÚNICA POR USUÁRIO
   const STORAGE_KEY = `pvfc_shadow_team_${currentUser.id}`;
   const printRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -42,7 +42,6 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
   const [selectingSlot, setSelectingSlot] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
-  // Salva automaticamente sempre que o time muda
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(squad));
   }, [squad, STORAGE_KEY]);
@@ -53,13 +52,12 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
     setIsExporting(true);
 
     try {
-      // Pequeno delay para garantir renderização
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 500)); // Delay para renderizar imagens
 
       const canvas = await html2canvas(printRef.current, {
-        scale: 2, // Melhora a qualidade
-        useCORS: true, // Permite carregar imagens externas (Supabase)
-        backgroundColor: '#0a0f0d', // Cor de fundo garantida
+        scale: 2,
+        useCORS: true, 
+        backgroundColor: '#0a0f0d',
         logging: false
       });
 
@@ -78,13 +76,13 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
       pdf.save(`ShadowTeam_PortoVitoria_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      alert("Erro ao gerar PDF. Verifique se as imagens carregaram corretamente.");
+      alert("Erro ao gerar PDF.");
     } finally {
       setIsExporting(false);
     }
   };
 
-  // --- FUNÇÕES DE GERENCIAMENTO DO TIME ---
+  // --- FUNÇÕES DE GERENCIAMENTO ---
   const movePlayer = (slotId: string, fromIndex: number, toIndex: number) => {
     setSquad(prev => {
       const list = [...(prev[slotId] || [])];
@@ -136,23 +134,18 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/98 backdrop-blur-xl p-2 overflow-hidden">
       
-      {/* Container Principal */}
       <div className="relative w-[98vw] h-[96vh] bg-[#0a0f0d] border border-[#006837]/30 rounded-[2rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in duration-300">
         
-        {/* BOTÕES DE CONTROLE (TOPO DIREITO) */}
+        {/* BOTÕES DE CONTROLE (NOVO LOCAL: Topo Direito) */}
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           
-          {/* Botão Exportar PDF */}
+          {/* Botão PDF */}
           <button 
             onClick={handleExportPDF}
             disabled={isExporting}
             className="h-10 px-4 bg-[#f1c40f] text-black font-black uppercase text-[10px] tracking-widest rounded-full hover:bg-white transition-colors flex items-center gap-2 shadow-lg disabled:opacity-50"
           >
-            {isExporting ? (
-              <i className="fas fa-spinner fa-spin"></i>
-            ) : (
-              <i className="fas fa-file-pdf"></i>
-            )}
+            {isExporting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-file-pdf"></i>}
             {isExporting ? 'Gerando...' : 'Salvar PDF'}
           </button>
 
@@ -162,11 +155,9 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
           </button>
         </div>
 
-        {/* --- ÁREA DE IMPRESSÃO (REF) --- */}
-        {/* Usamos ref aqui para o html2canvas capturar apenas esta div */}
+        {/* ÁREA DE IMPRESSÃO */}
         <div ref={printRef} className="flex-1 relative bg-[#1a2e22] overflow-hidden flex items-center justify-center p-4">
           
-          {/* Título Visível Apenas no PDF (Opcional, mas útil para contexto) */}
           <div className="absolute top-4 left-6 z-10 opacity-50 pointer-events-none">
              <h2 className="font-oswald text-2xl text-white uppercase font-bold">Shadow Team <span className="text-[#f1c40f]">2025/26</span></h2>
              <p className="text-[10px] text-white uppercase tracking-widest">Departamento de Análise • {currentUser.name}</p>
@@ -177,8 +168,6 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
 
           {/* CAMPO */}
           <div className="relative w-full h-full max-w-[1600px] border-2 border-white/10 rounded-xl shadow-2xl bg-[#006837]/10 backdrop-blur-sm mx-auto my-0">
-            
-            {/* Linhas */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-b-2 border-x-2 border-white/20 rounded-b-xl"></div>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-t-2 border-x-2 border-white/20 rounded-t-xl"></div>
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/10"></div>
@@ -192,7 +181,6 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                 <div 
                   key={slot.id}
                   onClick={() => setSelectingSlot(slot.id)}
-                  // data-html2canvas-ignore -> Use isso se quiser esconder elementos específicos do PDF
                   className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all cursor-pointer flex flex-col items-center ${isSelected ? 'z-50 scale-105' : 'z-10 hover:scale-105'}`}
                   style={{ top: slot.top, left: slot.left }}
                 >
@@ -213,13 +201,11 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                           }`}>
                              {idx === 0 && <i className="fas fa-crown text-[8px] text-[#f1c40f] absolute -left-1.5 -top-1.5 bg-black rounded-full p-1 shadow-md z-30 border border-[#f1c40f]/30"></i>}
                              
-                             {/* crossOrigin="anonymous" é CRUCIAL para o PDF funcionar com imagens externas */}
                              <img 
                                 src={player.photoUrl} 
                                 crossOrigin="anonymous"
                                 className={`${idx === 0 ? 'h-10 w-10' : 'h-7 w-7'} rounded-lg bg-black object-cover border border-white/10`} 
                              />
-                             
                              <div className="flex flex-col leading-none pr-2">
                                 <span className={`${idx === 0 ? 'text-[10px]' : 'text-[8px]'} font-bold text-white uppercase truncate max-w-[90px]`}>{player.name.split(' ')[0]}</span>
                                 <span className="text-[7px] font-bold text-[#f1c40f] uppercase">{player.club}</span>
@@ -239,8 +225,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
           </div>
         </div>
 
-        {/* --- SIDEBAR --- */}
-        {/* data-html2canvas-ignore garante que a sidebar NÃO saia no PDF */}
+        {/* SIDEBAR */}
         {selectingSlot && (
           <div data-html2canvas-ignore className="w-full md:w-[420px] bg-[#050807] border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300 z-20 absolute right-0 top-0 bottom-0 md:relative shadow-2xl">
             <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#0a0f0d]">
@@ -275,31 +260,18 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                       
                       <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                         {idx > 0 && (
-                          <>
-                            <button onClick={() => promoteToStarter(selectingSlot, idx)} title="Tornar Titular" className="h-6 w-6 rounded bg-[#f1c40f] text-black text-[9px] flex items-center justify-center hover:scale-110 transition-transform">
-                              <i className="fas fa-crown"></i>
-                            </button>
-                            <button onClick={() => movePlayer(selectingSlot, idx, idx - 1)} className="h-6 w-6 rounded bg-slate-800 text-slate-300 text-[9px] flex items-center justify-center hover:bg-white hover:text-black">
-                              <i className="fas fa-arrow-up"></i>
-                            </button>
-                          </>
+                           <>
+                            <button onClick={() => promoteToStarter(selectingSlot, idx)} className="h-6 w-6 rounded bg-[#f1c40f] text-black text-[9px] flex items-center justify-center hover:scale-110 transition-transform"><i className="fas fa-crown"></i></button>
+                            <button onClick={() => movePlayer(selectingSlot, idx, idx - 1)} className="h-6 w-6 rounded bg-slate-800 text-slate-300 text-[9px] flex items-center justify-center hover:bg-white hover:text-black"><i className="fas fa-arrow-up"></i></button>
+                           </>
                         )}
                         {idx < getPlayersInSlot(selectingSlot).length - 1 && (
-                          <button onClick={() => movePlayer(selectingSlot, idx, idx + 1)} className="h-6 w-6 rounded bg-slate-800 text-slate-300 text-[9px] flex items-center justify-center hover:bg-white hover:text-black">
-                            <i className="fas fa-arrow-down"></i>
-                          </button>
+                          <button onClick={() => movePlayer(selectingSlot, idx, idx + 1)} className="h-6 w-6 rounded bg-slate-800 text-slate-300 text-[9px] flex items-center justify-center hover:bg-white hover:text-black"><i className="fas fa-arrow-down"></i></button>
                         )}
-                        <button onClick={() => removePlayer(selectingSlot, p.id)} className="h-6 w-6 rounded bg-red-600/20 text-red-500 text-[9px] flex items-center justify-center hover:bg-red-600 hover:text-white ml-1">
-                          <i className="fas fa-trash"></i>
-                        </button>
+                        <button onClick={() => removePlayer(selectingSlot, p.id)} className="h-6 w-6 rounded bg-red-600/20 text-red-500 text-[9px] flex items-center justify-center hover:bg-red-600 hover:text-white ml-1"><i className="fas fa-trash"></i></button>
                       </div>
                     </div>
                   ))}
-                  {getPlayersInSlot(selectingSlot).length === 0 && (
-                    <div className="text-center py-4 border border-dashed border-white/10 rounded-xl">
-                      <p className="text-[8px] font-black text-slate-600 uppercase">Vazio</p>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -307,32 +279,17 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                 <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
                   <i className="fas fa-search"></i> Banco de Atletas
                 </h4>
-                
                 <div className="relative mb-3">
-                  <input 
-                    type="text" 
-                    placeholder="Buscar..." 
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-9 pr-4 text-xs text-white outline-none focus:border-[#f1c40f] transition-all"
-                  />
+                  <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-9 pr-4 text-xs text-white outline-none focus:border-[#f1c40f]" />
                   <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
                 </div>
-
                 <div className="space-y-2">
                   {searchResults.map(p => (
-                    <button 
-                      key={p.id}
-                      onClick={() => addPlayer(selectingSlot, p.id)}
-                      className="w-full flex items-center gap-3 p-2 rounded-xl border border-transparent hover:bg-white/5 hover:border-white/5 transition-all group text-left"
-                    >
-                      <img src={p.photoUrl} alt={p.name} className="h-8 w-8 rounded-lg object-cover bg-black grayscale group-hover:grayscale-0 transition-all" />
+                    <button key={p.id} onClick={() => addPlayer(selectingSlot, p.id)} className="w-full flex items-center gap-3 p-2 rounded-xl border border-transparent hover:bg-white/5 hover:border-white/5 transition-all group text-left">
+                      <img src={p.photoUrl} alt={p.name} className="h-8 w-8 rounded-lg object-cover bg-black grayscale group-hover:grayscale-0" />
                       <div className="flex-1">
                         <h4 className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase">{p.name}</h4>
-                        <div className="flex gap-2">
-                          <span className="text-[8px] font-black text-slate-600 uppercase">{p.position1}</span>
-                          <span className="text-[8px] font-black text-[#006837] uppercase">{p.recommendation}</span>
-                        </div>
+                        <div className="flex gap-2"><span className="text-[8px] font-black text-slate-600 uppercase">{p.position1}</span><span className="text-[8px] font-black text-[#006837] uppercase">{p.recommendation}</span></div>
                       </div>
                       <i className="fas fa-plus text-[#f1c40f] opacity-0 group-hover:opacity-100 transition-opacity mr-2"></i>
                     </button>
