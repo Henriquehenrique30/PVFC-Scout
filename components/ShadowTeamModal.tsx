@@ -1,58 +1,94 @@
-import React, { useState, useEffect } from 'react';
-import { Player } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Player, User } from '../types'; // Importe User aqui
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface ShadowTeamModalProps {
   players: Player[];
+  currentUser: User; // Recebe o usuário para salvar na chave correta
   onClose: () => void;
 }
 
-// --- CONFIGURAÇÃO DE POSIÇÕES OTIMIZADA ---
-// Estratégia: Corredor central limpo e laterais expandidas ao máximo.
+// --- CONFIGURAÇÃO DE POSIÇÕES ---
 const FORMATION_SLOTS = [
-  // LINHA 1: ATAQUE (Topo Centralizado)
   { id: 'ata', label: 'ATA', top: '5%', left: '50%' }, 
-
-  // LINHA 2: PONTAS (Bem abertos para não encostar no MEI)
   { id: 'ext_esq', label: 'EXT', top: '18%', left: '8%' }, 
   { id: 'ext_dir', label: 'EXT', top: '18%', left: '92%' }, 
-
-  // LINHA 3: MEIA (Centralizado, abaixo do ATA)
   { id: 'mei', label: 'MEI', top: '28%', left: '50%' }, 
-
-  // LINHA 4: VOLANTES (Afastados do centro para dar espaço ao MEI)
   { id: 'vol1', label: 'VOL', top: '50%', left: '32%' }, 
   { id: 'vol2', label: 'VOL', top: '50%', left: '68%' }, 
-
-  // LINHA 5: LATERAIS (Bem abertos e alinhados com a defesa)
   { id: 'lte', label: 'LTE', top: '65%', left: '5%' }, 
   { id: 'ltd', label: 'LTD', top: '65%', left: '95%' }, 
-
-  // LINHA 6: ZAGUEIROS (Centralizados mas abaixo dos volantes)
   { id: 'zag1', label: 'ZAG', top: '75%', left: '35%' }, 
   { id: 'zag2', label: 'ZAG', top: '75%', left: '65%' }, 
-
-  // LINHA 7: GOLEIRO (Fundo)
   { id: 'gol', label: 'GOL', top: '92%', left: '50%' }, 
 ];
 
-const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) => {
+const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser, onClose }) => {
+  // CHAVE ÚNICA POR USUÁRIO: Evita perder dados ou misturar times
+  const STORAGE_KEY = `pvfc_shadow_team_${currentUser.id}`;
+  const printRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
   const [squad, setSquad] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem('pvfc_shadow_team_v2');
-    return saved ? JSON.parse(saved) : {};
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
   });
 
   const [selectingSlot, setSelectingSlot] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
+  // Salva automaticamente sempre que o time muda
   useEffect(() => {
-    localStorage.setItem('pvfc_shadow_team_v2', JSON.stringify(squad));
-  }, [squad]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(squad));
+  }, [squad, STORAGE_KEY]);
 
+  // --- FUNÇÃO DE EXPORTAR PDF ---
+  const handleExportPDF = async () => {
+    if (!printRef.current) return;
+    setIsExporting(true);
+
+    try {
+      // Pequeno delay para garantir renderização
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const canvas = await html2canvas(printRef.current, {
+        scale: 2, // Melhora a qualidade
+        useCORS: true, // Permite carregar imagens externas (Supabase)
+        backgroundColor: '#0a0f0d', // Cor de fundo garantida
+        logging: false
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`ShadowTeam_PortoVitoria_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      alert("Erro ao gerar PDF. Verifique se as imagens carregaram corretamente.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // --- FUNÇÕES DE GERENCIAMENTO DO TIME ---
   const movePlayer = (slotId: string, fromIndex: number, toIndex: number) => {
     setSquad(prev => {
       const list = [...(prev[slotId] || [])];
       if (toIndex < 0 || toIndex >= list.length) return prev;
-      
       const item = list[fromIndex];
       list.splice(fromIndex, 1);
       list.splice(toIndex, 0, item);
@@ -99,22 +135,50 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/98 backdrop-blur-xl p-2 overflow-hidden">
-      {/* MODAL EXPANDIDO (98vw x 96vh) */}
+      
+      {/* Container Principal */}
       <div className="relative w-[98vw] h-[96vh] bg-[#0a0f0d] border border-[#006837]/30 rounded-[2rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in duration-300">
         
-        <button onClick={onClose} className="absolute top-4 right-4 z-50 h-10 w-10 bg-slate-900 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg border border-white/10">
-          <i className="fas fa-times"></i>
-        </button>
+        {/* BOTÕES DE CONTROLE (TOPO DIREITO) */}
+        <div className="absolute top-4 right-4 z-50 flex gap-2">
+          
+          {/* Botão Exportar PDF */}
+          <button 
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="h-10 px-4 bg-[#f1c40f] text-black font-black uppercase text-[10px] tracking-widest rounded-full hover:bg-white transition-colors flex items-center gap-2 shadow-lg disabled:opacity-50"
+          >
+            {isExporting ? (
+              <i className="fas fa-spinner fa-spin"></i>
+            ) : (
+              <i className="fas fa-file-pdf"></i>
+            )}
+            {isExporting ? 'Gerando...' : 'Salvar PDF'}
+          </button>
 
-        {/* --- CAMPO (VISUALIZADOR) --- */}
-        <div className="flex-1 relative bg-[#1a2e22] overflow-hidden flex items-center justify-center p-4">
+          {/* Botão Fechar */}
+          <button onClick={onClose} className="h-10 w-10 bg-slate-900 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg border border-white/10">
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+
+        {/* --- ÁREA DE IMPRESSÃO (REF) --- */}
+        {/* Usamos ref aqui para o html2canvas capturar apenas esta div */}
+        <div ref={printRef} className="flex-1 relative bg-[#1a2e22] overflow-hidden flex items-center justify-center p-4">
+          
+          {/* Título Visível Apenas no PDF (Opcional, mas útil para contexto) */}
+          <div className="absolute top-4 left-6 z-10 opacity-50 pointer-events-none">
+             <h2 className="font-oswald text-2xl text-white uppercase font-bold">Shadow Team <span className="text-[#f1c40f]">2025/26</span></h2>
+             <p className="text-[10px] text-white uppercase tracking-widest">Departamento de Análise • {currentUser.name}</p>
+          </div>
+
           <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 49px, #000 50px)' }}></div>
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none"></div>
 
-          {/* CAMPO EXPANDIDO (Max Width 1600px) */}
+          {/* CAMPO */}
           <div className="relative w-full h-full max-w-[1600px] border-2 border-white/10 rounded-xl shadow-2xl bg-[#006837]/10 backdrop-blur-sm mx-auto my-0">
             
-            {/* Linhas do Campo */}
+            {/* Linhas */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-b-2 border-x-2 border-white/20 rounded-b-xl"></div>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-t-2 border-x-2 border-white/20 rounded-t-xl"></div>
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/10"></div>
@@ -128,17 +192,16 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
                 <div 
                   key={slot.id}
                   onClick={() => setSelectingSlot(slot.id)}
+                  // data-html2canvas-ignore -> Use isso se quiser esconder elementos específicos do PDF
                   className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all cursor-pointer flex flex-col items-center ${isSelected ? 'z-50 scale-105' : 'z-10 hover:scale-105'}`}
                   style={{ top: slot.top, left: slot.left }}
                 >
-                  {/* LABEL POSIÇÃO */}
                   <div className={`mb-1 px-3 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border shadow-lg ${
                     isSelected ? 'bg-[#f1c40f] text-black border-[#f1c40f]' : 'bg-black/60 text-white/50 border-white/10'
                   }`}>
                     {slot.label} <span className="text-[8px] opacity-70">({playersInSlot.length})</span>
                   </div>
 
-                  {/* LISTA DE JOGADORES (Compactada) */}
                   <div className="flex flex-col gap-1 items-center min-w-[110px]">
                     {playersInSlot.length > 0 ? (
                       playersInSlot.map((player, idx) => (
@@ -148,10 +211,14 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
                               ? 'bg-[#006837]/90 border-[#006837] scale-105 z-20 shadow-[0_0_15px_rgba(0,104,55,0.5)]' 
                               : 'bg-slate-900/90 border-slate-700 scale-95 opacity-90'
                           }`}>
-                             {/* COROA */}
                              {idx === 0 && <i className="fas fa-crown text-[8px] text-[#f1c40f] absolute -left-1.5 -top-1.5 bg-black rounded-full p-1 shadow-md z-30 border border-[#f1c40f]/30"></i>}
                              
-                             <img src={player.photoUrl} className={`${idx === 0 ? 'h-10 w-10' : 'h-7 w-7'} rounded-lg bg-black object-cover border border-white/10`} />
+                             {/* crossOrigin="anonymous" é CRUCIAL para o PDF funcionar com imagens externas */}
+                             <img 
+                                src={player.photoUrl} 
+                                crossOrigin="anonymous"
+                                className={`${idx === 0 ? 'h-10 w-10' : 'h-7 w-7'} rounded-lg bg-black object-cover border border-white/10`} 
+                             />
                              
                              <div className="flex flex-col leading-none pr-2">
                                 <span className={`${idx === 0 ? 'text-[10px]' : 'text-[8px]'} font-bold text-white uppercase truncate max-w-[90px]`}>{player.name.split(' ')[0]}</span>
@@ -173,8 +240,9 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
         </div>
 
         {/* --- SIDEBAR --- */}
+        {/* data-html2canvas-ignore garante que a sidebar NÃO saia no PDF */}
         {selectingSlot && (
-          <div className="w-full md:w-[420px] bg-[#050807] border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300 z-20 absolute right-0 top-0 bottom-0 md:relative shadow-2xl">
+          <div data-html2canvas-ignore className="w-full md:w-[420px] bg-[#050807] border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300 z-20 absolute right-0 top-0 bottom-0 md:relative shadow-2xl">
             <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#0a0f0d]">
               <div>
                 <h3 className="text-[#f1c40f] font-oswald text-xl font-bold uppercase">Shadow List</h3>
@@ -188,7 +256,6 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
             </div>
             
             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-              {/* LISTA PRIORIDADE */}
               <div className="p-5 border-b border-white/5 bg-[#0a0f0d]/50">
                 <h4 className="text-[9px] font-black text-[#006837] uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
                   <i className="fas fa-list-ol"></i> Ordem de Preferência
@@ -236,7 +303,6 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
                 </div>
               </div>
 
-              {/* BUSCA */}
               <div className="p-5 flex-1">
                 <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
                   <i className="fas fa-search"></i> Banco de Atletas

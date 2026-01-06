@@ -5,7 +5,7 @@ import PlayerDetails from './components/PlayerDetails';
 import AddPlayerModal from './components/AddPlayerModal';
 import Auth from './components/Auth';
 import AdminUserManagement from './components/AdminUserManagement';
-import ShadowTeamModal from './components/ShadowTeamModal'; // <--- IMPORT NOVO
+import ShadowTeamModal from './components/ShadowTeamModal';
 import { dbService, isCloudActive } from './services/database';
 
 const App: React.FC = () => {
@@ -22,7 +22,7 @@ const App: React.FC = () => {
 
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isShadowTeamOpen, setIsShadowTeamOpen] = useState(false); // <--- ESTADO NOVO
+  const [isShadowTeamOpen, setIsShadowTeamOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
@@ -417,9 +417,10 @@ const App: React.FC = () => {
       </footer>
 
       {/* MODAL DO SHADOW TEAM */}
-      {isShadowTeamOpen && (
+      {isShadowTeamOpen && currentUser && ( // <--- Adicionado currentUser aqui
         <ShadowTeamModal 
           players={players} 
+          currentUser={currentUser} // <--- Adicionado currentUser aqui
           onClose={() => setIsShadowTeamOpen(false)} 
         />
       )}
