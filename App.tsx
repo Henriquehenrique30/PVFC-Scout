@@ -5,6 +5,7 @@ import PlayerDetails from './components/PlayerDetails';
 import AddPlayerModal from './components/AddPlayerModal';
 import Auth from './components/Auth';
 import AdminUserManagement from './components/AdminUserManagement';
+import ShadowTeamModal from './components/ShadowTeamModal'; // <--- IMPORT NOVO
 import { dbService, isCloudActive } from './services/database';
 
 const App: React.FC = () => {
@@ -21,6 +22,7 @@ const App: React.FC = () => {
 
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isShadowTeamOpen, setIsShadowTeamOpen] = useState(false); // <--- ESTADO NOVO
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
@@ -35,7 +37,7 @@ const App: React.FC = () => {
   });
 
   const loadData = async (isAutoRefresh = false) => {
-    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer)) return;
+    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer || isShadowTeamOpen)) return;
     if (!isCloudActive()) return;
     if (!isAutoRefresh) setLoading(true);
 
@@ -57,7 +59,7 @@ const App: React.FC = () => {
     loadData();
     const interval = setInterval(() => loadData(true), 45000);
     return () => clearInterval(interval);
-  }, [isModalOpen, isAdminPanelOpen, selectedPlayer]);
+  }, [isModalOpen, isAdminPanelOpen, selectedPlayer, isShadowTeamOpen]);
 
   useEffect(() => {
     if (currentUser) {
@@ -225,6 +227,15 @@ const App: React.FC = () => {
               {currentUser.role === 'admin' && (
                 <button onClick={() => setIsAdminPanelOpen(true)} className="px-3 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[9px] font-black uppercase tracking-widest border border-orange-500/20 hover:bg-orange-500/20 transition-all">Admin</button>
               )}
+              
+              {/* --- BOTÃO SHADOW TEAM --- */}
+              <button 
+                onClick={() => setIsShadowTeamOpen(true)}
+                className="bg-[#1a2e22] px-4 py-2 rounded-lg text-[9px] font-black uppercase text-[#f1c40f] hover:bg-[#006837] hover:text-white transition-all shadow-lg border border-[#f1c40f]/20 flex items-center gap-2"
+              >
+                <i className="fas fa-chess-board"></i> Shadow Team
+              </button>
+              
               <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="bg-[#006837] px-5 py-2 rounded-lg text-[9px] font-black uppercase text-white hover:bg-[#008a4a] transition-all shadow-lg border border-[#006837]/30">Adicionar Atleta</button>
               <button onClick={handleLogout} className="h-9 w-9 flex items-center justify-center rounded-lg bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all border border-red-500/20"><i className="fas fa-power-off text-xs"></i></button>
             </div>
@@ -299,7 +310,6 @@ const App: React.FC = () => {
                 </div>
               </section>
 
-              {/* --- NOVA SEÇÃO: COMPETIÇÕES --- */}
               <section>
                 <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Competição</label>
                 <div className="flex flex-wrap gap-2">
@@ -322,7 +332,6 @@ const App: React.FC = () => {
                   )}
                 </div>
               </section>
-              {/* ---------------------------------- */}
 
               <section>
                 <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Faixa Etária</label>
@@ -407,7 +416,16 @@ const App: React.FC = () => {
         </div>
       </footer>
 
+      {/* MODAL DO SHADOW TEAM */}
+      {isShadowTeamOpen && (
+        <ShadowTeamModal 
+          players={players} 
+          onClose={() => setIsShadowTeamOpen(false)} 
+        />
+      )}
+
       {selectedPlayer && <PlayerDetails player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
+      
       {isModalOpen && (
         <AddPlayerModal 
           player={editingPlayer || undefined} 
@@ -416,6 +434,7 @@ const App: React.FC = () => {
           onUpdate={handleUpdatePlayer} 
         />
       )}
+      
       {isAdminPanelOpen && (
         <AdminUserManagement 
           users={users} 
