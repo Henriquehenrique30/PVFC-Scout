@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { Player } from "../types";
 
@@ -7,10 +6,9 @@ export const getScoutReport = async (player: Player): Promise<string> => {
     return "RELATÓRIO PENDENTE: Vincule a planilha de scouting no cadastro do atleta para processar a análise tática.";
   }
 
-  // 1. Recuperação da chave via process.env.API_KEY (injetada pelo Vite define)
+  // AQUI FOI A MUDANÇA PRINCIPAL: Usamos a chave injetada pelo Vite
   const apiKey = process.env.API_KEY;
 
-  // 2. Log de Diagnóstico solicitado pelo usuário
   console.log("Status da Chave:", apiKey ? `Carregada (${apiKey.substring(0, 5)}...)` : "Não encontrada");
 
   if (!apiKey) {
@@ -18,14 +16,9 @@ export const getScoutReport = async (player: Player): Promise<string> => {
   }
 
   try {
-    // Inicialização conforme diretrizes oficiais
     const ai = new GoogleGenAI({ apiKey });
     
-    /**
-     * MODELO: gemini-3-flash-preview
-     * Este é o modelo de alto desempenho e compatibilidade universal.
-     * Substitui o 1.5-flash com maior inteligência e suporte a system instructions.
-     */
+    // AQUI ESTAVA O ERRO: Mudamos de "gemini-3" (que não existe) para "gemini-1.5-flash"
     const modelName = 'gemini-1.5-flash';
 
     const response: GenerateContentResponse = await ai.models.generateContent({
@@ -46,29 +39,22 @@ export const getScoutReport = async (player: Player): Promise<string> => {
       },
     });
 
-    // Acesso direto à propriedade .text conforme as diretrizes do SDK
     const report = response.text;
     if (!report) throw new Error("A IA retornou uma resposta vazia.");
 
     return report;
 
   } catch (error: any) {
-    // 3. Log de Erro Real/Detalhado da API Google solicitado para diagnóstico
     console.error("Erro detalhado da API Google:", error);
     
-    // Tratamento de erros de autenticação ou quota
-    if (
-      error.message?.includes("API key") || 
-      error.message?.includes("403") ||
-      error.message?.includes("401")
-    ) {
+    if (error.message?.includes("API key") || error.message?.includes("403")) {
       throw new Error("API_KEY_MISSING");
     }
-
-    if (error.message?.includes("404") || error.message?.includes("model")) {
-      return "FALHA TÉCNICA: O modelo solicitado não foi encontrado ou não está disponível para esta chave.";
+    // Tratamento para erro de modelo não encontrado
+    if (error.message?.includes("404") || error.message?.includes("not found")) {
+      return "FALHA TÉCNICA: Modelo não encontrado (verifique se está usando gemini-1.5-flash).";
     }
     
-    return `FALHA NA ANÁLISE: Erro ao processar dados. (Status: ${error.message || 'Erro Desconhecido'})`;
+    return `FALHA NA ANÁLISE: Erro ao processar dados. (${error.message})`;
   }
 };
