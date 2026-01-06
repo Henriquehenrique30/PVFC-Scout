@@ -191,7 +191,6 @@ const App: React.FC = () => {
       <header className="sticky top-0 z-40 glass-panel border-b border-white/5 py-3">
         <div className="mx-auto max-w-[1600px] flex items-center justify-between px-8">
           <div className="flex items-center gap-4">
-            {/* Logo Oficial do Porto Vitória FC - URL fornecida pelo usuário */}
             <div className="flex h-12 w-12 items-center justify-center shrink-0 overflow-hidden bg-white rounded-lg p-0.5">
                <img 
                 src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" 
@@ -243,38 +242,38 @@ const App: React.FC = () => {
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <div className="flex items-center gap-2">
                   <i className="fas fa-filter text-[#006837] text-xs"></i>
-                  <h3 className="text-[9px] font-black text-white uppercase tracking-[0.15em]">Filtros Técnicos</h3>
+                  <h3 className="text-[11px] font-black text-white uppercase tracking-[0.15em]">Filtros</h3>
                 </div>
-                <button onClick={clearFilters} className="text-[7px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Resetar</button>
+                <button onClick={clearFilters} className="text-[9px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Resetar</button>
               </div>
 
               <section>
-                <label className="block text-[7px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Pesquisa</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Pesquisa</label>
                 <div className="relative group">
                   <input 
                     type="text" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} 
                     placeholder="Nome ou Clube..." 
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-[10px] text-white outline-none focus:ring-1 focus:ring-[#006837] transition-all" 
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-[12px] text-white outline-none focus:ring-1 focus:ring-[#006837] transition-all" 
                   />
-                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] group-focus-within:text-[#006837] transition-colors"></i>
+                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[10px] group-focus-within:text-[#006837] transition-colors"></i>
                 </div>
               </section>
 
               <section>
-                <label className="block text-[7px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Prioridade</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Prioridade</label>
                 <div className="space-y-1.5">
                   {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
                     <button 
                       key={rec}
                       onClick={() => toggleFilter('recommendations', rec)}
-                      className={`w-full text-left px-4 py-2.5 rounded-lg text-[8px] font-black uppercase border transition-all flex items-center justify-between ${
+                      className={`w-full text-left px-4 py-2.5 rounded-lg text-[10px] font-black uppercase border transition-all flex items-center justify-between ${
                         filters.recommendations.includes(rec as Recommendation) 
                         ? 'bg-[#006837] border-[#006837] text-white' 
                         : 'bg-black/20 border-white/5 text-slate-600 hover:text-slate-400'
                       }`}
                     >
                       {rec}
-                      <div className={`h-1 w-1 rounded-full ${
+                      <div className={`h-1.5 w-1.5 rounded-full ${
                         filters.recommendations.includes(rec as Recommendation) ? 'bg-white' : 'bg-slate-800'
                       }`}></div>
                     </button>
@@ -283,15 +282,15 @@ const App: React.FC = () => {
               </section>
 
               <section>
-                <label className="block text-[7px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Posições</label>
-                <div className="grid grid-cols-4 gap-1">
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Posições</label>
+                <div className="grid grid-cols-4 gap-1.5">
                   {Object.values(Position).map(pos => (
                     <button 
                       key={pos} 
                       onClick={() => toggleFilter('positions', pos)}
-                      className={`py-1.5 rounded bg-black/20 border border-white/5 text-[7px] font-black uppercase transition-all ${
+                      className={`py-2 rounded bg-black/20 border border-white/5 text-[9px] font-black uppercase transition-all ${
                         filters.positions.includes(pos) 
-                        ? 'bg-[#f1c40f] border-[#f1c40f] text-black' 
+                        ? 'bg-[#f1c40f] border-[#f1c40f] text-black shadow-sm' 
                         : 'text-slate-600 hover:text-white'
                       }`}
                     >
@@ -302,18 +301,18 @@ const App: React.FC = () => {
               </section>
 
               <section>
-                <label className="block text-[7px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Faixa Etária</label>
-                <div className="flex items-center gap-2 bg-black/20 p-2 rounded-xl border border-white/5">
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Faixa Etária</label>
+                <div className="flex items-center gap-2 bg-black/20 p-2.5 rounded-xl border border-white/5">
                   <input 
                     type="number" min="0" max="60" value={filters.minAge} 
                     onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value) || 0}))}
-                    className="w-full bg-transparent text-center text-[9px] font-black text-white outline-none" 
+                    className="w-full bg-transparent text-center text-[11px] font-black text-white outline-none" 
                   />
                   <div className="h-px w-3 bg-slate-800"></div>
                   <input 
                     type="number" min="0" max="60" value={filters.maxAge} 
                     onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value) || 60}))}
-                    className="w-full bg-transparent text-center text-[9px] font-black text-white outline-none" 
+                    className="w-full bg-transparent text-center text-[11px] font-black text-white outline-none" 
                   />
                 </div>
               </section>
@@ -325,8 +324,8 @@ const App: React.FC = () => {
         <div className="flex-1 space-y-6">
           <div className="flex items-end justify-between border-b border-white/5 pb-4">
             <div>
-              <p className="text-[8px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">Intelligence Database</p>
-              <h2 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight leading-none">Dossiês Monitorados</h2>
+              <p className="text-[8px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">Database</p>
+              <h2 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight leading-none">Jogadores Monitorados</h2>
             </div>
             <div className="hidden sm:flex bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 items-center gap-2">
                <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Base Ativa:</span>
@@ -376,7 +375,7 @@ const App: React.FC = () => {
       <footer className="mt-auto py-6 border-t border-white/5 bg-black/40 backdrop-blur-md">
         <div className="mx-auto max-w-[1600px] px-8 flex items-center justify-between">
           <p className="text-[8px] font-black text-slate-700 uppercase tracking-[0.15em]">
-            Porto Vitória FC Intelligence System <span className="text-slate-800 ml-4">v1.2.4</span>
+            Desenvolvido por Henrique Bravim
           </p>
           <p className="text-[8px] font-black text-slate-700 uppercase tracking-[0.15em]">
             Sessão Ativa: <span className="text-slate-500">{currentUser.name}</span>
