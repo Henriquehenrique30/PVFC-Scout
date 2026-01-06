@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, FilterState, User, Recommendation, Position } from './types';
 import PlayerCard from './components/PlayerCard';
@@ -299,6 +298,31 @@ const App: React.FC = () => {
                   ))}
                 </div>
               </section>
+
+              {/* --- NOVA SEÇÃO: COMPETIÇÕES --- */}
+              <section>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Competição</label>
+                <div className="flex flex-wrap gap-2">
+                  {dynamicOptions.competitions.length > 0 ? (
+                    dynamicOptions.competitions.map(comp => (
+                      <button 
+                        key={comp} 
+                        onClick={() => toggleFilter('competitions', comp)}
+                        className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase border transition-all ${
+                          filters.competitions.includes(comp) 
+                          ? 'bg-[#006837] border-[#006837] text-white' 
+                          : 'bg-black/20 border-white/5 text-slate-600 hover:text-white'
+                        }`}
+                      >
+                        {comp}
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-[9px] text-slate-700 italic">Nenhuma registrada</span>
+                  )}
+                </div>
+              </section>
+              {/* ---------------------------------- */}
 
               <section>
                 <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Faixa Etária</label>
