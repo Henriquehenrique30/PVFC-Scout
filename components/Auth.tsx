@@ -87,8 +87,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users, onRegister }) => {
 
       <div className="relative w-full max-w-md p-6 md:p-8">
         <div className="flex flex-col items-center mb-8">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white p-2 shadow-2xl border-4 border-[#006837] mb-4">
-             <i className="fas fa-ship text-[#006837] text-2xl"></i>
+          <div className="flex h-20 w-20 items-center justify-center shrink-0 mb-4">
+             <img 
+              src="https://upload.wikimedia.org/wikipedia/pt/2/23/Logo_do_Porto_Vit%C3%B3ria_Futebol_Clube.png" 
+              alt="Porto Vitória FC Logo" 
+              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(0,104,55,0.4)]"
+             />
           </div>
           <h1 className="font-oswald text-2xl font-bold uppercase tracking-tighter text-white">
             Porto Vitória <span className="text-[#f1c40f]">FC</span>

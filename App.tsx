@@ -188,11 +188,11 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Main Professional Header */}
-      <header className="sticky top-0 z-40 glass-panel border-b border-white/5 py-4">
+      <header className="sticky top-0 z-40 glass-panel border-b border-white/5 py-3">
         <div className="mx-auto max-w-[1600px] flex items-center justify-between px-8">
-          <div className="flex items-center gap-5">
-            {/* Logo do Porto Vitória FC com efeito de profundidade */}
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white border-[2.5px] border-[#006837] shadow-[0_0_20px_rgba(0,104,55,0.2)] shrink-0 overflow-hidden p-0.5">
+          <div className="flex items-center gap-4">
+            {/* Logo Oficial do Porto Vitória FC */}
+            <div className="flex h-12 w-12 items-center justify-center shrink-0 overflow-hidden">
                <img 
                 src="https://upload.wikimedia.org/wikipedia/pt/2/23/Logo_do_Porto_Vit%C3%B3ria_Futebol_Clube.png" 
                 alt="Porto Vitória FC Logo" 
@@ -201,31 +201,31 @@ const App: React.FC = () => {
             </div>
             <div>
               <div className="flex items-baseline gap-1.5">
-                <h1 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight leading-none">
+                <h1 className="font-oswald text-xl font-bold uppercase text-white tracking-tight leading-none">
                   PORTO VITÓRIA <span className="text-[#f1c40f]">FC</span>
                 </h1>
               </div>
               <div className="flex items-center gap-2 mt-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#006837]"></span>
-                <span className="text-[9px] font-black text-[#006837] uppercase tracking-[0.15em]">Departamento de Análise de Mercado</span>
+                <span className="h-1 w-1 rounded-full bg-[#006837]"></span>
+                <span className="text-[8px] font-black text-[#006837] uppercase tracking-[0.1em]">Departamento de Análise de Mercado</span>
               </div>
             </div>
           </div>
           
           <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center gap-8 mr-4">
+            <div className="hidden lg:flex items-center gap-6 mr-2">
                <div className="text-right">
-                  <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Analista Logado</p>
-                  <p className="text-[10px] font-bold text-white uppercase">{currentUser.name}</p>
+                  <p className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Analista Logado</p>
+                  <p className="text-[9px] font-bold text-white uppercase">{currentUser.name}</p>
                </div>
-               <div className="h-8 w-px bg-white/5"></div>
+               <div className="h-6 w-px bg-white/5"></div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {currentUser.role === 'admin' && (
-                <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2.5 rounded-xl bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-widest border border-orange-500/20 hover:bg-orange-500/20 transition-all">Central Admin</button>
+                <button onClick={() => setIsAdminPanelOpen(true)} className="px-3 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[9px] font-black uppercase tracking-widest border border-orange-500/20 hover:bg-orange-500/20 transition-all">Admin</button>
               )}
-              <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="bg-[#006837] px-6 py-2.5 rounded-xl text-[10px] font-black uppercase text-white hover:bg-[#008a4a] transition-all shadow-xl shadow-[#006837]/20 border border-[#006837]/30">Adicionar Atleta</button>
-              <button onClick={handleLogout} className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all border border-red-500/20"><i className="fas fa-power-off"></i></button>
+              <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="bg-[#006837] px-5 py-2 rounded-lg text-[9px] font-black uppercase text-white hover:bg-[#008a4a] transition-all shadow-lg border border-[#006837]/30">Adicionar Atleta</button>
+              <button onClick={handleLogout} className="h-9 w-9 flex items-center justify-center rounded-lg bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all border border-red-500/20"><i className="fas fa-power-off text-xs"></i></button>
             </div>
           </div>
         </div>
@@ -235,36 +235,36 @@ const App: React.FC = () => {
         
         {/* Sidebar de Filtros */}
         <aside className="lg:w-80 shrink-0">
-          <div className="sticky top-28 space-y-6">
-            <div className="glass-panel p-8 rounded-[2.5rem] border border-white/5 shadow-3xl space-y-10">
-              <div className="flex items-center justify-between border-b border-white/5 pb-6">
-                <div className="flex items-center gap-3">
-                  <i className="fas fa-filter text-[#006837]"></i>
-                  <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Parâmetros de Busca</h3>
+          <div className="sticky top-24 space-y-6">
+            <div className="glass-panel p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-8">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-filter text-[#006837] text-xs"></i>
+                  <h3 className="text-[9px] font-black text-white uppercase tracking-[0.15em]">Filtros Técnicos</h3>
                 </div>
-                <button onClick={clearFilters} className="text-[8px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Resetar</button>
+                <button onClick={clearFilters} className="text-[7px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Resetar</button>
               </div>
 
               <section>
-                <label className="block text-[8px] font-black text-slate-500 uppercase mb-3 tracking-[0.3em]">Scout / Atleta / Clube</label>
+                <label className="block text-[7px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Pesquisa</label>
                 <div className="relative group">
                   <input 
                     type="text" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} 
-                    placeholder="Filtrar base de dados..." 
-                    className="w-full bg-black/40 border border-white/5 rounded-2xl py-3.5 pl-11 pr-4 text-[11px] text-white outline-none focus:ring-1 focus:ring-[#006837] transition-all" 
+                    placeholder="Nome ou Clube..." 
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-[10px] text-white outline-none focus:ring-1 focus:ring-[#006837] transition-all" 
                   />
-                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[10px] group-focus-within:text-[#006837] transition-colors"></i>
+                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[9px] group-focus-within:text-[#006837] transition-colors"></i>
                 </div>
               </section>
 
               <section>
-                <label className="block text-[8px] font-black text-slate-500 uppercase mb-3 tracking-[0.3em]">Monitoramento</label>
-                <div className="space-y-2">
+                <label className="block text-[7px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Prioridade</label>
+                <div className="space-y-1.5">
                   {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
                     <button 
                       key={rec}
                       onClick={() => toggleFilter('recommendations', rec)}
-                      className={`w-full text-left px-4 py-3 rounded-xl text-[9px] font-black uppercase border transition-all flex items-center justify-between group ${
+                      className={`w-full text-left px-4 py-2.5 rounded-lg text-[8px] font-black uppercase border transition-all flex items-center justify-between ${
                         filters.recommendations.includes(rec as Recommendation) 
                         ? 'bg-[#006837] border-[#006837] text-white' 
                         : 'bg-black/20 border-white/5 text-slate-600 hover:text-slate-400'
@@ -280,16 +280,16 @@ const App: React.FC = () => {
               </section>
 
               <section>
-                <label className="block text-[8px] font-black text-slate-500 uppercase mb-3 tracking-[0.3em]">Posições Táticas</label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <label className="block text-[7px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Posições</label>
+                <div className="grid grid-cols-4 gap-1">
                   {Object.values(Position).map(pos => (
                     <button 
                       key={pos} 
                       onClick={() => toggleFilter('positions', pos)}
-                      className={`py-2 rounded-lg text-[8px] font-black uppercase border transition-all ${
+                      className={`py-1.5 rounded bg-black/20 border border-white/5 text-[7px] font-black uppercase transition-all ${
                         filters.positions.includes(pos) 
-                        ? 'bg-[#f1c40f] border-[#f1c40f] text-black shadow-md shadow-[#f1c40f]/10' 
-                        : 'bg-black/20 border-white/5 text-slate-600 hover:text-white'
+                        ? 'bg-[#f1c40f] border-[#f1c40f] text-black' 
+                        : 'text-slate-600 hover:text-white'
                       }`}
                     >
                       {pos}
@@ -299,18 +299,18 @@ const App: React.FC = () => {
               </section>
 
               <section>
-                <label className="block text-[8px] font-black text-slate-500 uppercase mb-3 tracking-[0.3em]">Idade: {filters.minAge}-{filters.maxAge} Anos</label>
-                <div className="flex items-center gap-3 bg-black/20 p-3 rounded-2xl border border-white/5">
+                <label className="block text-[7px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Faixa Etária</label>
+                <div className="flex items-center gap-2 bg-black/20 p-2 rounded-xl border border-white/5">
                   <input 
                     type="number" min="0" max="60" value={filters.minAge} 
                     onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value) || 0}))}
-                    className="w-full bg-transparent text-center text-[10px] font-black text-white outline-none" 
+                    className="w-full bg-transparent text-center text-[9px] font-black text-white outline-none" 
                   />
-                  <div className="h-px w-4 bg-slate-800"></div>
+                  <div className="h-px w-3 bg-slate-800"></div>
                   <input 
                     type="number" min="0" max="60" value={filters.maxAge} 
                     onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value) || 60}))}
-                    className="w-full bg-transparent text-center text-[10px] font-black text-white outline-none" 
+                    className="w-full bg-transparent text-center text-[9px] font-black text-white outline-none" 
                   />
                 </div>
               </section>
@@ -319,66 +319,64 @@ const App: React.FC = () => {
         </aside>
 
         {/* Player Grid Area */}
-        <div className="flex-1 space-y-8">
-          <div className="flex items-end justify-between border-b border-white/5 pb-6">
+        <div className="flex-1 space-y-6">
+          <div className="flex items-end justify-between border-b border-white/5 pb-4">
             <div>
-              <p className="text-[9px] font-black text-[#006837] uppercase tracking-[0.4em] mb-1.5">Scouting Intelligence Database</p>
-              <h2 className="font-oswald text-3xl font-bold uppercase text-white tracking-tight leading-tight">Portfólio de Atletas Monitorados</h2>
+              <p className="text-[8px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">Intelligence Database</p>
+              <h2 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight leading-none">Dossiês Monitorados</h2>
             </div>
-            <div className="flex gap-4">
-               <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/5 flex items-center gap-3">
-                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Base Ativa:</span>
-                  <span className="text-[9px] font-bold text-[#f1c40f] uppercase">{filteredPlayers.length} Entradas</span>
-               </div>
+            <div className="hidden sm:flex bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 items-center gap-2">
+               <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Base Ativa:</span>
+               <span className="text-[8px] font-bold text-[#f1c40f] uppercase">{filteredPlayers.length} Resultados</span>
             </div>
           </div>
 
           {loading && players.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-40">
-              <div className="h-10 w-10 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin mb-4"></div>
-              <p className="text-[9px] text-slate-600 uppercase font-black tracking-widest">Sincronizando Dossiês...</p>
+            <div className="flex flex-col items-center justify-center py-32">
+              <div className="h-8 w-8 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin mb-4"></div>
+              <p className="text-[8px] text-slate-600 uppercase font-black tracking-widest">Acessando Cloud...</p>
             </div>
           ) : filteredPlayers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredPlayers.map(player => (
                 <div key={player.id} className="group relative">
                   <PlayerCard player={player} onClick={setSelectedPlayer} />
-                  <div className="absolute bottom-6 right-6 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                  <div className="absolute bottom-6 right-6 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); setIsModalOpen(true); }} 
-                      className="h-10 w-10 bg-black/60 backdrop-blur-md text-white rounded-xl flex items-center justify-center border border-white/10 hover:bg-[#f1c40f] hover:text-black transition-all shadow-2xl"
+                      className="h-9 w-9 bg-black/70 backdrop-blur-md text-white rounded-lg flex items-center justify-center border border-white/10 hover:bg-[#f1c40f] hover:text-black transition-all shadow-xl"
                     >
-                      <i className="fas fa-pen text-xs"></i>
+                      <i className="fas fa-pen text-[10px]"></i>
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }} 
-                      className="h-10 w-10 bg-red-600/10 backdrop-blur-md text-red-500 rounded-xl flex items-center justify-center border border-red-500/20 hover:bg-red-600 hover:text-white transition-all shadow-2xl"
+                      className="h-9 w-9 bg-red-600/20 backdrop-blur-md text-red-500 rounded-lg flex items-center justify-center border border-red-500/20 hover:bg-red-600 hover:text-white transition-all shadow-xl"
                     >
-                      <i className="fas fa-trash text-xs"></i>
+                      <i className="fas fa-trash text-[10px]"></i>
                     </button>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-40 glass-panel rounded-[3rem] border border-dashed border-white/5">
-              <div className="h-16 w-16 rounded-3xl bg-slate-900 flex items-center justify-center mb-5 text-slate-700">
-                 <i className="fas fa-search text-2xl"></i>
+            <div className="flex flex-col items-center justify-center py-32 glass-panel rounded-[2rem] border border-dashed border-white/5">
+              <div className="h-12 w-12 rounded-2xl bg-slate-900 flex items-center justify-center mb-4 text-slate-700">
+                 <i className="fas fa-search text-xl"></i>
               </div>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Nenhum atleta corresponde aos critérios de scout</p>
-              <button onClick={clearFilters} className="mt-5 text-[9px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-8 transition-all">Redefinir Filtros</button>
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.1em]">Nenhum registro encontrado</p>
+              <button onClick={clearFilters} className="mt-4 text-[8px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4 transition-all">Redefinir Filtros</button>
             </div>
           )}
         </div>
       </main>
 
-      <footer className="mt-auto py-8 border-t border-white/5 bg-black/40 backdrop-blur-md">
+      <footer className="mt-auto py-6 border-t border-white/5 bg-black/40 backdrop-blur-md">
         <div className="mx-auto max-w-[1600px] px-8 flex items-center justify-between">
-          <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.2em]">
-            Porto Vitória FC Intelligence <span className="text-slate-800 ml-4">V 1.2.4</span>
+          <p className="text-[8px] font-black text-slate-700 uppercase tracking-[0.15em]">
+            Porto Vitória FC Intelligence System <span className="text-slate-800 ml-4">v1.2.4</span>
           </p>
-          <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.2em]">
-            Analista: <span className="text-slate-500">{currentUser.name}</span>
+          <p className="text-[8px] font-black text-slate-700 uppercase tracking-[0.15em]">
+            Sessão Ativa: <span className="text-slate-500">{currentUser.name}</span>
           </p>
         </div>
       </footer>
