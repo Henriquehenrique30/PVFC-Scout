@@ -9,19 +9,19 @@ interface ShadowTeamModalProps {
   onClose: () => void;
 }
 
-// --- CONFIGURAÇÃO DE POSIÇÕES (Mantida a última versão otimizada) ---
+// POSIÇÕES AJUSTADAS (Grid 2x2 ocupa mais largura, então afastei levemente os laterais)
 const FORMATION_SLOTS = [
-  { id: 'ata', label: 'ATA', top: '5%', left: '50%' }, 
-  { id: 'ext_esq', label: 'EXT', top: '18%', left: '8%' }, 
-  { id: 'ext_dir', label: 'EXT', top: '18%', left: '92%' }, 
-  { id: 'mei', label: 'MEI', top: '28%', left: '50%' }, 
-  { id: 'vol1', label: 'VOL', top: '50%', left: '32%' }, 
-  { id: 'vol2', label: 'VOL', top: '50%', left: '68%' }, 
-  { id: 'lte', label: 'LTE', top: '65%', left: '5%' }, 
-  { id: 'ltd', label: 'LTD', top: '65%', left: '95%' }, 
-  { id: 'zag1', label: 'ZAG', top: '75%', left: '35%' }, 
-  { id: 'zag2', label: 'ZAG', top: '75%', left: '65%' }, 
-  { id: 'gol', label: 'GOL', top: '92%', left: '50%' }, 
+  { id: 'ata', label: 'ATA', top: '15%', left: '50%' }, 
+  { id: 'ext_esq', label: 'EXT', top: '25%', left: '15%' }, 
+  { id: 'ext_dir', label: 'EXT', top: '25%', left: '85%' }, 
+  { id: 'mei', label: 'MEI', top: '38%', left: '50%' }, 
+  { id: 'vol1', label: 'VOL', top: '55%', left: '35%' }, 
+  { id: 'vol2', label: 'VOL', top: '55%', left: '65%' }, 
+  { id: 'lte', label: 'LTE', top: '70%', left: '10%' }, 
+  { id: 'ltd', label: 'LTD', top: '70%', left: '90%' }, 
+  { id: 'zag1', label: 'ZAG', top: '80%', left: '38%' }, 
+  { id: 'zag2', label: 'ZAG', top: '80%', left: '62%' }, 
+  { id: 'gol', label: 'GOL', top: '90%', left: '50%' }, 
 ];
 
 const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser, onClose }) => {
@@ -45,56 +45,47 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
     localStorage.setItem(STORAGE_KEY, JSON.stringify(squad));
   }, [squad, STORAGE_KEY]);
 
-  // --- FUNÇÃO DE EXPORTAR PDF (CORRIGIDA PARA TELA CHEIA) ---
   const handleExportPDF = async () => {
     if (!printRef.current) return;
     setIsExporting(true);
 
     try {
-      // Esconde a sidebar temporariamente se estiver aberta para não sair no print
       const wasSelecting = selectingSlot;
       setSelectingSlot(null); 
-      await new Promise(resolve => setTimeout(resolve, 800)); // Delay maior para garantir a renderização sem sidebar
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       const canvas = await html2canvas(printRef.current, {
-        scale: 2, // Alta qualidade
+        scale: 2,
         useCORS: true,
-        backgroundColor: '#1a2e22', // Garante fundo verde escuro
+        backgroundColor: '#1a2e22',
         logging: false,
-        // Força a captura da área visível total
         windowWidth: printRef.current.scrollWidth,
         windowHeight: printRef.current.scrollHeight
       });
 
-      // Restaura a sidebar se estava aberta
       if (wasSelecting) setSelectingSlot(wasSelecting);
 
       const imgData = canvas.toDataURL('image/png');
-      
-      // Configura PDF A4 Paisagem
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       });
 
-      // Obtém as dimensões exatas da página A4
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // Força a imagem a preencher 100% da largura e altura do PDF (sem barra branca)
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`ShadowTeam_${currentUser.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
 
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      alert("Erro ao gerar PDF. Tente novamente.");
+      alert("Erro ao gerar PDF.");
     } finally {
       setIsExporting(false);
     }
   };
 
-  // --- FUNÇÕES DE GERENCIAMENTO ---
   const movePlayer = (slotId: string, fromIndex: number, toIndex: number) => {
     setSquad(prev => {
       const list = [...(prev[slotId] || [])];
@@ -144,15 +135,13 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
   );
 
   return (
-    // MODAL FULLSCREEN: Removemos padding, bordas arredondadas e limites de tamanho
     <div className="fixed inset-0 z-[60] bg-[#0a0f0d] flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in duration-300">
       
-      {/* BOTÕES DE CONTROLE (Ajustados para o canto da tela cheia) */}
+      {/* BOTÕES */}
       <div className="absolute top-6 right-6 z-50 flex gap-3">
-        {/* Botão PDF */}
         <button 
           onClick={handleExportPDF}
-          disabled={isExporting || selectingSlot !== null} // Desabilita se estiver com a sidebar aberta para evitar bugs visuais
+          disabled={isExporting || selectingSlot !== null}
           className="h-12 px-6 bg-[#f1c40f] text-black font-black uppercase text-xs tracking-widest rounded-full hover:bg-white transition-colors flex items-center gap-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           title={selectingSlot ? "Feche a barra lateral para gerar o PDF" : "Gerar PDF"}
         >
@@ -160,18 +149,15 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
           {isExporting ? 'Gerando...' : 'Salvar PDF'}
         </button>
 
-        {/* Botão Fechar */}
         <button onClick={onClose} className="h-12 w-12 bg-slate-900 text-white rounded-full hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg border border-white/10">
           <i className="fas fa-times text-lg"></i>
         </button>
       </div>
 
-      {/* ÁREA DE IMPRESSÃO (FULLSCREEN) */}
+      {/* ÁREA DE IMPRESSÃO */}
       <div ref={printRef} className="flex-1 relative bg-[#1a2e22] overflow-hidden flex items-center justify-center">
         
-        {/* Título e Analista (Visíveis no canto) */}
-        <div className="absolute top-8 left-8 z-10 pointer-events-none">
-            {/* ALTERADO: Apenas "Shadow Team" */}
+        <div className="absolute top-6 left-8 z-10 pointer-events-none">
            <h2 className="font-oswald text-4xl text-white uppercase font-bold tracking-wider drop-shadow-lg">Shadow Team</h2>
            <p className="text-xs font-bold text-[#f1c40f] uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
              <i className="fas fa-user-tie"></i>
@@ -179,13 +165,11 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
            </p>
         </div>
 
-        {/* Fundo do gramado */}
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 49px, #000 50px)' }}></div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none"></div>
 
-        {/* CAMPO (Removido max-w e bordas arredondadas das linhas para visual full) */}
+        {/* CAMPO */}
         <div className="relative w-full h-full bg-[#006837]/10 backdrop-blur-sm">
-          {/* Linhas do campo retas nas bordas */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-b-2 border-x-2 border-white/20"></div>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-t-2 border-x-2 border-white/20"></div>
           <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/10"></div>
@@ -199,51 +183,68 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
               <div 
                 key={slot.id}
                 onClick={() => setSelectingSlot(slot.id)}
-                className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all cursor-pointer flex flex-col items-center ${isSelected ? 'z-50 scale-110' : 'z-10 hover:scale-105'}`}
+                className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all cursor-pointer flex flex-col items-center group ${isSelected ? 'z-50 scale-110' : 'z-10 hover:scale-105'}`}
                 style={{ top: slot.top, left: slot.left }}
               >
-                <div className={`mb-1.5 px-3 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border shadow-lg backdrop-blur-md ${
+                {/* LABEL POSIÇÃO */}
+                <div className={`mb-1 px-3 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border shadow-lg backdrop-blur-md ${
                   isSelected ? 'bg-[#f1c40f] text-black border-[#f1c40f]' : 'bg-black/70 text-white/70 border-white/10'
                 }`}>
                   {slot.label} <span className="text-[8px] opacity-70">({playersInSlot.length})</span>
                 </div>
 
-                <div className="flex flex-col gap-1 items-center min-w-[110px]">
+                {/* --- GRID 2x2 --- */}
+                {/* AQUI ESTÁ A MÁGICA: Em vez de lista vertical, usamos GRID */}
+                <div className={`grid grid-cols-2 gap-1 p-1 rounded-xl transition-all ${
+                  playersInSlot.length > 0 ? 'bg-black/20 border border-white/5 backdrop-blur-sm' : ''
+                }`}>
+                  
                   {playersInSlot.length > 0 ? (
                     playersInSlot.map((player, idx) => (
-                      <div key={player.id} className="relative group w-full flex justify-center">
-                        <div className={`flex items-center gap-2 p-1.5 rounded-xl border shadow-xl backdrop-blur-md transition-all w-fit ${
-                          idx === 0 
-                            ? 'bg-[#006837]/90 border-[#006837] scale-110 z-20 shadow-[0_0_20px_rgba(0,104,55,0.6)]' 
-                            : 'bg-slate-900/90 border-slate-700 scale-100 opacity-95'
-                        }`}>
-                           {idx === 0 && <i className="fas fa-crown text-[9px] text-[#f1c40f] absolute -left-1.5 -top-1.5 bg-black rounded-full p-1.5 shadow-md z-30 border border-[#f1c40f]/30"></i>}
-                           
+                      <div key={player.id} className="relative flex flex-col items-center justify-center">
+                         {/* Cardzinho do Jogador */}
+                         <div className={`relative h-12 w-12 rounded-lg overflow-hidden border transition-all ${
+                            idx === 0 
+                              ? 'border-[#f1c40f] shadow-[0_0_10px_rgba(241,196,15,0.4)] z-20' // Titular (Index 0)
+                              : 'border-white/10 opacity-90'
+                         }`}>
                            <img 
                               src={player.photoUrl} 
                               crossOrigin="anonymous"
-                              className={`${idx === 0 ? 'h-11 w-11' : 'h-8 w-8'} rounded-lg bg-black object-cover border border-white/10`} 
+                              className="h-full w-full object-cover" 
                            />
-                           <div className="flex flex-col leading-none pr-2">
-                              <span className={`${idx === 0 ? 'text-[10px]' : 'text-[9px]'} font-bold text-white uppercase truncate max-w-[90px]`}>{player.name.split(' ')[0]}</span>
-                              <span className="text-[7px] font-bold text-[#f1c40f] uppercase">{player.club}</span>
+                           
+                           {/* Nome Sobreposto (Overlay) */}
+                           <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[6px] font-bold text-white text-center py-0.5 uppercase truncate px-0.5">
+                             {player.name.split(' ')[0]}
                            </div>
-                        </div>
+
+                           {/* Coroa no Titular */}
+                           {idx === 0 && (
+                             <div className="absolute top-0 left-0 bg-black/80 p-0.5 rounded-br-lg border-b border-r border-[#f1c40f]">
+                               <i className="fas fa-crown text-[6px] text-[#f1c40f]"></i>
+                             </div>
+                           )}
+                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="h-11 w-11 rounded-full border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center text-white/20 hover:text-[#f1c40f] hover:border-[#f1c40f] transition-all">
-                      <i className="fas fa-plus text-xs"></i>
+                    // Botão de Adicionar (+) grande quando vazio, ocupando o espaço do Grid
+                    <div className="col-span-2 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center text-white/20 group-hover:text-[#f1c40f] group-hover:border-[#f1c40f] transition-all">
+                          <i className="fas fa-plus text-xs"></i>
+                        </div>
                     </div>
                   )}
                 </div>
+
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* SIDEBAR (Aumentada ligeiramente para tela cheia) */}
+      {/* SIDEBAR */}
       {selectingSlot && (
         <div data-html2canvas-ignore className="w-full md:w-[450px] bg-[#050807] border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300 z-20 absolute right-0 top-0 bottom-0 md:relative shadow-2xl">
           <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#0a0f0d]">
