@@ -26,7 +26,7 @@ export const getScoutReport = async (player: Player): Promise<string> => {
      * Este é o modelo de alto desempenho e compatibilidade universal.
      * Substitui o 1.5-flash com maior inteligência e suporte a system instructions.
      */
-    const modelName = 'gemini-3-flash-preview';
+    const modelName = 'gemini-1.5-flash';
 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: modelName,
