@@ -9,7 +9,6 @@ interface ShadowTeamModalProps {
   onClose: () => void;
 }
 
-// POSIÇÕES AJUSTADAS (Grid 2x2 ocupa mais largura, então afastei levemente os laterais)
 const FORMATION_SLOTS = [
   { id: 'ata', label: 'ATA', top: '15%', left: '50%' }, 
   { id: 'ext_esq', label: 'EXT', top: '25%', left: '15%' }, 
@@ -137,8 +136,8 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
   return (
     <div className="fixed inset-0 z-[60] bg-[#0a0f0d] flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in duration-300">
       
-      {/* BOTÕES */}
-      <div className="absolute top-6 right-6 z-50 flex gap-3">
+      {/* BOTÕES PRINCIPAIS */}
+      <div className="absolute top-6 right-6 z-[70] flex gap-3">
         <button 
           onClick={handleExportPDF}
           disabled={isExporting || selectingSlot !== null}
@@ -168,8 +167,8 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 49px, #000 50px)' }}></div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none"></div>
 
-        {/* CAMPO */}
         <div className="relative w-full h-full bg-[#006837]/10 backdrop-blur-sm">
+          {/* Linhas */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-b-2 border-x-2 border-white/20"></div>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-t-2 border-x-2 border-white/20"></div>
           <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/10"></div>
@@ -186,26 +185,23 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                 className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all cursor-pointer flex flex-col items-center group ${isSelected ? 'z-50 scale-110' : 'z-10 hover:scale-105'}`}
                 style={{ top: slot.top, left: slot.left }}
               >
-                {/* LABEL POSIÇÃO */}
                 <div className={`mb-1 px-3 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border shadow-lg backdrop-blur-md ${
                   isSelected ? 'bg-[#f1c40f] text-black border-[#f1c40f]' : 'bg-black/70 text-white/70 border-white/10'
                 }`}>
                   {slot.label} <span className="text-[8px] opacity-70">({playersInSlot.length})</span>
                 </div>
 
-                {/* --- GRID 2x2 --- */}
-                {/* AQUI ESTÁ A MÁGICA: Em vez de lista vertical, usamos GRID */}
-                <div className={`grid grid-cols-2 gap-1 p-1 rounded-xl transition-all ${
+                {/* GRID AUMENTADO */}
+                <div className={`grid grid-cols-2 gap-1.5 p-1.5 rounded-xl transition-all ${
                   playersInSlot.length > 0 ? 'bg-black/20 border border-white/5 backdrop-blur-sm' : ''
                 }`}>
-                  
                   {playersInSlot.length > 0 ? (
                     playersInSlot.map((player, idx) => (
                       <div key={player.id} className="relative flex flex-col items-center justify-center">
-                         {/* Cardzinho do Jogador */}
-                         <div className={`relative h-12 w-12 rounded-lg overflow-hidden border transition-all ${
+                         {/* AUMENTO DO TAMANHO: h-16 w-16 (64px) */}
+                         <div className={`relative h-16 w-16 rounded-lg overflow-hidden border transition-all ${
                             idx === 0 
-                              ? 'border-[#f1c40f] shadow-[0_0_10px_rgba(241,196,15,0.4)] z-20' // Titular (Index 0)
+                              ? 'border-[#f1c40f] shadow-[0_0_15px_rgba(241,196,15,0.5)] z-20 scale-105' // Titular um pouco maior
                               : 'border-white/10 opacity-90'
                          }`}>
                            <img 
@@ -213,50 +209,51 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                               crossOrigin="anonymous"
                               className="h-full w-full object-cover" 
                            />
-                           
-                           {/* Nome Sobreposto (Overlay) */}
-                           <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[6px] font-bold text-white text-center py-0.5 uppercase truncate px-0.5">
+                           <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[7px] font-bold text-white text-center py-0.5 uppercase truncate px-0.5">
                              {player.name.split(' ')[0]}
                            </div>
-
-                           {/* Coroa no Titular */}
                            {idx === 0 && (
                              <div className="absolute top-0 left-0 bg-black/80 p-0.5 rounded-br-lg border-b border-r border-[#f1c40f]">
-                               <i className="fas fa-crown text-[6px] text-[#f1c40f]"></i>
+                               <i className="fas fa-crown text-[8px] text-[#f1c40f]"></i>
                              </div>
                            )}
                          </div>
                       </div>
                     ))
                   ) : (
-                    // Botão de Adicionar (+) grande quando vazio, ocupando o espaço do Grid
-                    <div className="col-span-2 flex items-center justify-center">
-                        <div className="h-10 w-10 rounded-full border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center text-white/20 group-hover:text-[#f1c40f] group-hover:border-[#f1c40f] transition-all">
+                    <div className="col-span-2 flex items-center justify-center p-2">
+                        <div className="h-12 w-12 rounded-full border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center text-white/20 group-hover:text-[#f1c40f] group-hover:border-[#f1c40f] transition-all">
                           <i className="fas fa-plus text-xs"></i>
                         </div>
                     </div>
                   )}
                 </div>
-
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR COM BOTÃO NA ESQUERDA */}
       {selectingSlot && (
         <div data-html2canvas-ignore className="w-full md:w-[450px] bg-[#050807] border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300 z-20 absolute right-0 top-0 bottom-0 md:relative shadow-2xl">
-          <div className="p-6 border-b border-white/5 flex justify-between items-center bg-[#0a0f0d]">
-            <div>
-              <h3 className="text-[#f1c40f] font-oswald text-2xl font-bold uppercase">Shadow List</h3>
+          
+          {/* HEADER REORGANIZADO */}
+          <div className="p-6 pt-8 border-b border-white/5 flex items-center gap-4 bg-[#0a0f0d]">
+            {/* Botão de Fechar Sidebar agora está na ESQUERDA */}
+            <button onClick={() => setSelectingSlot(null)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all shrink-0">
+              <i className="fas fa-chevron-right"></i>
+            </button>
+            
+            <div className="flex-1">
+              <h3 className="text-[#f1c40f] font-oswald text-2xl font-bold uppercase leading-none">Shadow List</h3>
               <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest mt-1">
                 Posição: <span className="text-white bg-[#006837] px-2 py-0.5 rounded ml-1 text-[10px]">{FORMATION_SLOTS.find(s => s.id === selectingSlot)?.label}</span>
               </p>
             </div>
-            <button onClick={() => setSelectingSlot(null)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all">
-              <i className="fas fa-chevron-right"></i>
-            </button>
+            
+            {/* Espaçador para evitar que o título fique embaixo dos botões da direita */}
+            <div className="w-16"></div>
           </div>
           
           <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
