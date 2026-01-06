@@ -191,14 +191,14 @@ const App: React.FC = () => {
       <header className="sticky top-0 z-40 glass-panel border-b border-white/5 py-3">
         <div className="mx-auto max-w-[1600px] flex items-center justify-between px-8">
           <div className="flex items-center gap-4">
-            {/* Logo Oficial do Porto Vitória FC - URL Estável do oGol */}
+            {/* Logo Oficial do Porto Vitória FC - URL fornecida pelo usuário */}
             <div className="flex h-12 w-12 items-center justify-center shrink-0 overflow-hidden bg-white rounded-lg p-0.5">
                <img 
-                src="https://www.ogol.com.br/img/logos/equipas/8682_imgbank.png" 
+                src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" 
                 alt="Porto Vitória FC Logo" 
                 className="h-full w-full object-contain"
                 onError={(e) => {
-                   (e.target as HTMLImageElement).src = 'https://upload.wikimedia.org/wikipedia/pt/2/23/Logo_do_Porto_Vit%C3%B3ria_Futebol_Clube.png';
+                   (e.target as HTMLImageElement).src = 'https://www.ogol.com.br/img/logos/equipas/8682_imgbank.png';
                 }}
                />
             </div>

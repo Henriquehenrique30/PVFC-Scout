@@ -89,11 +89,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users, onRegister }) => {
         <div className="flex flex-col items-center mb-8">
           <div className="flex h-24 w-24 items-center justify-center shrink-0 mb-4 bg-white rounded-full p-2 shadow-2xl">
              <img 
-              src="https://www.ogol.com.br/img/logos/equipas/8682_imgbank.png" 
+              src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" 
               alt="Porto Vitória FC Logo" 
               className="h-full w-full object-contain"
               onError={(e) => {
-                 (e.target as HTMLImageElement).src = 'https://upload.wikimedia.org/wikipedia/pt/2/23/Logo_do_Porto_Vit%C3%B3ria_Futebol_Clube.png';
+                 (e.target as HTMLImageElement).src = 'https://www.ogol.com.br/img/logos/equipas/8682_imgbank.png';
               }}
              />
           </div>
