@@ -6,19 +6,19 @@ interface ShadowTeamModalProps {
   onClose: () => void;
 }
 
-// AJUSTE DE POSIÇÕES: ATA subiu para 6%, EXT subiu para 20%
+// AJUSTE DE POSIÇÕES: Formação redistribuída para baixo para caber o ATA
 const FORMATION_SLOTS = [
-  { id: 'gol', label: 'GOL', top: '88%', left: '50%' },
-  { id: 'zag1', label: 'ZAG', top: '72%', left: '35%' },
-  { id: 'zag2', label: 'ZAG', top: '72%', left: '65%' },
-  { id: 'lte', label: 'LTE', top: '65%', left: '10%' },
-  { id: 'ltd', label: 'LTD', top: '65%', left: '90%' },
-  { id: 'vol1', label: 'VOL', top: '50%', left: '35%' },
-  { id: 'vol2', label: 'VOL', top: '50%', left: '65%' },
-  { id: 'mei', label: 'MEI', top: '36%', left: '50%' },
-  { id: 'ext_esq', label: 'EXT', top: '20%', left: '15%' },
-  { id: 'ext_dir', label: 'EXT', top: '20%', left: '85%' },
-  { id: 'ata', label: 'ATA', top: '6%', left: '50%' }, // <--- Mudança Principal (estava 15%)
+  { id: 'gol', label: 'GOL', top: '92%', left: '50%' }, // Desceu (era 88%)
+  { id: 'zag1', label: 'ZAG', top: '78%', left: '35%' }, // Desceu (era 72%)
+  { id: 'zag2', label: 'ZAG', top: '78%', left: '65%' }, // Desceu
+  { id: 'lte', label: 'LTE', top: '68%', left: '10%' }, // Desceu levemente
+  { id: 'ltd', label: 'LTD', top: '68%', left: '90%' }, // Desceu levemente
+  { id: 'vol1', label: 'VOL', top: '54%', left: '35%' }, // Desceu (era 50%)
+  { id: 'vol2', label: 'VOL', top: '54%', left: '65%' }, // Desceu
+  { id: 'mei', label: 'MEI', top: '40%', left: '50%' }, // Desceu (era 36%) para fugir do ATA
+  { id: 'ext_esq', label: 'EXT', top: '25%', left: '15%' }, // Desceu (era 20%)
+  { id: 'ext_dir', label: 'EXT', top: '25%', left: '85%' }, // Desceu
+  { id: 'ata', label: 'ATA', top: '11%', left: '53%' }, // <--- MUDANÇA: Baixo (11%) e Direita (53%)
 ];
 
 const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) => {
@@ -91,13 +91,14 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
           <i className="fas fa-times text-lg"></i>
         </button>
 
+        {/* --- CAMPO (VISUALIZADOR) --- */}
         <div className="flex-1 relative bg-[#1a2e22] overflow-hidden flex items-center justify-center p-4">
           <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 49px, #000 50px)' }}></div>
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none"></div>
 
           <div className="relative w-full h-full max-w-[1200px] border-2 border-white/10 rounded-xl shadow-2xl bg-[#006837]/10 backdrop-blur-sm mx-auto my-2">
             
-            {/* Desenho do Campo */}
+            {/* Linhas do Campo */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[12%] border-b-2 border-x-2 border-white/20 rounded-b-xl"></div>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 h-[12%] border-t-2 border-x-2 border-white/20 rounded-t-xl"></div>
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/10"></div>
@@ -114,12 +115,14 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
                   className={`absolute transform -translate-x-1/2 -translate-y-1/2 transition-all cursor-pointer z-10 flex flex-col items-center ${isSelected ? 'z-50 scale-105' : 'hover:scale-105'}`}
                   style={{ top: slot.top, left: slot.left }}
                 >
+                  {/* LABEL POSIÇÃO */}
                   <div className={`mb-1.5 px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest border shadow-lg ${
                     isSelected ? 'bg-[#f1c40f] text-black border-[#f1c40f]' : 'bg-black/60 text-white/50 border-white/10'
                   }`}>
                     {slot.label} <span className="text-[9px] opacity-70">({playersInSlot.length})</span>
                   </div>
 
+                  {/* LISTA DE JOGADORES */}
                   <div className="flex flex-col gap-1.5 items-center min-w-[120px]">
                     {playersInSlot.length > 0 ? (
                       playersInSlot.map((player, idx) => (
@@ -129,6 +132,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
                               ? 'bg-[#006837]/90 border-[#006837] scale-110 z-20 shadow-[0_0_20px_rgba(0,104,55,0.5)]' 
                               : 'bg-slate-900/80 border-slate-700 scale-95 opacity-90'
                           }`}>
+                             {/* COROA */}
                              {idx === 0 && <i className="fas fa-crown text-[10px] text-[#f1c40f] absolute -left-2 -top-2 bg-black rounded-full p-1.5 shadow-md z-30 border border-[#f1c40f]/30"></i>}
                              
                              <img src={player.photoUrl} className={`${idx === 0 ? 'h-12 w-12' : 'h-8 w-8'} rounded-lg bg-black object-cover border border-white/10`} />
@@ -141,6 +145,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
                         </div>
                       ))
                     ) : (
+                      // SLOT VAZIO
                       <div className="h-12 w-12 rounded-full border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center text-white/20 hover:text-[#f1c40f] hover:border-[#f1c40f] transition-all">
                         <i className="fas fa-plus text-xs"></i>
                       </div>
@@ -152,6 +157,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
           </div>
         </div>
 
+        {/* --- SIDEBAR --- */}
         {selectingSlot && (
           <div className="w-full md:w-[450px] bg-[#050807] border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300 z-20 absolute right-0 top-0 bottom-0 md:relative shadow-2xl">
             <div className="p-8 border-b border-white/5 flex justify-between items-center bg-[#0a0f0d]">
@@ -167,6 +173,8 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
             </div>
             
             <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+              
+              {/* LISTA PRIORIDADE */}
               <div className="p-6 border-b border-white/5 bg-[#0a0f0d]/50">
                 <h4 className="text-[10px] font-black text-[#006837] uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <i className="fas fa-list-ol"></i> Ordem de Preferência
@@ -215,6 +223,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, onClose }) =
                 </div>
               </div>
 
+              {/* BUSCA */}
               <div className="p-6 flex-1">
                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                   <i className="fas fa-search"></i> Banco de Atletas
