@@ -1,30 +1,49 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { Player } from "../types";
 
 export const getScoutReport = async (player: Player): Promise<string> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.API_KEY;
-  if (!apiKey) throw new Error("Chave não encontrada");
-
-  const genAI = new GoogleGenerativeAI(apiKey);
+  // 1. Pega a chave da Groq
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+  
+  if (!apiKey) throw new Error("Chave da Groq não encontrada (VITE_GROQ_API_KEY).");
 
   try {
-    // --- DIAGNÓSTICO DE MODELOS ---
-    // Vamos tentar listar o que está disponível para sua conta
-    console.log("🔍 Verificando modelos disponíveis...");
-    
-    // Tenta uma chamada direta para testar a conexão
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    try {
-      const result = await model.generateContent(`Teste rápido de conexão.`);
-      return result.response.text();
-    } catch (innerError: any) {
-      console.error("❌ Falha no flash. Tentando listar modelos oficiais...");
-      // Se falhar, vamos tentar descobrir o motivo real, se é bloqueio ou nome
-      return `ERRO GOOGLE: ${innerError.message}. \n(Verifique se a API 'Generative Language' está ativada no Google Cloud Console do projeto 'novo projeto v2').`;
-    }
+    // 2. Inicializa a Groq
+    // 'dangerouslyAllowBrowser: true' é necessário porque estamos no front-end (Vite)
+    const groq = new Groq({ 
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true 
+    });
+
+    // 3. Monta o Prompt
+    const prompt = `
+    Atue como Diretor de Inteligência de Futebol. Analise este atleta:
+    Nome: ${player.name}
+    Posição: ${player.position1}
+    Dados Técnicos (Contexto): ${player.aiContextData?.slice(0, 6000) || "Sem dados detalhados."}
+
+    Gere um relatório técnico direto em 3 parágrafos:
+    1. Análise Física e Técnica.
+    2. Leitura Tática.
+    3. Veredito Final (Contratar, Monitorar ou Dispensar).
+    `;
+
+    // 4. Chama o modelo Llama 3 (Muito rápido e inteligente)
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "llama3-8b-8192", // Modelo gratuito, rápido e excelente
+      temperature: 0.5,
+    });
+
+    return chatCompletion.choices[0]?.message?.content || "Sem resposta da IA.";
 
   } catch (error: any) {
-    return `ERRO CRÍTICO: ${error.message}`;
+    console.error("❌ Erro Groq:", error);
+    return `Erro ao gerar relatório: ${error.message}`;
   }
 };
