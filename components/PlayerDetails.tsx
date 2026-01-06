@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Player, Recommendation } from '../types';
 import { getScoutReport } from '../services/geminiService';
@@ -39,8 +38,8 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   }, [player]);
 
   const handleOpenConfig = async () => {
-    if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
-      await window.aistudio.openSelectKey();
+    if ((window as any).aistudio && typeof (window as any).aistudio.openSelectKey === 'function') {
+      await (window as any).aistudio.openSelectKey();
       fetchReport();
     }
   };
@@ -103,12 +102,21 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                 <span className="h-1 w-1 rounded-full bg-slate-800"></span>
                 <span className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">{player.club}</span>
               </div>
+              
+              {/* --- NOVO: BADGE DA COMPETIÇÃO --- */}
+              <div className="mt-4 flex items-center justify-center">
+                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[9px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-2 shadow-lg">
+                    <i className="fas fa-trophy text-[#f1c40f]"></i>
+                    {player.competition || 'Competição N/A'}
+                </div>
+              </div>
+              {/* --------------------------------- */}
             </div>
 
             <div className="mt-8 grid grid-cols-2 gap-3 w-full shrink-0">
               {[
                 { label: 'OVR', val: averageRating, color: 'text-[#f1c40f]' },
-                { label: 'AVALIAÇÃO', val: player.scoutYear },
+                { label: 'TEMPORADA', val: player.scoutYear }, // Renomeado de AVALIAÇÃO para TEMPORADA
                 { label: 'IDADE', val: player.age },
                 { label: 'ALTURA', val: `${player.height}cm` }
               ].map((item, idx) => (
