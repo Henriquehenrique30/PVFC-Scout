@@ -190,24 +190,20 @@ const App: React.FC = () => {
       {/* Main Professional Header */}
       <header className="sticky top-0 z-40 glass-panel border-b border-white/5 py-4">
         <div className="mx-auto max-w-[1600px] flex items-center justify-between px-8">
-          <div className="flex items-center gap-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white border-2 border-[#006837] shadow-[0_0_20px_rgba(0,104,55,0.2)]">
+          <div className="flex items-center gap-5">
+            {/* Logo Estilizado conforme imagem do usuário */}
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white border-[3px] border-[#006837] shadow-[0_0_15px_rgba(0,104,55,0.3)] shrink-0">
                <i className="fas fa-ship text-[#006837] text-2xl"></i>
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight">
-                  Porto Vitória <span className="text-[#f1c40f]">FC</span>
+              <div className="flex items-baseline gap-1.5">
+                <h1 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight leading-none">
+                  PORTO VITÓRIA <span className="text-[#f1c40f]">FC</span>
                 </h1>
-                <span className="bg-[#006837]/20 text-[#006837] text-[8px] font-black px-2 py-0.5 rounded border border-[#006837]/30 uppercase tracking-widest">Market Intelligence</span>
               </div>
-              <div className="flex items-center gap-3 mt-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Base de Dados Ativa</span>
-                </div>
-                <div className="h-3 w-px bg-slate-800"></div>
-                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Sincronizado: {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#006837]"></span>
+                <span className="text-[9px] font-black text-[#006837] uppercase tracking-widest">Departamento de Análise de Mercado</span>
               </div>
             </div>
           </div>
