@@ -87,11 +87,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin, users, onRegister }) => {
 
       <div className="relative w-full max-w-md p-6 md:p-8">
         <div className="flex flex-col items-center mb-8">
-          <div className="flex h-20 w-20 items-center justify-center shrink-0 mb-4">
+          <div className="flex h-24 w-24 items-center justify-center shrink-0 mb-4 bg-white rounded-full p-2 shadow-2xl">
              <img 
-              src="https://upload.wikimedia.org/wikipedia/pt/2/23/Logo_do_Porto_Vit%C3%B3ria_Futebol_Clube.png" 
+              src="https://www.ogol.com.br/img/logos/equipas/8682_imgbank.png" 
               alt="Porto Vitória FC Logo" 
-              className="h-full w-full object-contain filter drop-shadow-[0_0_15px_rgba(0,104,55,0.4)]"
+              className="h-full w-full object-contain"
+              onError={(e) => {
+                 (e.target as HTMLImageElement).src = 'https://upload.wikimedia.org/wikipedia/pt/2/23/Logo_do_Porto_Vit%C3%B3ria_Futebol_Clube.png';
+              }}
              />
           </div>
           <h1 className="font-oswald text-2xl font-bold uppercase tracking-tighter text-white">
