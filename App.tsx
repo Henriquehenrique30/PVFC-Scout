@@ -6,6 +6,7 @@ import AddPlayerModal from './components/AddPlayerModal';
 import Auth from './components/Auth';
 import AdminUserManagement from './components/AdminUserManagement';
 import ShadowTeamModal from './components/ShadowTeamModal';
+import ComparisonModal from './components/ComparisonModal'; // <--- IMPORT NOVO
 import { dbService, isCloudActive } from './services/database';
 
 const App: React.FC = () => {
@@ -23,6 +24,7 @@ const App: React.FC = () => {
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isShadowTeamOpen, setIsShadowTeamOpen] = useState(false);
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false); // <--- ESTADO NOVO
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
@@ -37,7 +39,7 @@ const App: React.FC = () => {
   });
 
   const loadData = async (isAutoRefresh = false) => {
-    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer || isShadowTeamOpen)) return;
+    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer || isShadowTeamOpen || isComparisonOpen)) return;
     if (!isCloudActive()) return;
     if (!isAutoRefresh) setLoading(true);
 
@@ -59,7 +61,7 @@ const App: React.FC = () => {
     loadData();
     const interval = setInterval(() => loadData(true), 45000);
     return () => clearInterval(interval);
-  }, [isModalOpen, isAdminPanelOpen, selectedPlayer, isShadowTeamOpen]);
+  }, [isModalOpen, isAdminPanelOpen, selectedPlayer, isShadowTeamOpen, isComparisonOpen]);
 
   useEffect(() => {
     if (currentUser) {
@@ -228,7 +230,15 @@ const App: React.FC = () => {
                 <button onClick={() => setIsAdminPanelOpen(true)} className="px-3 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[9px] font-black uppercase tracking-widest border border-orange-500/20 hover:bg-orange-500/20 transition-all">Admin</button>
               )}
               
-              {/* --- BOTÃO SHADOW TEAM --- */}
+              {/* BOTÃO DATA LAB (NOVO) */}
+              <button 
+                onClick={() => setIsComparisonOpen(true)}
+                className="bg-slate-900 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-slate-300 hover:bg-slate-800 hover:text-white transition-all border border-white/5 flex items-center gap-2"
+              >
+                <i className="fas fa-database"></i> Data Lab
+              </button>
+
+              {/* BOTÃO SHADOW TEAM */}
               <button 
                 onClick={() => setIsShadowTeamOpen(true)}
                 className="bg-[#1a2e22] px-4 py-2 rounded-lg text-[9px] font-black uppercase text-[#f1c40f] hover:bg-[#006837] hover:text-white transition-all shadow-lg border border-[#f1c40f]/20 flex items-center gap-2"
@@ -417,12 +427,17 @@ const App: React.FC = () => {
       </footer>
 
       {/* MODAL DO SHADOW TEAM */}
-      {isShadowTeamOpen && currentUser && ( // <--- Adicionado currentUser aqui
+      {isShadowTeamOpen && currentUser && (
         <ShadowTeamModal 
           players={players} 
-          currentUser={currentUser} // <--- Adicionado currentUser aqui
+          currentUser={currentUser} 
           onClose={() => setIsShadowTeamOpen(false)} 
         />
+      )}
+
+      {/* MODAL DE COMPARAÇÃO (DATA LAB) */}
+      {isComparisonOpen && (
+        <ComparisonModal onClose={() => setIsComparisonOpen(false)} />
       )}
 
       {selectedPlayer && <PlayerDetails player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
