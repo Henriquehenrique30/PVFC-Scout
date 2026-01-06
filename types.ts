@@ -1,15 +1,13 @@
 
 export enum Position {
-  GK = 'GK',
-  CB = 'CB',
-  LB = 'LB',
-  RB = 'RB',
-  CDM = 'CDM',
-  CM = 'CM',
-  CAM = 'CAM',
-  LW = 'LW',
-  RW = 'RW',
-  ST = 'ST'
+  GOL = 'GOL',
+  ZAG = 'ZAG',
+  LTD = 'LTD',
+  LTE = 'LTE',
+  VOL = 'VOL',
+  MEI = 'MEI',
+  EXT = 'EXT',
+  ATA = 'ATA'
 }
 
 export type Recommendation = 'G1 Elite' | 'G2 Titular' | 'G3 Monitoramento' | 'Base';
@@ -68,7 +66,7 @@ export interface User {
   lastName: string;
   username: string;
   email?: string;
-  name: string; // Mantido para compatibilidade, será firstName + lastName
+  name: string; 
   password?: string;
   role: UserRole;
   status: UserStatus;
