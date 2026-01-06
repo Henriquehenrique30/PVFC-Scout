@@ -19,10 +19,10 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
 
   const getRecStyles = (rec: Recommendation) => {
     switch(rec) {
-      case 'G1 Elite': return { border: 'border-[#f1c40f]/50', bg: 'bg-[#f1c40f]/5', text: 'text-[#f1c40f]', dot: 'bg-[#f1c40f]' };
-      case 'G2 Titular': return { border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', text: 'text-emerald-400', dot: 'bg-emerald-500' };
-      case 'G3 Monitoramento': return { border: 'border-blue-500/30', bg: 'bg-blue-500/5', text: 'text-blue-400', dot: 'bg-blue-500' };
-      default: return { border: 'border-slate-700/30', bg: 'bg-slate-800/5', text: 'text-slate-400', dot: 'bg-slate-500' };
+      case 'G1 Elite': return { border: 'border-[#f1c40f]', bg: 'bg-[#f1c40f]/10', text: 'text-[#f1c40f]', glow: 'shadow-[0_0_20px_rgba(241,196,15,0.15)]' };
+      case 'G2 Titular': return { border: 'border-white/40', bg: 'bg-white/5', text: 'text-white', glow: 'shadow-none' };
+      case 'G3 Monitoramento': return { border: 'border-orange-500/40', bg: 'bg-orange-500/10', text: 'text-orange-500', glow: 'shadow-none' };
+      default: return { border: 'border-[#006837]/40', bg: 'bg-[#006837]/10', text: 'text-[#006837]', glow: 'shadow-none' };
     }
   };
 
@@ -31,79 +31,78 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
   return (
     <div 
       onClick={() => onClick(player)}
-      className="group relative cursor-pointer overflow-hidden rounded-[2rem] bg-[#0a0f0d]/80 border border-white/5 transition-all duration-500 hover:border-[#006837]/50 hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] flex flex-col"
+      className={`group relative cursor-pointer overflow-hidden rounded-[2.5rem] bg-[#0a0f0d] border ${styles.border} transition-all duration-500 hover:-translate-y-2 ${styles.glow} flex flex-col`}
     >
-      {/* Top HUD Area */}
-      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#006837]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#006837]/10 blur-[50px] -z-10 group-hover:bg-[#f1c40f]/10 transition-colors"></div>
       
-      <div className="relative h-60 overflow-hidden">
-        {/* Photo with Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0d] via-transparent to-black/20 z-10"></div>
+      {/* Top Section: Photo & Badge */}
+      <div className="relative h-64 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0d] to-transparent z-10"></div>
         <img 
           src={player.photoUrl} 
           alt={player.name} 
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale-[20%] group-hover:grayscale-0"
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         
-        {/* Quality Indicator */}
-        <div className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/5">
-          <div className={`h-1.5 w-1.5 rounded-full ${styles.dot} animate-pulse`}></div>
-          <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${styles.text}`}>{player.recommendation}</span>
+        {/* Quality Badge */}
+        <div className={`absolute top-4 left-6 z-20 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${styles.border} ${styles.bg} ${styles.text}`}>
+          {player.recommendation}
         </div>
 
-        {/* Technical Score */}
-        <div className="absolute top-4 right-4 z-20 flex flex-col items-end">
-          <div className="bg-[#f1c40f] h-10 w-10 rounded-xl flex items-center justify-center text-lg font-black text-black shadow-2xl">
+        {/* Rating Hexagon-style */}
+        <div className="absolute top-4 right-6 z-20 flex flex-col items-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f1c40f] text-xl font-black text-black shadow-lg transform rotate-3 group-hover:rotate-0 transition-transform">
             {averageRating}
           </div>
-          <span className="text-[7px] font-black text-white/40 uppercase tracking-widest mt-1 mr-1">Rating</span>
+          <span className="mt-1 text-[7px] font-black uppercase text-white tracking-widest opacity-50">OVR</span>
         </div>
       </div>
 
-      {/* Profile Data */}
-      <div className="p-6 pt-2">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="px-2 py-0.5 rounded bg-[#006837]/20 border border-[#006837]/30 text-[9px] font-black text-[#006837] uppercase tracking-widest">
-            {player.position1}
-          </div>
-          <span className="text-[10px] font-bold text-slate-500 uppercase">{player.age}y</span>
-          <span className="h-1 w-1 rounded-full bg-slate-800"></span>
-          <span className="text-[10px] font-bold text-slate-500 uppercase">{player.height}cm</span>
+      {/* Content Section */}
+      <div className="px-6 pb-6 pt-2 flex-grow flex flex-col">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[10px] font-black text-[#006837] uppercase tracking-widest">{player.position1}</span>
+          <span className="h-1 w-1 rounded-full bg-slate-700"></span>
+          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{player.age} anos</span>
         </div>
 
-        <h3 className="font-oswald text-2xl font-bold uppercase text-white group-hover:text-[#f1c40f] transition-colors leading-tight">
+        <h3 className="font-oswald text-xl font-bold uppercase text-white group-hover:text-[#f1c40f] transition-colors line-clamp-1">
           {player.name}
         </h3>
         
-        <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-1">
+        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-tight italic mb-4">
           {player.club}
         </p>
 
-        {/* Metric Grid - High Contrast */}
-        <div className="mt-6 pt-6 border-t border-white/5 grid grid-cols-3 gap-y-4">
-          {[
-            { label: 'Ritmo', val: player.stats.pace },
-            { label: 'Passe', val: player.stats.passing },
-            { label: 'Drible', val: player.stats.dribbling },
-            { label: 'Defesa', val: player.stats.defending },
-            { label: 'Físico', val: player.stats.physical },
-            { label: 'Final.', val: player.stats.shooting },
-          ].map((stat, i) => (
-            <div key={i} className="flex flex-col">
-              <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest mb-1">{stat.label}</span>
-              <div className="flex items-center gap-2">
-                 <span className="text-xs font-black text-white">{stat.val}</span>
-                 <div className="h-0.5 flex-1 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#006837]" style={{ width: `${(stat.val/5)*100}%` }}></div>
-                 </div>
-              </div>
-            </div>
-          ))}
+        {/* Stats Grid */}
+        <div className="mt-auto pt-4 border-t border-white/5 grid grid-cols-3 gap-y-3">
+          <div className="flex flex-col">
+            <span className="text-[7px] font-black text-slate-600 uppercase">Ritmo</span>
+            <span className="text-xs font-bold text-white">{player.stats.pace}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[7px] font-black text-slate-600 uppercase">Passe</span>
+            <span className="text-xs font-bold text-white">{player.stats.passing}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[7px] font-black text-slate-600 uppercase">Drible</span>
+            <span className="text-xs font-bold text-white">{player.stats.dribbling}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[7px] font-black text-slate-600 uppercase">Defesa</span>
+            <span className="text-xs font-bold text-white">{player.stats.defending}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[7px] font-black text-slate-600 uppercase">Físico</span>
+            <span className="text-xs font-bold text-white">{player.stats.physical}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[7px] font-black text-slate-600 uppercase">Finaliz.</span>
+            <span className="text-xs font-bold text-white">{player.stats.shooting}</span>
+          </div>
         </div>
       </div>
-      
-      {/* Footer "Scan" Effect */}
-      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#f1c40f] opacity-0 group-hover:opacity-40 shadow-[0_0_10px_#f1c40f] transition-opacity"></div>
     </div>
   );
 };
