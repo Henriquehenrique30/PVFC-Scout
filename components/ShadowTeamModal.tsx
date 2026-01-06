@@ -9,17 +9,19 @@ interface ShadowTeamModalProps {
   onClose: () => void;
 }
 
+// --- CONFIGURAÇÃO DE POSIÇÕES EXPANDIDA HORIZONTALMENTE ---
+// Afastei as posições do centro (left) para dar espaço aos grids maiores
 const FORMATION_SLOTS = [
   { id: 'ata', label: 'ATA', top: '15%', left: '50%' }, 
-  { id: 'ext_esq', label: 'EXT', top: '25%', left: '15%' }, 
-  { id: 'ext_dir', label: 'EXT', top: '25%', left: '85%' }, 
+  { id: 'ext_esq', label: 'EXT', top: '25%', left: '12%' }, // Mais aberto (era 15%)
+  { id: 'ext_dir', label: 'EXT', top: '25%', left: '88%' }, // Mais aberto (era 85%)
   { id: 'mei', label: 'MEI', top: '38%', left: '50%' }, 
-  { id: 'vol1', label: 'VOL', top: '55%', left: '35%' }, 
-  { id: 'vol2', label: 'VOL', top: '55%', left: '65%' }, 
-  { id: 'lte', label: 'LTE', top: '70%', left: '10%' }, 
-  { id: 'ltd', label: 'LTD', top: '70%', left: '90%' }, 
-  { id: 'zag1', label: 'ZAG', top: '80%', left: '38%' }, 
-  { id: 'zag2', label: 'ZAG', top: '80%', left: '62%' }, 
+  { id: 'vol1', label: 'VOL', top: '55%', left: '30%' }, // Mais aberto (era 35%)
+  { id: 'vol2', label: 'VOL', top: '55%', left: '70%' }, // Mais aberto (era 65%)
+  { id: 'lte', label: 'LTE', top: '70%', left: '8%' },  // Mais aberto (era 10%)
+  { id: 'ltd', label: 'LTD', top: '70%', left: '92%' }, // Mais aberto (era 90%)
+  { id: 'zag1', label: 'ZAG', top: '80%', left: '32%' }, // Mais aberto (era 38%)
+  { id: 'zag2', label: 'ZAG', top: '80%', left: '68%' }, // Mais aberto (era 62%)
   { id: 'gol', label: 'GOL', top: '90%', left: '50%' }, 
 ];
 
@@ -191,17 +193,17 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                   {slot.label} <span className="text-[8px] opacity-70">({playersInSlot.length})</span>
                 </div>
 
-                {/* GRID AUMENTADO */}
-                <div className={`grid grid-cols-2 gap-1.5 p-1.5 rounded-xl transition-all ${
+                {/* GRID AUMENTADO MAIS AINDA (p-2 gap-2) */}
+                <div className={`grid grid-cols-2 gap-2 p-2 rounded-xl transition-all ${
                   playersInSlot.length > 0 ? 'bg-black/20 border border-white/5 backdrop-blur-sm' : ''
                 }`}>
                   {playersInSlot.length > 0 ? (
                     playersInSlot.map((player, idx) => (
                       <div key={player.id} className="relative flex flex-col items-center justify-center">
-                         {/* AUMENTO DO TAMANHO: h-16 w-16 (64px) */}
-                         <div className={`relative h-16 w-16 rounded-lg overflow-hidden border transition-all ${
+                         {/* AUMENTO DO TAMANHO: h-20 w-20 (80px) */}
+                         <div className={`relative h-20 w-20 rounded-lg overflow-hidden border transition-all ${
                             idx === 0 
-                              ? 'border-[#f1c40f] shadow-[0_0_15px_rgba(241,196,15,0.5)] z-20 scale-105' // Titular um pouco maior
+                              ? 'border-[#f1c40f] shadow-[0_0_20px_rgba(241,196,15,0.5)] z-20 scale-105' 
                               : 'border-white/10 opacity-90'
                          }`}>
                            <img 
@@ -209,12 +211,12 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                               crossOrigin="anonymous"
                               className="h-full w-full object-cover" 
                            />
-                           <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[7px] font-bold text-white text-center py-0.5 uppercase truncate px-0.5">
+                           <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[8px] font-bold text-white text-center py-0.5 uppercase truncate px-0.5">
                              {player.name.split(' ')[0]}
                            </div>
                            {idx === 0 && (
                              <div className="absolute top-0 left-0 bg-black/80 p-0.5 rounded-br-lg border-b border-r border-[#f1c40f]">
-                               <i className="fas fa-crown text-[8px] text-[#f1c40f]"></i>
+                               <i className="fas fa-crown text-[9px] text-[#f1c40f]"></i>
                              </div>
                            )}
                          </div>
@@ -222,8 +224,8 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                     ))
                   ) : (
                     <div className="col-span-2 flex items-center justify-center p-2">
-                        <div className="h-12 w-12 rounded-full border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center text-white/20 group-hover:text-[#f1c40f] group-hover:border-[#f1c40f] transition-all">
-                          <i className="fas fa-plus text-xs"></i>
+                        <div className="h-16 w-16 rounded-full border-2 border-dashed border-white/20 bg-black/20 flex items-center justify-center text-white/20 group-hover:text-[#f1c40f] group-hover:border-[#f1c40f] transition-all">
+                          <i className="fas fa-plus text-base"></i>
                         </div>
                     </div>
                   )}
@@ -234,13 +236,11 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
         </div>
       </div>
 
-      {/* SIDEBAR COM BOTÃO NA ESQUERDA */}
+      {/* SIDEBAR (Mantida a correção do botão na esquerda) */}
       {selectingSlot && (
         <div data-html2canvas-ignore className="w-full md:w-[450px] bg-[#050807] border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300 z-20 absolute right-0 top-0 bottom-0 md:relative shadow-2xl">
           
-          {/* HEADER REORGANIZADO */}
           <div className="p-6 pt-8 border-b border-white/5 flex items-center gap-4 bg-[#0a0f0d]">
-            {/* Botão de Fechar Sidebar agora está na ESQUERDA */}
             <button onClick={() => setSelectingSlot(null)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all shrink-0">
               <i className="fas fa-chevron-right"></i>
             </button>
@@ -251,8 +251,6 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                 Posição: <span className="text-white bg-[#006837] px-2 py-0.5 rounded ml-1 text-[10px]">{FORMATION_SLOTS.find(s => s.id === selectingSlot)?.label}</span>
               </p>
             </div>
-            
-            {/* Espaçador para evitar que o título fique embaixo dos botões da direita */}
             <div className="w-16"></div>
           </div>
           
