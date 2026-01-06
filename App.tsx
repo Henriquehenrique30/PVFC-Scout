@@ -241,34 +241,34 @@ const App: React.FC = () => {
             <div className="glass-panel p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-8">
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <div className="flex items-center gap-2">
-                  <i className="fas fa-filter text-[#006837] text-sm"></i>
-                  <h3 className="text-[12px] font-black text-white uppercase tracking-[0.15em]">Filtros</h3>
+                  <i className="fas fa-filter text-[#006837] text-xs"></i>
+                  <h3 className="text-[11px] font-black text-white uppercase tracking-[0.15em]">Filtros</h3>
                 </div>
-                <button onClick={clearFilters} className="text-[10px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Resetar</button>
+                <button onClick={clearFilters} className="text-[9px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4">Resetar</button>
               </div>
 
               <section>
-                <label className="block text-[11px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Pesquisa</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Pesquisa</label>
                 <div className="relative group">
                   <input 
                     type="text" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} 
                     placeholder="Nome ou Clube..." 
-                    className="w-full bg-black/40 border border-white/5 rounded-xl py-4 pl-10 pr-4 text-[13px] text-white outline-none focus:ring-1 focus:ring-[#006837] transition-all" 
+                    className="w-full bg-black/40 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-[12px] text-white outline-none focus:ring-1 focus:ring-[#006837] transition-all" 
                   />
-                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[11px] group-focus-within:text-[#006837] transition-colors"></i>
+                  <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[10px] group-focus-within:text-[#006837] transition-colors"></i>
                 </div>
               </section>
 
               <section>
-                <label className="block text-[11px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Prioridade</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Prioridade</label>
                 <div className="space-y-1.5">
                   {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
                     <button 
                       key={rec}
                       onClick={() => toggleFilter('recommendations', rec)}
-                      className={`w-full text-left px-4 py-3 rounded-lg text-[11px] font-black uppercase border transition-all flex items-center justify-between ${
+                      className={`w-full text-left px-4 py-2.5 rounded-lg text-[10px] font-black uppercase border transition-all flex items-center justify-between ${
                         filters.recommendations.includes(rec as Recommendation) 
-                        ? 'bg-[#006837] border-[#006837] text-white shadow-lg' 
+                        ? 'bg-[#006837] border-[#006837] text-white' 
                         : 'bg-black/20 border-white/5 text-slate-600 hover:text-slate-400'
                       }`}
                     >
@@ -282,15 +282,15 @@ const App: React.FC = () => {
               </section>
 
               <section>
-                <label className="block text-[11px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Posições</label>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Posições</label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {Object.values(Position).map(pos => (
                     <button 
                       key={pos} 
                       onClick={() => toggleFilter('positions', pos)}
-                      className={`py-2 rounded bg-black/20 border border-white/5 text-[10px] font-black uppercase transition-all ${
+                      className={`py-2 rounded bg-black/20 border border-white/5 text-[9px] font-black uppercase transition-all ${
                         filters.positions.includes(pos) 
-                        ? 'bg-[#f1c40f] border-[#f1c40f] text-black shadow-md' 
+                        ? 'bg-[#f1c40f] border-[#f1c40f] text-black shadow-sm' 
                         : 'text-slate-600 hover:text-white'
                       }`}
                     >
@@ -301,18 +301,18 @@ const App: React.FC = () => {
               </section>
 
               <section>
-                <label className="block text-[11px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Faixa Etária</label>
-                <div className="flex items-center gap-2 bg-black/20 p-3 rounded-xl border border-white/5">
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Faixa Etária</label>
+                <div className="flex items-center gap-2 bg-black/20 p-2.5 rounded-xl border border-white/5">
                   <input 
                     type="number" min="0" max="60" value={filters.minAge} 
                     onChange={e => setFilters(f => ({...f, minAge: parseInt(e.target.value) || 0}))}
-                    className="w-full bg-transparent text-center text-[12px] font-black text-white outline-none" 
+                    className="w-full bg-transparent text-center text-[11px] font-black text-white outline-none" 
                   />
                   <div className="h-px w-3 bg-slate-800"></div>
                   <input 
                     type="number" min="0" max="60" value={filters.maxAge} 
                     onChange={e => setFilters(f => ({...f, maxAge: parseInt(e.target.value) || 60}))}
-                    className="w-full bg-transparent text-center text-[12px] font-black text-white outline-none" 
+                    className="w-full bg-transparent text-center text-[11px] font-black text-white outline-none" 
                   />
                 </div>
               </section>
@@ -324,19 +324,19 @@ const App: React.FC = () => {
         <div className="flex-1 space-y-6">
           <div className="flex items-end justify-between border-b border-white/5 pb-4">
             <div>
-              <p className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">Database</p>
-              <h2 className="font-oswald text-3xl font-bold uppercase text-white tracking-tight leading-none">Jogadores Monitorados</h2>
+              <p className="text-[8px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">Database</p>
+              <h2 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight leading-none">Jogadores Monitorados</h2>
             </div>
             <div className="hidden sm:flex bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 items-center gap-2">
-               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Base Ativa:</span>
-               <span className="text-[10px] font-bold text-[#f1c40f] uppercase">{filteredPlayers.length} Resultados</span>
+               <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Base Ativa:</span>
+               <span className="text-[8px] font-bold text-[#f1c40f] uppercase">{filteredPlayers.length} Resultados</span>
             </div>
           </div>
 
           {loading && players.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32">
               <div className="h-8 w-8 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin mb-4"></div>
-              <p className="text-[10px] text-slate-600 uppercase font-black tracking-widest">Acessando Cloud...</p>
+              <p className="text-[8px] text-slate-600 uppercase font-black tracking-widest">Acessando Cloud...</p>
             </div>
           ) : filteredPlayers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -346,15 +346,15 @@ const App: React.FC = () => {
                   <div className="absolute bottom-6 right-6 z-30 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-1 group-hover:translate-y-0">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setEditingPlayer(player); setIsModalOpen(true); }} 
-                      className="h-10 w-10 bg-black/70 backdrop-blur-md text-white rounded-lg flex items-center justify-center border border-white/10 hover:bg-[#f1c40f] hover:text-black transition-all shadow-xl"
+                      className="h-9 w-9 bg-black/70 backdrop-blur-md text-white rounded-lg flex items-center justify-center border border-white/10 hover:bg-[#f1c40f] hover:text-black transition-all shadow-xl"
                     >
-                      <i className="fas fa-pen text-[11px]"></i>
+                      <i className="fas fa-pen text-[10px]"></i>
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleDeletePlayer(player.id); }} 
-                      className="h-10 w-10 bg-red-600/20 backdrop-blur-md text-red-500 rounded-lg flex items-center justify-center border border-red-500/20 hover:bg-red-600 hover:text-white transition-all shadow-xl"
+                      className="h-9 w-9 bg-red-600/20 backdrop-blur-md text-red-500 rounded-lg flex items-center justify-center border border-red-500/20 hover:bg-red-600 hover:text-white transition-all shadow-xl"
                     >
-                      <i className="fas fa-trash text-[11px]"></i>
+                      <i className="fas fa-trash text-[10px]"></i>
                     </button>
                   </div>
                 </div>
@@ -365,19 +365,19 @@ const App: React.FC = () => {
               <div className="h-12 w-12 rounded-2xl bg-slate-900 flex items-center justify-center mb-4 text-slate-700">
                  <i className="fas fa-search text-xl"></i>
               </div>
-              <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">Nenhum atleta encontrado</p>
-              <button onClick={clearFilters} className="mt-4 text-[10px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4 transition-all">Redefinir Filtros</button>
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.1em]">Nenhum registro encontrado</p>
+              <button onClick={clearFilters} className="mt-4 text-[8px] font-black text-[#f1c40f] uppercase hover:underline underline-offset-4 transition-all">Redefinir Filtros</button>
             </div>
           )}
         </div>
       </main>
 
-      <footer className="mt-auto py-8 border-t border-white/5 bg-black/40 backdrop-blur-md">
+      <footer className="mt-auto py-6 border-t border-white/5 bg-black/40 backdrop-blur-md">
         <div className="mx-auto max-w-[1600px] px-8 flex items-center justify-between">
-          <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.15em]">
+          <p className="text-[8px] font-black text-slate-700 uppercase tracking-[0.15em]">
             Desenvolvido por Henrique Bravim
           </p>
-          <p className="text-[9px] font-black text-slate-800 uppercase tracking-[0.15em]">
+          <p className="text-[8px] font-black text-slate-700 uppercase tracking-[0.15em]">
             Sessão Ativa: <span className="text-slate-500">{currentUser.name}</span>
           </p>
         </div>

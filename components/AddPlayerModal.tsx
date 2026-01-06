@@ -17,7 +17,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
   const [club, setClub] = useState(player?.club || '');
   const [birthDate, setBirthDate] = useState(player?.birthDate || '2005-01-01');
   const [gamesWatched, setGamesWatched] = useState(player?.gamesWatched || 0);
-  const [position1, setPosition1] = useState<Position>(player?.position1 || Position.ATA);
+  const [position1, setPosition1] = useState<Position>(player?.position1 || Position.ST);
   const [position2, setPosition2] = useState<Position | ''>(player?.position2 || '');
   const [recommendation, setRecommendation] = useState<Recommendation>(player?.recommendation || 'G3 Monitoramento');
   const [competition, setCompetition] = useState(player?.competition || '');
@@ -116,6 +116,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
         <form onSubmit={handleSubmit} className="p-8 max-h-[80vh] overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
             
+            {/* COLUNA ESQUERDA: FOTO E STATS */}
             <div className="md:col-span-4 space-y-8">
               <section>
                 <label className="block text-[10px] font-black text-[#006837] uppercase tracking-widest mb-3">Identidade Visual</label>
@@ -159,7 +160,10 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
               </section>
             </div>
 
+            {/* COLUNA DIREITA: DADOS COMPLETOS */}
             <div className="md:col-span-8 space-y-10">
+              
+              {/* BLOCO 1: IDENTIFICAÇÃO E CAMPO */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Nome Completo do Atleta</label>
@@ -216,6 +220,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
                 </div>
               </div>
 
+              {/* BLOCO 2: DADOS DE SCOUT */}
               <div className="bg-white/5 rounded-3xl p-8 space-y-6 border border-white/5">
                 <h3 className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] flex items-center gap-2">
                   <i className="fas fa-clipboard-check"></i> Histórico de Avaliação
@@ -223,7 +228,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Liga / Competição Avaliada</label>
-                    <input type="text" value={competition} onChange={e => setCompetition(e.target.value)} placeholder="Ex: Capixabão Sub-17" className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none focus:border-[#006837]" />
+                    <input type="text" value={competition} onChange={e => setCompetition(e.target.value)} placeholder="Ex: Paulistão Sub-20" className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none focus:border-[#006837]" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -238,6 +243,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
                 </div>
               </div>
 
+              {/* BLOCO 3: MERCADO E ANALÍTICA */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Agente / Representante</label>
@@ -268,6 +274,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
                 </div>
               </div>
 
+              {/* AÇÕES FINAIS */}
               <div className="pt-10 flex gap-4">
                 <button type="button" onClick={onClose} className="flex-1 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-800 rounded-3xl hover:bg-white/5 transition-all">Cancelar</button>
                 <button type="submit" className="flex-[2] py-5 bg-[#006837] text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-3xl hover:bg-[#008a4a] shadow-2xl shadow-[#006837]/30 transition-all">
