@@ -2,20 +2,16 @@ import Groq from "groq-sdk";
 import { Player } from "../types";
 
 export const getScoutReport = async (player: Player): Promise<string> => {
-  // 1. Pega a chave da Groq
   const apiKey = import.meta.env.VITE_GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
   
   if (!apiKey) throw new Error("Chave da Groq não encontrada (VITE_GROQ_API_KEY).");
 
   try {
-    // 2. Inicializa a Groq
-    // 'dangerouslyAllowBrowser: true' é necessário porque estamos no front-end (Vite)
     const groq = new Groq({ 
       apiKey: apiKey,
       dangerouslyAllowBrowser: true 
     });
 
-    // 3. Monta o Prompt
     const prompt = `
     Atue como Diretor de Inteligência de Futebol. Analise este atleta:
     Nome: ${player.name}
@@ -28,7 +24,6 @@ export const getScoutReport = async (player: Player): Promise<string> => {
     3. Veredito Final (Contratar, Monitorar ou Dispensar).
     `;
 
-    // 4. Chama o modelo Llama 3 (Muito rápido e inteligente)
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         {
@@ -36,7 +31,8 @@ export const getScoutReport = async (player: Player): Promise<string> => {
           content: prompt,
         },
       ],
-      model: "llama3-8b-8192", // Modelo gratuito, rápido e excelente
+      // AQUI ESTÁ A MUDANÇA: Usando o modelo mais novo e potente (Llama 3.3)
+      model: "llama-3.3-70b-versatile", 
       temperature: 0.5,
     });
 
