@@ -57,12 +57,12 @@ export interface ObservedPlayer {
 
 export interface ScoutingGame {
   id: string;
-  analystId: string;
-  analystName: string;
-  gameTitle: string;
-  dateTime: string;
+  analystid: string;
+  analystname: string;
+  gametitle: string;
+  datetime: string;
   competition?: string;
-  createdAt: string;
+  createdat: string;
 }
 
 export interface FilterState {

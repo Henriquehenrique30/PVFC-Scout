@@ -44,7 +44,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
 
   const filteredGames = useMemo(() => {
     if (selectedAnalystId === 'all') return games;
-    return games.filter(g => g.analystId === selectedAnalystId);
+    return games.filter(g => g.analystid === selectedAnalystId);
   }, [games, selectedAnalystId]);
 
   const handleAddGame = async (e: React.FormEvent) => {
@@ -56,12 +56,12 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
 
     const newGame: ScoutingGame = {
       id: `game_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      analystId: currentUser.id,
-      analystName: currentUser.name,
-      gameTitle,
-      dateTime: new Date(dateTime).toISOString(),
+      analystid: currentUser.id,
+      analystname: currentUser.name,
+      gametitle: gameTitle,
+      datetime: new Date(dateTime).toISOString(),
       competition,
-      createdAt: new Date().toISOString()
+      createdat: new Date().toISOString()
     };
 
     try {
@@ -72,7 +72,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
       loadData();
     } catch (err: any) {
       console.error("Falha ao salvar jogo:", err);
-      alert(`Erro: ${err.message || "Verifique se a tabela 'scouting_games' existe no seu Supabase."}`);
+      alert(`Erro: ${err.message || "Erro desconhecido na nuvem."}`);
     }
   };
 
@@ -109,7 +109,17 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
         if (Array.isArray(importedData)) {
           alert("Iniciando importação para a nuvem...");
           for (const game of importedData) {
-            await dbService.saveScoutingGame(game);
+            // Garantir que os dados importados também sigam o padrão de minúsculas
+            const sanitizedGame: ScoutingGame = {
+              id: game.id || game.id,
+              analystid: game.analystid || game.analystId,
+              analystname: game.analystname || game.analystName,
+              gametitle: game.gametitle || game.gameTitle,
+              datetime: game.datetime || game.dateTime,
+              competition: game.competition,
+              createdat: game.createdat || game.createdAt || new Date().toISOString()
+            };
+            await dbService.saveScoutingGame(sanitizedGame);
           }
           loadData();
           alert("Importação concluída!");
@@ -129,7 +139,6 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     const diffHours = diffMs / (1000 * 60 * 60);
 
     if (diffMs < 0) {
-      // Se passou mais de 2 horas do início, considera finalizado
       return diffHours < -2 ? 'Finalizado' : 'Em Andamento';
     }
     return 'Próximo';
@@ -231,41 +240,39 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
               </div>
             ) : filteredGames.length > 0 ? (
               filteredGames.map(game => {
-                const status = getGameStatus(game.dateTime);
-                const isMine = game.analystId === currentUser.id;
+                const status = getGameStatus(game.datetime);
+                const isMine = game.analystid === currentUser.id;
                 
                 return (
                   <div key={game.id} className="group relative glass-panel p-6 rounded-3xl border border-white/5 hover:border-[#006837]/30 transition-all flex flex-col md:flex-row items-center gap-8 overflow-hidden">
                     
-                    {/* Indicador de Status Lateral */}
                     <div className={`absolute left-0 top-0 bottom-0 w-1 ${
                       status === 'Em Andamento' ? 'bg-red-600' : 
                       status === 'Próximo' ? 'bg-[#006837]' : 'bg-slate-800'
                     }`}></div>
 
-                    {/* Badge de Horário */}
                     <div className="flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-2xl p-4 min-w-[100px] shadow-inner">
-                      <span className="text-[10px] font-black text-slate-500 uppercase mb-1">{new Date(game.dateTime).toLocaleDateString('pt-BR', { weekday: 'short' })}</span>
-                      <span className="text-2xl font-oswald font-black text-white leading-none">{new Date(game.dateTime).getDate()}</span>
-                      <span className="text-[8px] font-black text-[#f1c40f] uppercase mt-1 tracking-widest">{new Date(game.dateTime).toLocaleDateString('pt-BR', { month: 'short' })}</span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase mb-1">{new Date(game.datetime).toLocaleDateString('pt-BR', { weekday: 'short' })}</span>
+                      <span className="text-2xl font-oswald font-black text-white leading-none">{new Date(game.datetime).getDate()}</span>
+                      <span className="text-[8px] font-black text-[#f1c40f] uppercase mt-1 tracking-widest">{new Date(game.datetime).toLocaleDateString('pt-BR', { month: 'short' })}</span>
                     </div>
 
                     <div className="flex-grow text-center md:text-left space-y-1">
                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                          <span className="text-[10px] font-black text-[#006837] uppercase tracking-widest">{game.competition || 'Jogo Isolado'}</span>
                          <span className="h-1 w-1 rounded-full bg-slate-700"></span>
-                         <span className="text-[11px] font-bold text-slate-400">{new Date(game.dateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                         <span className="text-[11px] font-bold text-slate-400">{new Date(game.datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                          
                          {status === 'Em Andamento' && (
                            <span className="px-2 py-0.5 bg-red-600 text-[8px] font-black text-white uppercase rounded animate-pulse">● Ao Vivo</span>
                          )}
                       </div>
-                      <h4 className="text-xl font-oswald font-bold uppercase text-white tracking-wide group-hover:text-[#f1c40f] transition-colors">{game.gameTitle}</h4>
+                      <h4 className="text-xl font-oswald font-bold uppercase text-white tracking-wide group-hover:text-[#f1c40f] transition-colors">{game.gametitle}</h4>
                       <div className="flex items-center justify-center md:justify-start gap-2 pt-1">
                         <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] ${isMine ? 'bg-[#006837] text-white' : 'bg-white/5 text-slate-500'}`}>
                            <i className="fas fa-user-ninja"></i>
                         </div>
-                        <span className="text-[9px] font-black text-slate-500 uppercase">Analista: <span className="text-white">{game.analystName}</span></span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase">Analista: <span className="text-white">{game.analystname}</span></span>
                       </div>
                     </div>
 

@@ -13,6 +13,7 @@ export const dbService = {
   // --- JOGADORES ---
   async getPlayers(): Promise<Player[]> {
     if (!supabase) return [];
+    // Nota: 'created_at' em minúsculas é o padrão do Supabase
     const { data, error } = await supabase.from('players').select('*').order('created_at', { ascending: false });
     return data || [];
   },
@@ -36,7 +37,8 @@ export const dbService = {
   // --- AGENDA DE SCOUTING ---
   async getScoutingGames(): Promise<ScoutingGame[]> {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('scouting_games').select('*').order('dateTime', { ascending: true });
+    // Atualizado para 'datetime' em minúsculas
+    const { data, error } = await supabase.from('scouting_games').select('*').order('datetime', { ascending: true });
     if (error) {
       console.error("Erro ao buscar jogos:", error);
       return [];
@@ -47,16 +49,14 @@ export const dbService = {
   async saveScoutingGame(game: ScoutingGame): Promise<void> {
     if (!supabase) throw new Error("Nuvem não configurada.");
     
-    // Log para debug
-    console.log("Tentando salvar jogo:", game);
+    console.log("Tentando salvar jogo (Keys minúsculas):", game);
     
     const { error } = await supabase.from('scouting_games').upsert(game);
     
     if (error) {
       console.error("Erro detalhado do Supabase:", error);
-      // Se o erro for 404, provavelmente a tabela não existe
       if (error.code === '42P01') {
-        throw new Error("Tabela 'scouting_games' não encontrada no banco. Execute o SQL de criação.");
+        throw new Error("Tabela 'scouting_games' não encontrada no banco.");
       }
       throw error;
     }
