@@ -121,14 +121,13 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     try {
       const element = scheduleRef.current;
       
-      // Ajuste de DPI e forçando renderização limpa
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#020403',
         logging: false,
         width: element.offsetWidth,
-        height: element.scrollHeight,
+        height: element.scrollHeight, // Força a captura da altura total
         onclone: (clonedDoc) => {
           const pdfHeader = clonedDoc.querySelector('#pdf-analyst-header');
           if (pdfHeader) (pdfHeader as HTMLElement).style.display = 'block';
@@ -136,20 +135,20 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
           const pdfFooter = clonedDoc.querySelector('#pdf-footer');
           if (pdfFooter) (pdfFooter as HTMLElement).style.display = 'block';
 
-          const captureArea = clonedDoc.querySelector('[ref="scheduleRef"]');
-          if (captureArea) {
-             const style = (captureArea as HTMLElement).style;
+          // Garante que o container clonado se expanda totalmente sem scroll interno
+          const container = clonedDoc.querySelector('.schedule-container-capture');
+          if (container) {
+             const style = (container as HTMLElement).style;
              style.height = 'auto';
              style.overflow = 'visible';
-             style.padding = '20px';
-             style.width = '100%';
-             style.maxWidth = 'none';
+             style.padding = '30px';
+             style.backgroundColor = '#020403';
           }
         }
       });
 
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' para Portrait (Retrato)
+      const pdf = new jsPDF('p', 'mm', 'a4');
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -160,13 +159,13 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Página 1
+      // Adiciona a primeira página
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
-      // Páginas subsequentes para evitar cortes
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
+      // Só adiciona novas páginas se o conteúdo restante for maior que um pequeno threshold (evita página em branco)
+      while (heightLeft > 2) { 
+        position -= pdfHeight; 
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
@@ -235,6 +234,13 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     return 'Próximo';
   };
 
+  const currentGeneratingAnalyst = useMemo(() => {
+    if (selectedAnalystId !== 'all') {
+      return analysts.find(a => a.id === selectedAnalystId)?.name || currentUser.name;
+    }
+    return currentUser.name;
+  }, [selectedAnalystId, analysts, currentUser]);
+
   return (
     <div className="min-h-screen bg-[#020403] text-white flex flex-col animate-in fade-in duration-500">
       <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
@@ -299,7 +305,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
           <div className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-wrap items-center justify-between gap-6">
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex flex-col gap-1.5">
-                <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Analista</span>
+                <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Filtrar Analista</span>
                 <select 
                   value={selectedAnalystId} 
                   onChange={e => setSelectedAnalystId(e.target.value)}
@@ -326,7 +332,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
             </div>
           </div>
 
-          <div ref={scheduleRef} className="flex flex-col gap-4 p-8 rounded-[2rem] bg-[#020403] min-h-[500px]">
+          <div ref={scheduleRef} className="schedule-container-capture flex flex-col gap-4 p-8 rounded-[2rem] bg-[#020403] min-h-[500px]">
             
             <div id="pdf-analyst-header" className="hidden mb-12 border-b border-white/10 pb-10 text-center bg-[#050807] rounded-[2.5rem] p-8">
                <div className="flex h-20 w-20 items-center justify-center mx-auto mb-6 bg-white rounded-2xl p-1 shadow-2xl">
@@ -337,14 +343,12 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                   <div className="text-center">
                     <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Responsável pela Geração</p>
                     <p className="text-[12px] font-black text-[#f1c40f] uppercase tracking-widest">
-                      {selectedAnalystId !== 'all' 
-                        ? analysts.find(a => a.id === selectedAnalystId)?.name 
-                        : currentUser.name}
+                      {currentGeneratingAnalyst}
                     </p>
                   </div>
                   <div className="h-10 w-px bg-white/10"></div>
                   <div className="text-center">
-                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Período</p>
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Período Selecionado</p>
                     <p className="text-[12px] font-black text-white uppercase tracking-widest">
                       {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString() : 'Histórico'} — {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString() : 'Atual'}
                     </p>
@@ -374,7 +378,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                          <span className="text-[10px] text-slate-500 font-bold">{gameDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <h4 className="text-xl font-oswald font-bold uppercase text-white tracking-wide">{game.gametitle}</h4>
-                      <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Analista: <span className="text-white">{game.analystname}</span></p>
+                      <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Analista Escalado: <span className="text-white">{game.analystname}</span></p>
                     </div>
 
                     <div className="flex items-center gap-4 shrink-0" data-html2canvas-ignore>
@@ -389,7 +393,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
               })
             ) : (
               <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[2rem]">
-                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Agenda Vazia</p>
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Nenhum jogo encontrado para este período</p>
               </div>
             )}
             
