@@ -54,13 +54,18 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     setIsExporting(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Pequeno delay para garantir que o DOM esteja estável
+      await new Promise(resolve => setTimeout(resolve, 600));
 
-      const canvas = await html2canvas(reportContainerRef.current, {
+      const element = reportContainerRef.current;
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#050807',
         logging: false,
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+        windowWidth: element.offsetWidth, // Força a captura a respeitar a largura atual
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -111,7 +116,10 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/98 backdrop-blur-3xl overflow-hidden">
-      <div ref={reportContainerRef} className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-[#050807] shadow-2xl border border-white/5 h-[90vh] max-h-[820px] flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
+      <div 
+        ref={reportContainerRef} 
+        className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-[#050807] shadow-2xl border border-white/5 h-[90vh] max-h-[820px] flex flex-col md:flex-row animate-in fade-in zoom-in duration-500"
+      >
         
         <button 
           onClick={onClose}
@@ -129,7 +137,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             <img 
               src={player.photoUrl} 
               alt={player.name} 
-              className="relative h-36 w-36 rounded-[1.5rem] object-cover object-top border-2 border-white/5 shadow-xl"
+              className="relative h-32 w-32 rounded-[1.5rem] object-cover object-top border-2 border-white/5 shadow-xl"
               crossOrigin="anonymous"
             />
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-3 py-1 rounded-full text-[8px] font-black text-slate-950 uppercase shadow-xl tracking-tighter text-center min-w-[100px]">
@@ -137,7 +145,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             </div>
           </div>
           
-          <div className="mt-6 text-center shrink-0 w-full">
+          <div className="mt-5 text-center shrink-0 w-full">
             <h2 className="font-oswald text-2xl font-bold uppercase text-white leading-tight">{player.name}</h2>
             <div className="mt-1 flex items-center justify-center gap-2">
               <span className="text-[10px] font-black text-[#006837] uppercase">{player.position1}</span>
@@ -150,8 +158,8 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             </div>
           </div>
 
-          {/* GRID DE MÉTRICAS REDUZIDO (3 COLUNAS) */}
-          <div className="mt-6 grid grid-cols-3 gap-2 w-full shrink-0">
+          {/* GRID DE MÉTRICAS REDUZIDO (3 COLUNAS) - Alinhamento fixo para PDF */}
+          <div className="mt-5 grid grid-cols-3 gap-2 w-full shrink-0">
             {[
               { label: 'OVR', val: averageRating, color: 'text-[#f1c40f]' },
               { label: 'PÉ', val: footLabel },
@@ -160,9 +168,9 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               { label: 'TEMP.', val: player.scoutYear },
               { label: 'JOGOS', val: player.gamesWatched }
             ].map((item, idx) => (
-              <div key={idx} className="rounded-lg bg-white/5 p-2 border border-white/5 text-center">
-                <div className="text-[7px] text-slate-600 uppercase font-black mb-0.5 tracking-tighter">{item.label}</div>
-                <div className={`text-sm font-black ${item.color || 'text-white'}`}>{item.val}</div>
+              <div key={idx} className="rounded-lg bg-white/5 p-1.5 border border-white/5 text-center flex flex-col justify-center min-h-[40px]">
+                <div className="text-[7px] text-slate-600 uppercase font-black mb-0.5 tracking-tighter leading-none">{item.label}</div>
+                <div className={`text-xs font-black leading-none ${item.color || 'text-white'}`}>{item.val}</div>
               </div>
             ))}
           </div>
@@ -172,17 +180,27 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               <h4 className="text-[7px] font-black text-[#006837] uppercase tracking-widest mb-2 flex items-center gap-2">
                  <i className="fas fa-user-tie"></i> Staff / Contato
               </h4>
-              <div className="flex flex-col gap-1.5">
-                {player.agent && <p className="text-[9px] font-bold text-white truncate"><span className="text-slate-500 font-black mr-1 text-[7px] uppercase">Ag:</span>{player.agent}</p>}
-                {player.contact && <div className="text-[9px] font-bold text-[#f1c40f] flex items-center gap-2"><i className="fab fa-whatsapp text-[#006837] text-[8px]"></i>{player.contact}</div>}
+              <div className="flex flex-col gap-1">
+                {player.agent && (
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-slate-500 font-black text-[7px] uppercase shrink-0">Agente:</span>
+                    <p className="text-[9px] font-bold text-white truncate">{player.agent}</p>
+                  </div>
+                )}
+                {player.contact && (
+                  <div className="text-[9px] font-bold text-[#f1c40f] flex items-center gap-1.5 mt-0.5">
+                    <i className="fab fa-whatsapp text-[#006837] text-[8px]"></i>
+                    {player.contact}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* GRÁFICO RADAR (ALTURA FIXA E REDUZIDA) */}
-          <div className="mt-4 h-44 w-full shrink-0">
+          {/* GRÁFICO RADAR (Dimensões Estabilizadas para PDF) */}
+          <div className="mt-4 h-40 w-full shrink-0 relative">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
                 <PolarGrid stroke="#006837" strokeOpacity={0.1} />
                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 9, fontWeight: 900 }} />
                 <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
