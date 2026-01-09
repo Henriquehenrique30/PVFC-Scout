@@ -1,18 +1,14 @@
-import Groq from "groq-sdk";
+// Fix: Use GoogleGenAI from @google/genai instead of groq-sdk
+import { GoogleGenAI } from "@google/genai";
 import { Player } from "../types";
 
-// --- FUNÇÃO EXISTENTE (NÃO MODIFICADA) ---
+// --- FUNÇÃO EXISTENTE (REATORADA PARA GEMINI) ---
+// Fix: Use Gemini model and process.env.API_KEY for scout report
 export const getScoutReport = async (player: Player): Promise<string> => {
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
-  
-  if (!apiKey) throw new Error("Chave da Groq não encontrada (VITE_GROQ_API_KEY).");
+  // Fix: Initialize GoogleGenAI instance with the required process.env.API_KEY exclusively
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   try {
-    const groq = new Groq({ 
-      apiKey: apiKey,
-      dangerouslyAllowBrowser: true 
-    });
-
     const prompt = `
     Atue como um Analista de Desempenho Sênior de um clube de futebol. 
     Sua tarefa é analisar os dados estatísticos brutos abaixo (extraídos de uma planilha de scout) e criar um perfil técnico detalhado do atleta.
@@ -43,22 +39,20 @@ export const getScoutReport = async (player: Player): Promise<string> => {
     - Se os dados da planilha forem insuficientes ou vazios, diga que não é possível realizar uma análise profunda e faça uma avaliação baseada apenas na posição e perfil físico básico.
     `;
 
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: "llama-3.3-70b-versatile", 
-      temperature: 0.4,
-      max_tokens: 1024,
+    // Fix: Using gemini-3-pro-preview for complex reasoning tasks
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+      config: {
+        temperature: 0.4,
+      },
     });
 
-    return chatCompletion.choices[0]?.message?.content || "A IA não retornou uma resposta válida.";
+    // Fix: Accessing generated text using the .text property
+    return response.text || "A IA não retornou uma resposta válida.";
 
   } catch (error: any) {
-    console.error("❌ Erro Groq:", error);
+    console.error("❌ Erro Gemini:", error);
     return `Erro ao gerar relatório: ${error.message}`;
   }
 };
@@ -71,17 +65,12 @@ export interface ComparisonCandidate {
   data: any; // Dados brutos do Excel/CSV
 }
 
+// Fix: Use Gemini model and process.env.API_KEY for player comparison
 export const comparePlayersWithAI = async (candidates: ComparisonCandidate[]): Promise<string> => {
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
-  
-  if (!apiKey) throw new Error("Chave da Groq não encontrada.");
+  // Fix: Initialize GoogleGenAI instance with the required process.env.API_KEY exclusively
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   try {
-    const groq = new Groq({ 
-      apiKey: apiKey,
-      dangerouslyAllowBrowser: true 
-    });
-
     // Prepara os dados para a IA ler
     const dataString = candidates.map(c => 
       `JOGADOR: ${c.name}\nDADOS ESTATÍSTICOS (JSON):\n${JSON.stringify(c.data, null, 2)}`
@@ -108,22 +97,20 @@ export const comparePlayersWithAI = async (candidates: ComparisonCandidate[]): P
     Use Markdown. Utilize tabelas comparativas se possível. Seja extremamente técnico e baseie-se apenas na evidência dos dados.
     `;
 
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: "llama-3.3-70b-versatile", // Modelo potente para análise de dados complexos
-      temperature: 0.2, // Temperatura baixa para máxima precisão matemática
-      max_tokens: 2048,
+    // Fix: Using gemini-3-pro-preview for complex data analysis tasks
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: prompt,
+      config: {
+        temperature: 0.2, // Temperatura baixa para máxima precisão matemática
+      },
     });
 
-    return chatCompletion.choices[0]?.message?.content || "Erro na comparação.";
+    // Fix: Accessing generated text using the .text property
+    return response.text || "Erro na comparação.";
 
   } catch (error: any) {
-    console.error("❌ Erro Comparação Groq:", error);
+    console.error("❌ Erro Comparação Gemini:", error);
     return `Erro ao processar comparação: ${error.message}`;
   }
 };

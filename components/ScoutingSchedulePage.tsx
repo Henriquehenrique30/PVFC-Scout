@@ -49,28 +49,30 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
   const filteredGames = useMemo(() => {
     let result = [...games];
 
+    // 1. Filtro por Analista
     if (selectedAnalystId !== 'all') {
       result = result.filter(g => g.analystid === selectedAnalystId);
     }
 
-    const now = new Date();
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(now.getDate() - 7);
-
+    // 2. Lógica de Range de Data (Corrigida para Fuso Local)
     const hasExplicitFilter = startDate !== '' || endDate !== '';
 
     if (hasExplicitFilter) {
       if (startDate) {
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0);
-        result = result.filter(g => new Date(g.datetime) >= start);
+        // Força o início do dia no fuso horário local
+        const startLimit = new Date(startDate + 'T00:00:00').getTime();
+        result = result.filter(g => new Date(g.datetime).getTime() >= startLimit);
       }
       if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        result = result.filter(g => new Date(g.datetime) <= end);
+        // Força o final do dia no fuso horário local
+        const endLimit = new Date(endDate + 'T23:59:59').getTime();
+        result = result.filter(g => new Date(g.datetime).getTime() <= endLimit);
       }
     } else {
+      // Auto-hide: esconde jogos finalizados há mais de 1 semana se não houver filtro
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      oneWeekAgo.setHours(0, 0, 0, 0);
       result = result.filter(g => new Date(g.datetime) >= oneWeekAgo);
     }
 
@@ -124,9 +126,8 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     try {
       const element = scheduleRef.current;
       
-      // Criar o canvas com alta qualidade e forçando a altura total
       const canvas = await html2canvas(element, {
-        scale: 2.5,
+        scale: 2,
         useCORS: true,
         backgroundColor: '#020403',
         logging: false,
@@ -139,11 +140,11 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
           const pdfFooter = clonedDoc.querySelector('#pdf-footer');
           if (pdfFooter) (pdfFooter as HTMLElement).style.display = 'block';
 
-          // Garante que o container clonado não tenha scroll ou alturas fixas
           const captureArea = clonedDoc.querySelector('[ref="scheduleRef"]');
           if (captureArea) {
              (captureArea as HTMLElement).style.height = 'auto';
              (captureArea as HTMLElement).style.overflow = 'visible';
+             (captureArea as HTMLElement).style.padding = '40px';
           }
         }
       });
@@ -160,20 +161,20 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Adiciona a primeira página
+      // Primeira página
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
-      // Adiciona páginas extras se necessário para evitar cortes
-      while (heightLeft >= 0) {
+      // Loop para múltiplas páginas se necessário
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
 
-      const fileName = `Agenda_PVFC_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`;
-      pdf.save(fileName);
+      const dateStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+      pdf.save(`Agenda_PVFC_${dateStr}.pdf`);
       
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
@@ -247,7 +248,6 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     <div className="min-h-screen bg-[#020403] text-white flex flex-col animate-in fade-in duration-500">
       <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
 
-      {/* Header Fixo */}
       <header className="glass-panel border-b border-white/5 py-4 px-8 sticky top-0 z-50">
         <div className="mx-auto max-w-6xl flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -278,7 +278,6 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
 
       <main className="flex-grow mx-auto max-w-5xl w-full p-8 space-y-8">
         
-        {/* Formulário de Inserção */}
         <section className="glass-panel p-8 rounded-[2rem] border border-[#006837]/20 shadow-2xl relative overflow-hidden">
           <h3 className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
             <i className="fas fa-calendar-plus"></i> Novo Agendamento
@@ -305,7 +304,6 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
           </form>
         </section>
 
-        {/* Filtros e Visualização */}
         <section className="space-y-6">
           <div className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-wrap items-center justify-between gap-6">
             <div className="flex flex-wrap items-center gap-4">
@@ -337,15 +335,13 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
             </div>
           </div>
 
-          {/* CONTAINER DE CAPTURA PARA O PDF */}
           <div ref={scheduleRef} className="flex flex-col gap-6 p-8 rounded-[3rem] bg-[#020403] min-h-[500px]">
             
-            {/* Header exclusivo para o PDF */}
             <div id="pdf-analyst-header" className="hidden mb-12 border-b border-white/10 pb-10 text-center bg-[#050807] rounded-[2.5rem] p-8">
                <div className="flex h-20 w-20 items-center justify-center mx-auto mb-6 bg-white rounded-2xl p-1 shadow-2xl">
                   <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" />
                </div>
-               <h2 className="text-4xl font-oswald font-bold uppercase text-white mb-2 tracking-tighter">Relatório de Agenda Semanal</h2>
+               <h2 className="text-4xl font-oswald text-4xl font-bold uppercase text-white mb-2 tracking-tighter">Relatório de Agenda Semanal</h2>
                <div className="flex items-center justify-center gap-10">
                   <div className="text-center">
                     <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Responsável</p>
@@ -357,7 +353,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                   <div className="text-center">
                     <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Período Selecionado</p>
                     <p className="text-[12px] font-black text-white uppercase tracking-widest">
-                      {startDate ? new Date(startDate).toLocaleDateString() : 'Histórico'} — {endDate ? new Date(endDate).toLocaleDateString() : 'Atual'}
+                      {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString() : 'Histórico'} — {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString() : 'Atual'}
                     </p>
                   </div>
                </div>
@@ -408,7 +404,6 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
               </div>
             )}
             
-            {/* Rodapé exclusivo para o PDF */}
             <div id="pdf-footer" className="hidden mt-12 border-t border-white/5 pt-10 text-center">
                <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em]">
                  Porto Vitória FC • Departamento de Análise de Mercado
