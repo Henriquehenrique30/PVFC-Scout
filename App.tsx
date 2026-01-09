@@ -9,7 +9,7 @@ import AdminUserManagement from './components/AdminUserManagement';
 import ShadowTeamModal from './components/ShadowTeamModal';
 import ComparisonModal from './components/ComparisonModal';
 import WatchlistPage from './components/WatchlistPage';
-import ScoutingSchedulePage from './components/ScoutingSchedulePage'; // NOVO
+import ScoutingSchedulePage from './components/ScoutingSchedulePage';
 import { dbService, isCloudActive } from './services/database';
 
 const App: React.FC = () => {
@@ -24,7 +24,6 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Alternador de página: dashboard, watchlist, schedule
   const [view, setView] = useState<'dashboard' | 'watchlist' | 'schedule'>('dashboard');
 
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
@@ -194,7 +193,6 @@ const App: React.FC = () => {
     return <Auth onLogin={handleLogin} users={users} onRegister={handleRegister} />;
   }
 
-  // Renderização condicional das subpáginas
   if (view === 'watchlist') {
     return <WatchlistPage onBack={() => setView('dashboard')} />;
   }
@@ -205,7 +203,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Main Professional Header */}
       <header className="sticky top-0 z-40 glass-panel border-b border-white/5 py-3">
         <div className="mx-auto max-w-[1600px] flex items-center justify-between px-8">
           <div className="flex items-center gap-4">
@@ -245,7 +242,6 @@ const App: React.FC = () => {
                 <button onClick={() => setIsAdminPanelOpen(true)} className="px-3 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[9px] font-black uppercase tracking-widest border border-orange-500/20 hover:bg-orange-500/20 transition-all">Admin</button>
               )}
               
-              {/* BOTÃO AGENDA (NOVO) */}
               <button 
                 onClick={() => setView('schedule')}
                 className="bg-[#006837]/20 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-[#006837] hover:text-white hover:bg-[#006837] transition-all border border-[#006837]/30 flex items-center gap-2"
@@ -281,9 +277,7 @@ const App: React.FC = () => {
         </div>
       </header>
       
-      {/* ... Resto do Dashboard permanece o mesmo ... */}
       <main className="flex-grow mx-auto max-w-[1600px] px-8 py-8 w-full flex flex-col lg:flex-row gap-10">
-        {/* Sidebar e Grid de jogadores omitidos por brevidade, permanecem iguais */}
         <aside className="lg:w-80 shrink-0">
           <div className="sticky top-24 space-y-6">
             <div className="glass-panel p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-8">
@@ -445,7 +439,7 @@ const App: React.FC = () => {
       <footer className="mt-auto py-6 border-t border-white/5 bg-black/40 backdrop-blur-md">
         <div className="mx-auto max-w-[1600px] px-8 flex items-center justify-between">
           <p className="text-[8px] font-black text-slate-700 uppercase tracking-[0.15em]">
-            Desenvolvido por Henrique Bravim
+            Porto Vitória FC Departamento de Análise de Mercado
           </p>
           <p className="text-[8px] font-black text-slate-700 uppercase tracking-[0.15em]">
             Sessão Ativa: <span className="text-slate-500">{currentUser.name}</span>

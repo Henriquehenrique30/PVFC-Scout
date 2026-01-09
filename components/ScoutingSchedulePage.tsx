@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ScoutingGame, User } from '../types';
 import { dbService } from '../services/database';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface ScoutingSchedulePageProps {
   currentUser: User;
@@ -12,15 +14,19 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
   const [games, setGames] = useState<ScoutingGame[]>([]);
   const [analysts, setAnalysts] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scheduleRef = useRef<HTMLDivElement>(null);
   
-  // Estados do Formulário
+  // Estados do Formulário de Cadastro
   const [gameTitle, setGameTitle] = useState('');
   const [dateTime, setDateTime] = useState('');
   const [competition, setCompetition] = useState('');
 
-  // Estado do Filtro
+  // Estados de Filtro
   const [selectedAnalystId, setSelectedAnalystId] = useState<string>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   const loadData = async () => {
     setLoading(true);
@@ -43,9 +49,40 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
   }, []);
 
   const filteredGames = useMemo(() => {
-    if (selectedAnalystId === 'all') return games;
-    return games.filter(g => g.analystid === selectedAnalystId);
-  }, [games, selectedAnalystId]);
+    let result = [...games];
+
+    // 1. Filtro por Analista
+    if (selectedAnalystId !== 'all') {
+      result = result.filter(g => g.analystid === selectedAnalystId);
+    }
+
+    // 2. Lógica de Range de Data e Auto-hide
+    const now = new Date();
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(now.getDate() - 7);
+
+    const hasExplicitFilter = startDate !== '' || endDate !== '';
+
+    if (hasExplicitFilter) {
+      // Se houver filtro explícito, respeita rigorosamente as datas
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        result = result.filter(g => new Date(g.datetime) >= start);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        result = result.filter(g => new Date(g.datetime) <= end);
+      }
+    } else {
+      // Se NÃO houver filtro, esconde jogos finalizados há mais de 1 semana
+      result = result.filter(g => new Date(g.datetime) >= oneWeekAgo);
+    }
+
+    // Ordenação Cronológica
+    return result.sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
+  }, [games, selectedAnalystId, startDate, endDate]);
 
   const handleAddGame = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,12 +124,51 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     }
   };
 
-  const handleExport = () => {
+  const handleExportPDF = async () => {
+    if (!scheduleRef.current || filteredGames.length === 0) return;
+    setIsExportingPDF(true);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const element = scheduleRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#050807',
+        logging: false,
+        width: element.offsetWidth,
+        onclone: (clonedDoc) => {
+          const analystLabel = clonedDoc.querySelector('#pdf-analyst-header');
+          if (analystLabel) (analystLabel as HTMLElement).style.display = 'block';
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Agenda_PVFC_${selectedAnalystId === 'all' ? 'Geral' : currentUser.name.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      alert("Falha ao gerar relatório PDF.");
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
+  const handleExportJSON = () => {
     if (games.length === 0) return alert("Agenda vazia.");
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(games, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `Agenda_Scouting_PVFC_${new Date().toISOString().split('T')[0]}.json`);
+    downloadAnchorNode.setAttribute("download", `Agenda_Backup_${new Date().toISOString().split('T')[0]}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -101,17 +177,15 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
         const importedData = JSON.parse(evt.target?.result as string);
         if (Array.isArray(importedData)) {
-          alert("Iniciando importação para a nuvem...");
+          alert("Importando dados...");
           for (const game of importedData) {
-            // Garantir que os dados importados também sigam o padrão de minúsculas
             const sanitizedGame: ScoutingGame = {
-              id: game.id || game.id,
+              id: game.id,
               analystid: game.analystid || game.analystId,
               analystname: game.analystname || game.analystName,
               gametitle: game.gametitle || game.gameTitle,
@@ -122,10 +196,10 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
             await dbService.saveScoutingGame(sanitizedGame);
           }
           loadData();
-          alert("Importação concluída!");
+          alert("Sincronização concluída.");
         }
       } catch (err) {
-        alert("Formato JSON inválido.");
+        alert("JSON inválido.");
       }
     };
     reader.readAsText(file);
@@ -142,6 +216,11 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
       return diffHours < -2 ? 'Finalizado' : 'Em Andamento';
     }
     return 'Próximo';
+  };
+
+  const clearDateFilters = () => {
+    setStartDate('');
+    setEndDate('');
   };
 
   return (
@@ -162,7 +241,14 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
           </div>
           
           <div className="flex items-center gap-3">
-             <button onClick={handleExport} className="h-10 px-4 rounded-xl bg-white/5 text-[9px] font-black uppercase text-slate-400 hover:text-[#f1c40f] transition-all border border-white/5 flex items-center gap-2">
+             <button 
+                onClick={handleExportPDF} 
+                disabled={isExportingPDF || filteredGames.length === 0}
+                className="h-10 px-4 rounded-xl bg-[#006837]/20 text-[9px] font-black uppercase text-[#006837] hover:bg-[#006837] hover:text-white transition-all border border-[#006837]/30 flex items-center gap-2 disabled:opacity-50"
+             >
+               <i className={`fas ${isExportingPDF ? 'fa-spinner fa-spin' : 'fa-file-pdf'}`}></i> {isExportingPDF ? 'Gerando PDF...' : 'Gerar Relatório'}
+             </button>
+             <button onClick={handleExportJSON} className="h-10 px-4 rounded-xl bg-white/5 text-[9px] font-black uppercase text-slate-400 hover:text-[#f1c40f] transition-all border border-white/5 flex items-center gap-2">
                <i className="fas fa-download"></i> Backup
              </button>
              <button onClick={() => fileInputRef.current?.click()} className="h-10 px-4 rounded-xl bg-white/5 text-[9px] font-black uppercase text-slate-400 hover:text-white transition-all border border-white/5 flex items-center gap-2">
@@ -172,7 +258,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
         </div>
       </header>
 
-      <main className="flex-grow mx-auto max-w-5xl w-full p-8 space-y-12">
+      <main className="flex-grow mx-auto max-w-5xl w-full p-8 space-y-8">
         
         {/* Formulário de Inserção */}
         <section className="glass-panel p-8 rounded-[2rem] border border-[#006837]/20 shadow-2xl relative overflow-hidden">
@@ -209,30 +295,103 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
           </div>
         </section>
 
-        {/* Visualização e Filtro */}
+        {/* Visualização e Filtros Avançados */}
         <section className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-             <div className="flex items-center gap-3">
-                <div className="h-1 w-8 bg-[#006837] rounded-full"></div>
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Painel de Jogos</h3>
-             </div>
-             
-             <div className="flex items-center gap-3 w-full sm:w-auto bg-white/5 p-1.5 rounded-2xl border border-white/5">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-3">Visualizar Agenda:</span>
-                <select 
-                  value={selectedAnalystId} 
-                  onChange={e => setSelectedAnalystId(e.target.value)}
-                  className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white outline-none focus:border-[#f1c40f] cursor-pointer min-w-[200px]"
-                >
-                  <option value="all">TODOS OS ANALISTAS</option>
-                  {analysts.map(u => (
-                    <option key={u.id} value={u.id}>{u.name.toUpperCase()}</option>
-                  ))}
-                </select>
-             </div>
+          <div className="glass-panel p-6 rounded-3xl border border-white/5 space-y-6">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-3">
+                  <div className="h-1 w-8 bg-[#006837] rounded-full"></div>
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filtros de Visualização</h3>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
+                {/* Filtro de Analista */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Analista</span>
+                  <select 
+                    value={selectedAnalystId} 
+                    onChange={e => setSelectedAnalystId(e.target.value)}
+                    className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white outline-none focus:border-[#f1c40f] cursor-pointer min-w-[180px]"
+                  >
+                    <option value="all">TODOS OS ANALISTAS</option>
+                    {analysts.map(u => (
+                      <option key={u.id} value={u.id}>{u.name.toUpperCase()}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Filtro Range de Datas */}
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">De</span>
+                  <input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={e => setStartDate(e.target.value)}
+                    className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none focus:border-[#006837]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Até</span>
+                  <input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={e => setEndDate(e.target.value)}
+                    className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white outline-none focus:border-[#006837]"
+                  />
+                </div>
+
+                <div className="flex items-end h-[42px] mt-1.5">
+                  <button 
+                    onClick={clearDateFilters}
+                    className="h-full px-4 rounded-xl bg-white/5 border border-white/10 text-[9px] font-black uppercase text-slate-500 hover:text-white transition-all"
+                  >
+                    Limpar Datas
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {!(startDate || endDate) && (
+              <div className="flex items-center gap-2 bg-[#006837]/5 p-3 rounded-xl border border-[#006837]/20">
+                <i className="fas fa-info-circle text-[#f1c40f] text-xs"></i>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
+                  <span className="text-[#006837]">Modo Semanal:</span> Jogos finalizados há mais de 7 dias estão ocultos. Use o filtro de data para ver o histórico completo.
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
+          <div ref={scheduleRef} className="grid grid-cols-1 gap-4 p-4 rounded-[2rem]">
+            {/* Cabeçalho oculto apenas para o PDF */}
+            <div id="pdf-analyst-header" className="hidden mb-12 border-b border-white/10 pb-8 text-center bg-[#050807] rounded-3xl p-6">
+               <div className="flex h-16 w-16 items-center justify-center shrink-0 mx-auto mb-4 bg-white rounded-xl p-1 shadow-2xl">
+                  <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" />
+               </div>
+               <h2 className="text-3xl font-oswald font-bold uppercase text-white mb-2 tracking-tight">Relatório de Agenda Semanal</h2>
+               <div className="flex items-center justify-center gap-8">
+                  <div className="text-center">
+                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Responsável</p>
+                    <p className="text-[10px] font-black text-[#f1c40f] uppercase tracking-widest">
+                      {selectedAnalystId === 'all' ? 'Departamento Geral' : analysts.find(a => a.id === selectedAnalystId)?.name}
+                    </p>
+                  </div>
+                  <div className="h-8 w-px bg-white/10"></div>
+                  <div className="text-center">
+                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Período</p>
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest">
+                      {startDate ? new Date(startDate).toLocaleDateString() : 'Início'} — {endDate ? new Date(endDate).toLocaleDateString() : 'Atual'}
+                    </p>
+                  </div>
+                  <div className="h-8 w-px bg-white/10"></div>
+                  <div className="text-center">
+                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Geração</p>
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest">
+                      {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+               </div>
+            </div>
+
             {loading ? (
               <div className="py-24 text-center">
                  <div className="h-10 w-10 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin mx-auto"></div>
@@ -242,6 +401,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
               filteredGames.map(game => {
                 const status = getGameStatus(game.datetime);
                 const isMine = game.analystid === currentUser.id;
+                const gameDate = new Date(game.datetime);
                 
                 return (
                   <div key={game.id} className="group relative glass-panel p-6 rounded-3xl border border-white/5 hover:border-[#006837]/30 transition-all flex flex-col md:flex-row items-center gap-8 overflow-hidden">
@@ -252,16 +412,16 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                     }`}></div>
 
                     <div className="flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-2xl p-4 min-w-[100px] shadow-inner">
-                      <span className="text-[10px] font-black text-slate-500 uppercase mb-1">{new Date(game.datetime).toLocaleDateString('pt-BR', { weekday: 'short' })}</span>
-                      <span className="text-2xl font-oswald font-black text-white leading-none">{new Date(game.datetime).getDate()}</span>
-                      <span className="text-[8px] font-black text-[#f1c40f] uppercase mt-1 tracking-widest">{new Date(game.datetime).toLocaleDateString('pt-BR', { month: 'short' })}</span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase mb-1">{gameDate.toLocaleDateString('pt-BR', { weekday: 'short' })}</span>
+                      <span className="text-2xl font-oswald font-black text-white leading-none">{gameDate.getDate()}</span>
+                      <span className="text-[8px] font-black text-[#f1c40f] uppercase mt-1 tracking-widest">{gameDate.toLocaleDateString('pt-BR', { month: 'short' })}</span>
                     </div>
 
                     <div className="flex-grow text-center md:text-left space-y-1">
                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                          <span className="text-[10px] font-black text-[#006837] uppercase tracking-widest">{game.competition || 'Jogo Isolado'}</span>
                          <span className="h-1 w-1 rounded-full bg-slate-700"></span>
-                         <span className="text-[11px] font-bold text-slate-400">{new Date(game.datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                         <span className="text-[11px] font-bold text-slate-400">{gameDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                          
                          {status === 'Em Andamento' && (
                            <span className="px-2 py-0.5 bg-red-600 text-[8px] font-black text-white uppercase rounded animate-pulse">● Ao Vivo</span>
@@ -276,7 +436,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 shrink-0">
+                    <div className="flex items-center gap-4 shrink-0" data-html2canvas-ignore>
                        <div className="text-right hidden sm:block">
                           <p className="text-[8px] font-black text-slate-700 uppercase tracking-widest mb-1">Status</p>
                           <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-lg border ${
@@ -302,8 +462,8 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                 <div className="h-16 w-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-800">
                    <i className="far fa-calendar-times text-3xl"></i>
                 </div>
-                <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.3em]">Agenda Livre no Momento</p>
-                <p className="text-[9px] text-slate-700 uppercase mt-2">Nenhum jogo cadastrado para este analista</p>
+                <p className="text-[11px] font-black text-slate-600 uppercase tracking-[0.2em]">Sem jogos encontrados</p>
+                <p className="text-[9px] text-slate-700 uppercase mt-2">Tente ajustar os filtros de data ou analista</p>
               </div>
             )}
           </div>
@@ -313,7 +473,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
 
       <footer className="py-10 border-t border-white/5 text-center bg-black/40">
          <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.2em]">
-           Porto Vitória FC • Departamento de Scouting • 2024
+           Porto Vitória FC Departamento de Análise de Mercado
          </p>
       </footer>
     </div>
