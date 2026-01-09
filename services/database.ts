@@ -18,34 +18,52 @@ export const dbService = {
   },
 
   async savePlayer(player: Player): Promise<void> {
-    if (!supabase) throw new Error("Cloud not configured.");
+    if (!supabase) throw new Error("Nuvem não configurada.");
     const { id, ...playerData } = player;
     const { error } = await supabase.from('players').upsert({ id, ...playerData });
-    if (error) throw error;
+    if (error) {
+      console.error("Erro Supabase (Players):", error);
+      throw error;
+    }
   },
 
   async deletePlayer(id: string): Promise<void> {
-    if (!supabase) throw new Error("Cloud not configured.");
+    if (!supabase) throw new Error("Nuvem não configurada.");
     const { error } = await supabase.from('players').delete().eq('id', id);
     if (error) throw error;
   },
 
-  // --- AGENDA DE SCOUTING (NOVO) ---
+  // --- AGENDA DE SCOUTING ---
   async getScoutingGames(): Promise<ScoutingGame[]> {
     if (!supabase) return [];
     const { data, error } = await supabase.from('scouting_games').select('*').order('dateTime', { ascending: true });
-    if (error) return [];
+    if (error) {
+      console.error("Erro ao buscar jogos:", error);
+      return [];
+    }
     return data || [];
   },
 
   async saveScoutingGame(game: ScoutingGame): Promise<void> {
-    if (!supabase) throw new Error("Cloud not configured.");
+    if (!supabase) throw new Error("Nuvem não configurada.");
+    
+    // Log para debug
+    console.log("Tentando salvar jogo:", game);
+    
     const { error } = await supabase.from('scouting_games').upsert(game);
-    if (error) throw error;
+    
+    if (error) {
+      console.error("Erro detalhado do Supabase:", error);
+      // Se o erro for 404, provavelmente a tabela não existe
+      if (error.code === '42P01') {
+        throw new Error("Tabela 'scouting_games' não encontrada no banco. Execute o SQL de criação.");
+      }
+      throw error;
+    }
   },
 
   async deleteScoutingGame(id: string): Promise<void> {
-    if (!supabase) throw new Error("Cloud not configured.");
+    if (!supabase) throw new Error("Nuvem não configurada.");
     const { error } = await supabase.from('scouting_games').delete().eq('id', id);
     if (error) throw error;
   },
@@ -53,18 +71,18 @@ export const dbService = {
   // --- USUÁRIOS ---
   async getUsers(): Promise<User[]> {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('users').select('*');
+    const { data, error } = await supabase.from('users').select('*').eq('status', 'approved');
     return data || [];
   },
 
   async saveUser(user: User): Promise<void> {
-    if (!supabase) throw new Error("Cloud not configured.");
+    if (!supabase) throw new Error("Nuvem não configurada.");
     const { error } = await supabase.from('users').upsert(user);
     if (error) throw error;
   },
 
   async deleteUser(id: string): Promise<void> {
-    if (!supabase) throw new Error("Cloud not configured.");
+    if (!supabase) throw new Error("Nuvem não configurada.");
     const { error } = await supabase.from('users').delete().eq('id', id);
     if (error) throw error;
   }
