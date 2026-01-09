@@ -47,6 +47,14 @@ export interface Player {
   contact?: string;
 }
 
+export interface ObservedPlayer {
+  id: string;
+  name: string;
+  club: string;
+  position: Position;
+  createdAt: string;
+}
+
 export interface FilterState {
   search: string;
   positions: Position[];

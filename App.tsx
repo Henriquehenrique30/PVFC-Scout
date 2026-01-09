@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, FilterState, User, Recommendation, Position } from './types';
 import PlayerCard from './components/PlayerCard';
@@ -6,7 +7,8 @@ import AddPlayerModal from './components/AddPlayerModal';
 import Auth from './components/Auth';
 import AdminUserManagement from './components/AdminUserManagement';
 import ShadowTeamModal from './components/ShadowTeamModal';
-import ComparisonModal from './components/ComparisonModal'; // <--- IMPORT NOVO
+import ComparisonModal from './components/ComparisonModal';
+import WatchlistPage from './components/WatchlistPage'; // NOVO
 import { dbService, isCloudActive } from './services/database';
 
 const App: React.FC = () => {
@@ -21,10 +23,13 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : null;
   });
 
+  // Alternador de página: dashboard ou watchlist
+  const [view, setView] = useState<'dashboard' | 'watchlist'>('dashboard');
+
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isShadowTeamOpen, setIsShadowTeamOpen] = useState(false);
-  const [isComparisonOpen, setIsComparisonOpen] = useState(false); // <--- ESTADO NOVO
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
@@ -39,7 +44,7 @@ const App: React.FC = () => {
   });
 
   const loadData = async (isAutoRefresh = false) => {
-    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer || isShadowTeamOpen || isComparisonOpen)) return;
+    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer || isShadowTeamOpen || isComparisonOpen || view === 'watchlist')) return;
     if (!isCloudActive()) return;
     if (!isAutoRefresh) setLoading(true);
 
@@ -61,7 +66,7 @@ const App: React.FC = () => {
     loadData();
     const interval = setInterval(() => loadData(true), 45000);
     return () => clearInterval(interval);
-  }, [isModalOpen, isAdminPanelOpen, selectedPlayer, isShadowTeamOpen, isComparisonOpen]);
+  }, [isModalOpen, isAdminPanelOpen, selectedPlayer, isShadowTeamOpen, isComparisonOpen, view]);
 
   useEffect(() => {
     if (currentUser) {
@@ -188,6 +193,11 @@ const App: React.FC = () => {
     return <Auth onLogin={handleLogin} users={users} onRegister={handleRegister} />;
   }
 
+  // Renderização condicional da nova página de Watchlist
+  if (view === 'watchlist') {
+    return <WatchlistPage onBack={() => setView('dashboard')} />;
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Main Professional Header */}
@@ -230,7 +240,14 @@ const App: React.FC = () => {
                 <button onClick={() => setIsAdminPanelOpen(true)} className="px-3 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[9px] font-black uppercase tracking-widest border border-orange-500/20 hover:bg-orange-500/20 transition-all">Admin</button>
               )}
               
-              {/* BOTÃO DATA LAB (NOVO) */}
+              {/* BOTÃO WATCHLIST (NOVO) */}
+              <button 
+                onClick={() => setView('watchlist')}
+                className="bg-white/5 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-slate-400 hover:text-[#f1c40f] hover:bg-white/10 transition-all border border-white/5 flex items-center gap-2"
+              >
+                <i className="fas fa-binoculars"></i> Watchlist
+              </button>
+
               <button 
                 onClick={() => setIsComparisonOpen(true)}
                 className="bg-slate-900 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-slate-300 hover:bg-slate-800 hover:text-white transition-all border border-white/5 flex items-center gap-2"
@@ -238,7 +255,6 @@ const App: React.FC = () => {
                 <i className="fas fa-database"></i> Data Lab
               </button>
 
-              {/* BOTÃO SHADOW TEAM */}
               <button 
                 onClick={() => setIsShadowTeamOpen(true)}
                 className="bg-[#1a2e22] px-4 py-2 rounded-lg text-[9px] font-black uppercase text-[#f1c40f] hover:bg-[#006837] hover:text-white transition-all shadow-lg border border-[#f1c40f]/20 flex items-center gap-2"
