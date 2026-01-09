@@ -18,12 +18,10 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scheduleRef = useRef<HTMLDivElement>(null);
   
-  // Estados do Formulário de Cadastro
   const [gameTitle, setGameTitle] = useState('');
   const [dateTime, setDateTime] = useState('');
   const [competition, setCompetition] = useState('');
 
-  // Estados de Filtro
   const [selectedAnalystId, setSelectedAnalystId] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -51,12 +49,10 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
   const filteredGames = useMemo(() => {
     let result = [...games];
 
-    // 1. Filtro por Analista
     if (selectedAnalystId !== 'all') {
       result = result.filter(g => g.analystid === selectedAnalystId);
     }
 
-    // 2. Lógica de Range de Data e Auto-hide
     const now = new Date();
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(now.getDate() - 7);
@@ -64,7 +60,6 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     const hasExplicitFilter = startDate !== '' || endDate !== '';
 
     if (hasExplicitFilter) {
-      // Se houver filtro explícito, respeita rigorosamente as datas
       if (startDate) {
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
@@ -76,11 +71,9 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
         result = result.filter(g => new Date(g.datetime) <= end);
       }
     } else {
-      // Se NÃO houver filtro, esconde jogos finalizados há mais de 1 semana
       result = result.filter(g => new Date(g.datetime) >= oneWeekAgo);
     }
 
-    // Ordenação Cronológica
     return result.sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
   }, [games, selectedAnalystId, startDate, endDate]);
 
@@ -129,21 +122,32 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     setIsExportingPDF(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Pequeno delay para garantir que o DOM esteja pronto
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       const element = scheduleRef.current;
+      
+      // Captura o canvas ignorando elementos marcados e garantindo fundo sólido
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 2, // Aumenta resolução para impressão
         useCORS: true,
-        backgroundColor: '#050807',
+        backgroundColor: '#020403', // Fundo escuro do app
         logging: false,
         width: element.offsetWidth,
+        height: element.scrollHeight, // Captura toda a altura, não só o visível
         onclone: (clonedDoc) => {
           const analystLabel = clonedDoc.querySelector('#pdf-analyst-header');
           if (analystLabel) (analystLabel as HTMLElement).style.display = 'block';
+          
+          // Remove bordas arredondadas externas para o PDF se necessário
+          const container = clonedDoc.querySelector('[ref="scheduleRef"]');
+          if (container) (container as HTMLElement).style.borderRadius = '0';
         }
       });
 
       const imgData = canvas.toDataURL('image/png');
+      
+      // Criar PDF em formato Paisagem (Landscape)
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -151,13 +155,25 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Calcular dimensões da imagem para caber na largura da página PDF
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Agenda_PVFC_${selectedAnalystId === 'all' ? 'Geral' : currentUser.name.replace(/\s+/g, '_')}.pdf`);
+      // Se a imagem for mais alta que a página, ela ocupará o espaço necessário 
+      // Em relatórios semanais, geralmente cabe em uma página Paisagem.
+      // Se precisar de múltiplas páginas, pode-se iterar, mas para "Weekly Agenda" o fit resolve 99% dos casos.
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
+      const fileName = selectedAnalystId === 'all' 
+        ? `Agenda_Geral_PVFC_${new Date().toISOString().split('T')[0]}.pdf`
+        : `Agenda_${currentUser.name.replace(/\s+/g, '_')}_PVFC.pdf`;
+
+      pdf.save(fileName);
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      alert("Falha ao gerar relatório PDF.");
+      alert("Falha ao gerar relatório PDF. Tente novamente.");
     } finally {
       setIsExportingPDF(false);
     }
@@ -305,7 +321,6 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
               </div>
 
               <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-                {/* Filtro de Analista */}
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">Analista</span>
                   <select 
@@ -320,7 +335,6 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                   </select>
                 </div>
 
-                {/* Filtro Range de Datas */}
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest ml-1">De</span>
                   <input 
@@ -361,31 +375,32 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
             )}
           </div>
 
-          <div ref={scheduleRef} className="grid grid-cols-1 gap-4 p-4 rounded-[2rem]">
+          {/* ÁREA DE CAPTURA DO PDF */}
+          <div ref={scheduleRef} className="grid grid-cols-1 gap-4 p-6 rounded-[2rem] bg-[#020403]">
             {/* Cabeçalho oculto apenas para o PDF */}
-            <div id="pdf-analyst-header" className="hidden mb-12 border-b border-white/10 pb-8 text-center bg-[#050807] rounded-3xl p-6">
-               <div className="flex h-16 w-16 items-center justify-center shrink-0 mx-auto mb-4 bg-white rounded-xl p-1 shadow-2xl">
+            <div id="pdf-analyst-header" className="hidden mb-12 border-b border-white/10 pb-10 text-center bg-[#050807] rounded-[2.5rem] p-8 shadow-2xl">
+               <div className="flex h-20 w-20 items-center justify-center shrink-0 mx-auto mb-6 bg-white rounded-2xl p-1 shadow-2xl">
                   <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" />
                </div>
-               <h2 className="text-3xl font-oswald font-bold uppercase text-white mb-2 tracking-tight">Relatório de Agenda Semanal</h2>
-               <div className="flex items-center justify-center gap-8">
+               <h2 className="text-4xl font-oswald font-bold uppercase text-white mb-3 tracking-tighter">Relatório de Agenda Semanal</h2>
+               <div className="flex items-center justify-center gap-10">
                   <div className="text-center">
-                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Responsável</p>
-                    <p className="text-[10px] font-black text-[#f1c40f] uppercase tracking-widest">
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Responsável</p>
+                    <p className="text-[12px] font-black text-[#f1c40f] uppercase tracking-widest">
                       {selectedAnalystId === 'all' ? 'Departamento Geral' : analysts.find(a => a.id === selectedAnalystId)?.name}
                     </p>
                   </div>
-                  <div className="h-8 w-px bg-white/10"></div>
+                  <div className="h-10 w-px bg-white/10"></div>
                   <div className="text-center">
-                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Período</p>
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest">
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Período Selecionado</p>
+                    <p className="text-[12px] font-black text-white uppercase tracking-widest">
                       {startDate ? new Date(startDate).toLocaleDateString() : 'Início'} — {endDate ? new Date(endDate).toLocaleDateString() : 'Atual'}
                     </p>
                   </div>
-                  <div className="h-8 w-px bg-white/10"></div>
+                  <div className="h-10 w-px bg-white/10"></div>
                   <div className="text-center">
-                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Geração</p>
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest">
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Data de Geração</p>
+                    <p className="text-[12px] font-black text-white uppercase tracking-widest">
                       {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -404,42 +419,42 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                 const gameDate = new Date(game.datetime);
                 
                 return (
-                  <div key={game.id} className="group relative glass-panel p-6 rounded-3xl border border-white/5 hover:border-[#006837]/30 transition-all flex flex-col md:flex-row items-center gap-8 overflow-hidden">
+                  <div key={game.id} className="group relative glass-panel p-6 rounded-[2rem] border border-white/5 hover:border-[#006837]/30 transition-all flex flex-col md:flex-row items-center gap-8 overflow-hidden bg-black/40">
                     
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                      status === 'Em Andamento' ? 'bg-red-600' : 
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                      status === 'Em Andamento' ? 'bg-red-600 shadow-[2px_0_10px_rgba(220,38,38,0.5)]' : 
                       status === 'Próximo' ? 'bg-[#006837]' : 'bg-slate-800'
                     }`}></div>
 
-                    <div className="flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-2xl p-4 min-w-[100px] shadow-inner">
-                      <span className="text-[10px] font-black text-slate-500 uppercase mb-1">{gameDate.toLocaleDateString('pt-BR', { weekday: 'short' })}</span>
-                      <span className="text-2xl font-oswald font-black text-white leading-none">{gameDate.getDate()}</span>
-                      <span className="text-[8px] font-black text-[#f1c40f] uppercase mt-1 tracking-widest">{gameDate.toLocaleDateString('pt-BR', { month: 'short' })}</span>
+                    <div className="flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-2xl p-5 min-w-[110px] shadow-inner">
+                      <span className="text-[11px] font-black text-slate-500 uppercase mb-1">{gameDate.toLocaleDateString('pt-BR', { weekday: 'short' })}</span>
+                      <span className="text-3xl font-oswald font-black text-white leading-none">{gameDate.getDate()}</span>
+                      <span className="text-[9px] font-black text-[#f1c40f] uppercase mt-1 tracking-widest">{gameDate.toLocaleDateString('pt-BR', { month: 'short' })}</span>
                     </div>
 
                     <div className="flex-grow text-center md:text-left space-y-1">
                       <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                         <span className="text-[10px] font-black text-[#006837] uppercase tracking-widest">{game.competition || 'Jogo Isolado'}</span>
+                         <span className="text-[11px] font-black text-[#006837] uppercase tracking-widest">{game.competition || 'Jogo Isolado'}</span>
                          <span className="h-1 w-1 rounded-full bg-slate-700"></span>
-                         <span className="text-[11px] font-bold text-slate-400">{gameDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                         <span className="text-[12px] font-bold text-slate-400">{gameDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                          
                          {status === 'Em Andamento' && (
-                           <span className="px-2 py-0.5 bg-red-600 text-[8px] font-black text-white uppercase rounded animate-pulse">● Ao Vivo</span>
+                           <span className="px-2 py-0.5 bg-red-600 text-[8px] font-black text-white uppercase rounded animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.5)]">● Ao Vivo</span>
                          )}
                       </div>
-                      <h4 className="text-xl font-oswald font-bold uppercase text-white tracking-wide group-hover:text-[#f1c40f] transition-colors">{game.gametitle}</h4>
-                      <div className="flex items-center justify-center md:justify-start gap-2 pt-1">
-                        <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] ${isMine ? 'bg-[#006837] text-white' : 'bg-white/5 text-slate-500'}`}>
+                      <h4 className="text-2xl font-oswald font-bold uppercase text-white tracking-wide group-hover:text-[#f1c40f] transition-colors">{game.gametitle}</h4>
+                      <div className="flex items-center justify-center md:justify-start gap-3 pt-1">
+                        <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] ${isMine ? 'bg-[#006837] text-white shadow-lg shadow-[#006837]/20' : 'bg-white/5 text-slate-500'}`}>
                            <i className="fas fa-user-ninja"></i>
                         </div>
-                        <span className="text-[9px] font-black text-slate-500 uppercase">Analista: <span className="text-white">{game.analystname}</span></span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase">Analista Responsável: <span className="text-white">{game.analystname}</span></span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-4 shrink-0" data-html2canvas-ignore>
                        <div className="text-right hidden sm:block">
-                          <p className="text-[8px] font-black text-slate-700 uppercase tracking-widest mb-1">Status</p>
-                          <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-lg border ${
+                          <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-1">Status Observação</p>
+                          <span className={`text-[10px] font-black uppercase px-4 py-1.5 rounded-xl border ${
                             status === 'Em Andamento' ? 'border-red-600 text-red-500 bg-red-600/5' : 
                             status === 'Próximo' ? 'border-[#006837] text-[#006837] bg-[#006837]/5' : 
                             'border-slate-800 text-slate-600 bg-slate-800/5'
@@ -449,7 +464,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                        </div>
                        
                        {isMine && (
-                         <button onClick={() => handleDelete(game.id)} className="h-12 w-12 rounded-2xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center border border-red-500/20 shadow-lg">
+                         <button onClick={() => handleDelete(game.id)} className="h-12 w-12 rounded-2xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center border border-red-500/20 shadow-lg active:scale-90">
                            <i className="fas fa-trash-alt"></i>
                          </button>
                        )}
@@ -466,6 +481,13 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                 <p className="text-[9px] text-slate-700 uppercase mt-2">Tente ajustar os filtros de data ou analista</p>
               </div>
             )}
+            
+            {/* Rodapé institucional apenas no PDF */}
+            <div id="pdf-footer" className="hidden mt-12 border-t border-white/5 pt-6 text-center">
+               <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.3em]">
+                 Porto Vitória FC • Departamento de Análise de Mercado
+               </p>
+            </div>
           </div>
         </section>
 
