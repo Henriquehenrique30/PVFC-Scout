@@ -55,6 +55,16 @@ export interface ObservedPlayer {
   createdAt: string;
 }
 
+export interface ScoutingGame {
+  id: string;
+  analystId: string;
+  analystName: string;
+  gameTitle: string;
+  dateTime: string;
+  competition?: string;
+  createdAt: string;
+}
+
 export interface FilterState {
   search: string;
   positions: Position[];
@@ -74,7 +84,7 @@ export interface User {
   lastName: string;
   username: string;
   email?: string;
-  name: string; // Mantido para compatibilidade, será firstName + lastName
+  name: string; 
   password?: string;
   role: UserRole;
   status: UserStatus;

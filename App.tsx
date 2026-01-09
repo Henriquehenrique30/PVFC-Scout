@@ -8,7 +8,8 @@ import Auth from './components/Auth';
 import AdminUserManagement from './components/AdminUserManagement';
 import ShadowTeamModal from './components/ShadowTeamModal';
 import ComparisonModal from './components/ComparisonModal';
-import WatchlistPage from './components/WatchlistPage'; // NOVO
+import WatchlistPage from './components/WatchlistPage';
+import ScoutingSchedulePage from './components/ScoutingSchedulePage'; // NOVO
 import { dbService, isCloudActive } from './services/database';
 
 const App: React.FC = () => {
@@ -23,8 +24,8 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Alternador de página: dashboard ou watchlist
-  const [view, setView] = useState<'dashboard' | 'watchlist'>('dashboard');
+  // Alternador de página: dashboard, watchlist, schedule
+  const [view, setView] = useState<'dashboard' | 'watchlist' | 'schedule'>('dashboard');
 
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,7 +45,7 @@ const App: React.FC = () => {
   });
 
   const loadData = async (isAutoRefresh = false) => {
-    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer || isShadowTeamOpen || isComparisonOpen || view === 'watchlist')) return;
+    if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer || isShadowTeamOpen || isComparisonOpen || view !== 'dashboard')) return;
     if (!isCloudActive()) return;
     if (!isAutoRefresh) setLoading(true);
 
@@ -193,9 +194,13 @@ const App: React.FC = () => {
     return <Auth onLogin={handleLogin} users={users} onRegister={handleRegister} />;
   }
 
-  // Renderização condicional da nova página de Watchlist
+  // Renderização condicional das subpáginas
   if (view === 'watchlist') {
     return <WatchlistPage onBack={() => setView('dashboard')} />;
+  }
+  
+  if (view === 'schedule') {
+    return <ScoutingSchedulePage currentUser={currentUser} onBack={() => setView('dashboard')} />;
   }
 
   return (
@@ -240,7 +245,14 @@ const App: React.FC = () => {
                 <button onClick={() => setIsAdminPanelOpen(true)} className="px-3 py-2 rounded-lg bg-orange-500/10 text-orange-500 text-[9px] font-black uppercase tracking-widest border border-orange-500/20 hover:bg-orange-500/20 transition-all">Admin</button>
               )}
               
-              {/* BOTÃO WATCHLIST (NOVO) */}
+              {/* BOTÃO AGENDA (NOVO) */}
+              <button 
+                onClick={() => setView('schedule')}
+                className="bg-[#006837]/20 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-[#006837] hover:text-white hover:bg-[#006837] transition-all border border-[#006837]/30 flex items-center gap-2"
+              >
+                <i className="fas fa-calendar-alt"></i> Agenda
+              </button>
+
               <button 
                 onClick={() => setView('watchlist')}
                 className="bg-white/5 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-slate-400 hover:text-[#f1c40f] hover:bg-white/10 transition-all border border-white/5 flex items-center gap-2"
@@ -268,10 +280,10 @@ const App: React.FC = () => {
           </div>
         </div>
       </header>
-
+      
+      {/* ... Resto do Dashboard permanece o mesmo ... */}
       <main className="flex-grow mx-auto max-w-[1600px] px-8 py-8 w-full flex flex-col lg:flex-row gap-10">
-        
-        {/* Sidebar de Filtros */}
+        {/* Sidebar e Grid de jogadores omitidos por brevidade, permanecem iguais */}
         <aside className="lg:w-80 shrink-0">
           <div className="sticky top-24 space-y-6">
             <div className="glass-panel p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-8">
@@ -379,7 +391,6 @@ const App: React.FC = () => {
           </div>
         </aside>
 
-        {/* Player Grid Area */}
         <div className="flex-1 space-y-6">
           <div className="flex items-end justify-between border-b border-white/5 pb-4">
             <div>
@@ -442,7 +453,6 @@ const App: React.FC = () => {
         </div>
       </footer>
 
-      {/* MODAL DO SHADOW TEAM */}
       {isShadowTeamOpen && currentUser && (
         <ShadowTeamModal 
           players={players} 
@@ -450,14 +460,8 @@ const App: React.FC = () => {
           onClose={() => setIsShadowTeamOpen(false)} 
         />
       )}
-
-      {/* MODAL DE COMPARAÇÃO (DATA LAB) */}
-      {isComparisonOpen && (
-        <ComparisonModal onClose={() => setIsComparisonOpen(false)} />
-      )}
-
+      {isComparisonOpen && <ComparisonModal onClose={() => setIsComparisonOpen(false)} />}
       {selectedPlayer && <PlayerDetails player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
-      
       {isModalOpen && (
         <AddPlayerModal 
           player={editingPlayer || undefined} 
@@ -466,7 +470,6 @@ const App: React.FC = () => {
           onUpdate={handleUpdatePlayer} 
         />
       )}
-      
       {isAdminPanelOpen && (
         <AdminUserManagement 
           users={users} 
