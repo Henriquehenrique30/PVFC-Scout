@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useRef } from 'react';
 import { Player } from '../types';
 import { getScoutReport } from '../services/geminiService';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface PlayerDetailsProps {
   player: Player;
@@ -12,6 +15,8 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   const [report, setReport] = useState<string>('Decodificando métricas de performance...');
   const [loading, setLoading] = useState(true);
   const [isKeyMissing, setIsKeyMissing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const reportContainerRef = useRef<HTMLDivElement>(null);
 
   const hasData = !!player.aiContextData;
 
@@ -44,6 +49,41 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     }
   };
 
+  const handleExportPDF = async () => {
+    if (!reportContainerRef.current) return;
+    setIsExporting(true);
+
+    try {
+      // Pequeno delay para garantir renderização
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const canvas = await html2canvas(reportContainerRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#050807',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Relatorio_${player.name.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      alert("Erro ao exportar dossiê.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const renderReportText = (text: string) => {
     const parts = text.split(/(\*\*.*?\*\*)/g);
     return parts.map((part, i) => {
@@ -70,10 +110,11 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/98 backdrop-blur-3xl overflow-hidden">
-      <div className="relative w-full max-w-6xl overflow-hidden rounded-[2.5rem] bg-[#050807] shadow-[0_0_80px_rgba(0,104,55,0.1)] border border-white/5 h-[90vh] max-h-[850px] flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
+      <div ref={reportContainerRef} className="relative w-full max-w-6xl overflow-hidden rounded-[2.5rem] bg-[#050807] shadow-[0_0_80px_rgba(0,104,55,0.1)] border border-white/5 h-[90vh] max-h-[850px] flex flex-col md:flex-row animate-in fade-in zoom-in duration-500">
         
         <button 
           onClick={onClose}
+          data-html2canvas-ignore
           className="absolute right-6 top-6 z-50 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/80 text-white hover:bg-red-600 transition-all border border-white/10 group shadow-2xl"
         >
           <i className="fas fa-times group-hover:rotate-90 transition-transform"></i>
@@ -88,6 +129,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               src={player.photoUrl} 
               alt={player.name} 
               className="relative h-44 w-44 rounded-[2rem] object-cover object-top border-4 border-[#050807] shadow-2xl"
+              crossOrigin="anonymous"
             />
             <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#f1c40f] px-5 py-1.5 rounded-full text-[9px] font-black text-slate-950 uppercase shadow-2xl border-4 border-[#0a0f0d] tracking-widest text-center min-w-[110px]">
               {player.recommendation}
@@ -124,25 +166,20 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             ))}
           </div>
 
-          {/* --- NOVO: BLOCO DE AGENTE E CONTATO --- */}
           {(player.agent || player.contact) && (
             <div className="mt-6 w-full rounded-2xl bg-[#0f1a16] p-5 border border-[#006837]/20 shrink-0 relative overflow-hidden group">
-               {/* Efeito de fundo */}
                <div className="absolute top-0 right-0 p-3 opacity-5">
                   <i className="fas fa-handshake text-4xl text-white"></i>
                </div>
-
               <h4 className="text-[8px] font-black text-[#006837] uppercase tracking-[0.2em] mb-4 flex items-center gap-2 relative z-10">
                  <i className="fas fa-user-tie"></i> Staff / Gestão
               </h4>
-              
               {player.agent && (
                 <div className="mb-3 last:mb-0 relative z-10">
                   <p className="text-[7px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Representante / Agência</p>
                   <p className="text-xs font-bold text-white uppercase truncate tracking-wide">{player.agent}</p>
                 </div>
               )}
-
               {player.contact && (
                 <div className="last:mb-0 relative z-10">
                   <p className="text-[7px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Contato Direto</p>
@@ -154,7 +191,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               )}
             </div>
           )}
-          {/* -------------------------------------- */}
 
           <div className="mt-6 h-56 w-full shrink-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -177,7 +213,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
         {/* CONTEÚDO DIREITA (RELATÓRIO IA) */}
         <div className="flex-1 flex flex-col h-full bg-[#050807] overflow-hidden border-t md:border-t-0 md:border-l border-white/5">
           
-          {/* Header Fixo */}
           <div className="p-8 pb-4 border-b border-white/5 shrink-0 bg-[#050807]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-5">
@@ -193,6 +228,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                 </div>
               </div>
               <button 
+                data-html2canvas-ignore
                 onClick={handleOpenConfig}
                 className="flex items-center gap-2 transition-all px-4 py-2 rounded-xl border border-white/5 bg-slate-900/50 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white hover:bg-slate-800"
               >
@@ -201,7 +237,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             </div>
           </div>
 
-          {/* Área de Texto com Scroll */}
           <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
             <div className={`relative rounded-[2rem] border p-8 shadow-2xl h-fit min-h-full transition-all ${
               hasData ? 'border-[#006837]/10 bg-gradient-to-br from-[#0a0f0d] to-transparent' : 'border-slate-800 bg-slate-900/10'
@@ -217,7 +252,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               ) : (
                 <div className="relative">
                   <i className="fas fa-quote-left text-5xl text-[#006837]/5 absolute -top-4 -left-2 pointer-events-none"></i>
-                  <div className={`text-[12.5px] leading-relaxed tracking-tight whitespace-pre-line ${isKeyMissing ? 'text-red-400 italic text-center' : 'text-slate-300 font-normal'}`}>
+                  <div className={`text-[10px] leading-snug tracking-tight whitespace-pre-line ${isKeyMissing ? 'text-red-400 italic text-center' : 'text-slate-300 font-normal'}`}>
                     {renderReportText(report)}
                   </div>
                 </div>
@@ -225,16 +260,24 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             </div>
           </div>
           
-          {/* Footer de Ações */}
           <div className="p-8 pt-4 border-t border-white/5 shrink-0 bg-[#050807]/80 backdrop-blur-md">
             <div className="flex gap-4">
+              <button 
+                data-html2canvas-ignore
+                onClick={handleExportPDF}
+                disabled={isExporting}
+                className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-[#f1c40f] px-6 py-4 text-[10px] font-black text-black hover:bg-white transition-all shadow-xl uppercase tracking-widest disabled:opacity-50"
+              >
+                <i className={`fas ${isExporting ? 'fa-spinner fa-spin' : 'fa-file-pdf'} text-lg`}></i> 
+                {isExporting ? 'Gerando PDF...' : 'Exportar Relatório PDF'}
+              </button>
               {player.videoUrl && (
-                <a href={player.videoUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-red-600/90 px-6 py-4 text-[10px] font-black text-white hover:bg-red-600 transition-all shadow-xl uppercase tracking-widest">
+                <a data-html2canvas-ignore href={player.videoUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-red-600/90 px-6 py-4 text-[10px] font-black text-white hover:bg-red-600 transition-all shadow-xl uppercase tracking-widest">
                   <i className="fab fa-youtube text-lg"></i> Vídeo
                 </a>
               )}
               {player.ogolUrl && (
-                <a href={player.ogolUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-white/5 px-6 py-4 text-[10px] font-black text-[#006837] hover:bg-white/10 hover:text-white transition-all shadow-xl uppercase tracking-widest border border-white/5">
+                <a data-html2canvas-ignore href={player.ogolUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-white/5 px-6 py-4 text-[10px] font-black text-[#006837] hover:bg-white/10 hover:text-white transition-all shadow-xl uppercase tracking-widest border border-white/5">
                   <i className="fas fa-database text-sm"></i> oGol Data
                 </a>
               )}
