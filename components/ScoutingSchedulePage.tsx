@@ -5,6 +5,24 @@ import { dbService } from '../services/database';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+/**
+ * Helper function to determine the status of a scouting game based on its date and time.
+ */
+const getGameStatus = (dateTimeStr: string): string => {
+  const gameDate = new Date(dateTimeStr);
+  const now = new Date();
+  const diffHours = (gameDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+  if (diffHours < 0 && diffHours > -3) {
+    return 'Em Andamento';
+  } else if (diffHours <= 0) {
+    return 'Finalizado';
+  } else if (diffHours < 48) {
+    return 'Próximo';
+  }
+  return 'Agendado';
+};
+
 interface ScoutingSchedulePageProps {
   currentUser: User;
   onBack: () => void;
@@ -65,10 +83,10 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
         result = result.filter(g => new Date(g.datetime).getTime() <= endLimit);
       }
     } else {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      oneWeekAgo.setHours(0, 0, 0, 0);
-      result = result.filter(g => new Date(g.datetime) >= oneWeekAgo);
+      // Padrão: Próximos 30 dias se não houver filtro
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      result = result.filter(g => new Date(g.datetime) >= now);
     }
 
     return result.sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
@@ -121,28 +139,29 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
     try {
       const element = scheduleRef.current;
       
+      // html2canvas capture com ajuste de escala e fundo sólido para evitar transparência que causa cortes visuais
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#020403',
+        backgroundColor: '#020403', // Fundo preto puro para o relatório
         logging: false,
-        width: element.offsetWidth,
-        height: element.scrollHeight, // Força a captura da altura total
         onclone: (clonedDoc) => {
+          // Mostrar elementos exclusivos do PDF
           const pdfHeader = clonedDoc.querySelector('#pdf-analyst-header');
           if (pdfHeader) (pdfHeader as HTMLElement).style.display = 'block';
           
           const pdfFooter = clonedDoc.querySelector('#pdf-footer');
           if (pdfFooter) (pdfFooter as HTMLElement).style.display = 'block';
 
-          // Garante que o container clonado se expanda totalmente sem scroll interno
-          const container = clonedDoc.querySelector('.schedule-container-capture');
-          if (container) {
-             const style = (container as HTMLElement).style;
+          // Forçar o container a não ter scroll e expandir totalmente
+          const captureArea = clonedDoc.querySelector('.schedule-container-capture');
+          if (captureArea) {
+             const style = (captureArea as HTMLElement).style;
              style.height = 'auto';
              style.overflow = 'visible';
-             style.padding = '30px';
-             style.backgroundColor = '#020403';
+             style.padding = '40px';
+             style.width = '210mm'; // Largura fixa A4
+             style.maxWidth = 'none';
           }
         }
       });
@@ -153,21 +172,22 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      // Calcula altura proporcional da imagem no PDF
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
       let heightLeft = imgHeight;
       let position = 0;
 
       // Adiciona a primeira página
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
       heightLeft -= pdfHeight;
 
-      // Só adiciona novas páginas se o conteúdo restante for maior que um pequeno threshold (evita página em branco)
-      while (heightLeft > 2) { 
-        position -= pdfHeight; 
+      // Loop para múltiplas páginas, evitando a página branca final com margem de segurança (10mm)
+      while (heightLeft > 10) { 
+        position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
 
@@ -176,75 +196,22 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
       
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
-      alert("Erro ao gerar PDF.");
+      alert("Erro ao gerar PDF. Tente novamente.");
     } finally {
       setIsExportingPDF(false);
     }
   };
 
-  const handleExportJSON = () => {
-    if (games.length === 0) return alert("Agenda vazia.");
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(games, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `Agenda_Backup_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const importedData = JSON.parse(evt.target?.result as string);
-        if (Array.isArray(importedData)) {
-          alert("Importando...");
-          for (const game of importedData) {
-            const sanitizedGame: ScoutingGame = {
-              id: game.id,
-              analystid: game.analystid || game.analystId,
-              analystname: game.analystname || game.analystName,
-              gametitle: game.gametitle || game.gameTitle,
-              datetime: game.datetime || game.dateTime,
-              competition: game.competition,
-              createdat: game.createdat || game.createdAt || new Date().toISOString()
-            };
-            await dbService.saveScoutingGame(sanitizedGame);
-          }
-          loadData();
-          alert("Sincronizado.");
-        }
-      } catch (err) {
-        alert("JSON inválido.");
-      }
-    };
-    reader.readAsText(file);
-    if (e.target) e.target.value = '';
-  };
-
-  const getGameStatus = (gameDateStr: string) => {
-    const gameDate = new Date(gameDateStr);
-    const now = new Date();
-    const diffMs = gameDate.getTime() - now.getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-    if (diffMs < 0) return diffHours < -2 ? 'Finalizado' : 'Em Andamento';
-    return 'Próximo';
-  };
-
   const currentGeneratingAnalyst = useMemo(() => {
     if (selectedAnalystId !== 'all') {
-      return analysts.find(a => a.id === selectedAnalystId)?.name || currentUser.name;
+      const found = analysts.find(a => a.id === selectedAnalystId);
+      return found ? found.name : "Analista Geral";
     }
     return currentUser.name;
   }, [selectedAnalystId, analysts, currentUser]);
 
   return (
     <div className="min-h-screen bg-[#020403] text-white flex flex-col animate-in fade-in duration-500">
-      <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
-
       <header className="glass-panel border-b border-white/5 py-4 px-8 sticky top-0 z-50">
         <div className="mx-auto max-w-6xl flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -264,10 +231,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                 className="h-10 px-6 rounded-xl bg-[#006837] text-[10px] font-black uppercase text-white hover:bg-[#f1c40f] hover:text-black transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
              >
                {isExportingPDF ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-file-pdf"></i>}
-               {isExportingPDF ? 'Gerando Relatório...' : 'Gerar Relatório'}
-             </button>
-             <button onClick={handleExportJSON} className="h-10 px-4 rounded-xl bg-white/5 text-[9px] font-black uppercase text-slate-400 hover:text-[#f1c40f] transition-all border border-white/5 flex items-center gap-2">
-               <i className="fas fa-download"></i> Backup
+               {isExportingPDF ? 'Sincronizando...' : 'Gerar Relatório'}
              </button>
           </div>
         </div>
@@ -275,6 +239,7 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
 
       <main className="flex-grow mx-auto max-w-5xl w-full p-8 space-y-8">
         
+        {/* Adicionar Jogo */}
         <section className="glass-panel p-8 rounded-[2rem] border border-[#006837]/20 shadow-2xl relative overflow-hidden">
           <h3 className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
             <i className="fas fa-calendar-plus"></i> Novo Agendamento
@@ -301,11 +266,12 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
           </form>
         </section>
 
+        {/* Filtros */}
         <section className="space-y-6">
           <div className="glass-panel p-6 rounded-3xl border border-white/5 flex flex-wrap items-center justify-between gap-6">
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex flex-col gap-1.5">
-                <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Filtrar Analista</span>
+                <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Analista</span>
                 <select 
                   value={selectedAnalystId} 
                   onChange={e => setSelectedAnalystId(e.target.value)}
@@ -332,25 +298,27 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
             </div>
           </div>
 
-          <div ref={scheduleRef} className="schedule-container-capture flex flex-col gap-4 p-8 rounded-[2rem] bg-[#020403] min-h-[500px]">
+          {/* Área de Captura do Relatório */}
+          <div ref={scheduleRef} className="schedule-container-capture flex flex-col gap-5 p-4 md:p-8 rounded-[2rem] bg-[#020403] min-h-[400px]">
             
-            <div id="pdf-analyst-header" className="hidden mb-12 border-b border-white/10 pb-10 text-center bg-[#050807] rounded-[2.5rem] p-8">
-               <div className="flex h-20 w-20 items-center justify-center mx-auto mb-6 bg-white rounded-2xl p-1 shadow-2xl">
+            {/* Cabeçalho Exclusivo PDF */}
+            <div id="pdf-analyst-header" className="hidden mb-12 border-b-2 border-[#006837]/30 pb-10 text-center bg-[#050807] rounded-[2.5rem] p-10">
+               <div className="flex h-24 w-24 items-center justify-center mx-auto mb-6 bg-white rounded-[1.5rem] p-2 shadow-2xl">
                   <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" />
                </div>
-               <h2 className="text-4xl font-oswald font-bold uppercase text-white mb-4 tracking-tighter">Relatório de Agenda Semanal</h2>
-               <div className="flex items-center justify-center gap-10">
+               <h2 className="text-5xl font-oswald font-bold uppercase text-white mb-6 tracking-tighter">Relatório de Escala de Scouting</h2>
+               <div className="flex items-center justify-center gap-12">
                   <div className="text-center">
-                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Responsável pela Geração</p>
-                    <p className="text-[12px] font-black text-[#f1c40f] uppercase tracking-widest">
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] mb-2">Analista Responsável</p>
+                    <p className="text-[16px] font-black text-[#f1c40f] uppercase tracking-widest">
                       {currentGeneratingAnalyst}
                     </p>
                   </div>
-                  <div className="h-10 w-px bg-white/10"></div>
+                  <div className="h-12 w-px bg-[#006837]/20"></div>
                   <div className="text-center">
-                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1">Período Selecionado</p>
-                    <p className="text-[12px] font-black text-white uppercase tracking-widest">
-                      {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString() : 'Histórico'} — {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString() : 'Atual'}
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] mb-2">Período de Análise</p>
+                    <p className="text-[16px] font-black text-white uppercase tracking-widest">
+                      {startDate ? new Date(startDate + 'T00:00:00').toLocaleDateString() : '—'} ATÉ {endDate ? new Date(endDate + 'T00:00:00').toLocaleDateString() : 'ATUAL'}
                     </p>
                   </div>
                </div>
@@ -363,28 +331,40 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                 const gameDate = new Date(game.datetime);
                 
                 return (
-                  <div key={game.id} className="relative glass-panel p-6 rounded-[1.5rem] border border-white/5 flex flex-col md:flex-row items-center gap-6 overflow-hidden bg-black/40">
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${status === 'Em Andamento' ? 'bg-red-600' : status === 'Próximo' ? 'bg-[#006837]' : 'bg-slate-800'}`}></div>
+                  <div key={game.id} className="relative glass-panel p-6 rounded-[1.5rem] border border-white/5 flex flex-col md:flex-row items-center gap-8 overflow-hidden bg-black/50 transition-all hover:border-[#006837]/30">
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${status === 'Em Andamento' ? 'bg-red-600' : status === 'Próximo' ? 'bg-[#006837]' : 'bg-slate-800'}`}></div>
 
-                    <div className="flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-xl p-4 min-w-[90px]">
-                      <span className="text-[10px] font-black text-slate-500 uppercase">{gameDate.toLocaleDateString('pt-BR', { weekday: 'short' })}</span>
-                      <span className="text-2xl font-oswald font-black text-white">{gameDate.getDate()}</span>
-                      <span className="text-[8px] font-black text-[#f1c40f] uppercase tracking-widest">{gameDate.toLocaleDateString('pt-BR', { month: 'short' })}</span>
+                    <div className="flex flex-col items-center justify-center bg-white/5 border border-white/10 rounded-2xl p-4 min-w-[100px] shadow-inner">
+                      <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{gameDate.toLocaleDateString('pt-BR', { weekday: 'short' })}</span>
+                      <span className="text-3xl font-oswald font-black text-white leading-tight">{gameDate.getDate()}</span>
+                      <span className="text-[9px] font-black text-[#f1c40f] uppercase tracking-widest">{gameDate.toLocaleDateString('pt-BR', { month: 'short' })}</span>
                     </div>
 
                     <div className="flex-grow text-center md:text-left">
-                      <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-                         <span className="text-[9px] font-black text-[#006837] uppercase tracking-widest">{game.competition || 'Competição'}</span>
-                         <span className="text-[10px] text-slate-500 font-bold">{gameDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                         <span className="px-2 py-0.5 rounded bg-[#006837]/20 text-[#006837] text-[10px] font-black uppercase tracking-widest border border-[#006837]/30">
+                           {game.competition || 'Monitoramento'}
+                         </span>
+                         <span className="text-xs text-slate-400 font-bold bg-white/5 px-2 py-0.5 rounded-lg border border-white/5">
+                           <i className="far fa-clock mr-1.5"></i>
+                           {gameDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                         </span>
                       </div>
-                      <h4 className="text-xl font-oswald font-bold uppercase text-white tracking-wide">{game.gametitle}</h4>
-                      <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Analista Escalado: <span className="text-white">{game.analystname}</span></p>
+                      <h4 className="text-2xl font-oswald font-bold uppercase text-white tracking-wide mb-2">{game.gametitle}</h4>
+                      <div className="flex items-center justify-center md:justify-start gap-2">
+                         <div className="h-5 w-5 rounded-full bg-white/10 flex items-center justify-center text-[10px] text-slate-500">
+                           <i className="fas fa-user-tie"></i>
+                         </div>
+                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                           Analista Escalado: <span className="text-white ml-1">{game.analystname}</span>
+                         </p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-4 shrink-0" data-html2canvas-ignore>
                        {isMine && (
-                         <button onClick={() => handleDelete(game.id)} className="h-10 w-10 rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center border border-red-500/20">
-                           <i className="fas fa-trash-alt text-sm"></i>
+                         <button onClick={() => handleDelete(game.id)} className="h-11 w-11 rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center border border-red-500/20 shadow-lg">
+                           <i className="fas fa-trash-alt text-base"></i>
                          </button>
                        )}
                     </div>
@@ -392,14 +372,19 @@ const ScoutingSchedulePage: React.FC<ScoutingSchedulePageProps> = ({ currentUser
                 );
               })
             ) : (
-              <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[2rem]">
-                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Nenhum jogo encontrado para este período</p>
+              <div className="py-24 text-center border-2 border-dashed border-white/5 rounded-[3rem] opacity-40">
+                <i className="far fa-calendar-times text-5xl mb-4 text-slate-800"></i>
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Nenhum compromisso registrado</p>
               </div>
             )}
             
-            <div id="pdf-footer" className="hidden mt-12 border-t border-white/5 pt-8 text-center">
-               <p className="text-[9px] font-black text-slate-700 uppercase tracking-[0.3em]">
-                 Porto Vitória FC • Departamento de Análise de Mercado
+            {/* Rodapé Exclusivo PDF */}
+            <div id="pdf-footer" className="hidden mt-16 border-t border-white/10 pt-10 text-center">
+               <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.5em]">
+                 Documento Oficial • Porto Vitória FC • Analítica de Mercado
+               </p>
+               <p className="text-[8px] font-bold text-slate-800 uppercase mt-4">
+                 © {new Date().getFullYear()} Porto Vitória - Todos os direitos reservados.
                </p>
             </div>
           </div>
