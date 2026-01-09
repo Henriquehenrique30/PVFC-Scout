@@ -251,7 +251,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                 </div>
               ) : (
                 <div className="relative">
-                  <div className={`text-[10px] leading-tight tracking-tight whitespace-pre-line ${isKeyMissing ? 'text-red-400 italic' : 'text-slate-300 font-normal'}`}>
+                  <div className={`text-[12px] leading-tight tracking-tight whitespace-pre-line ${isKeyMissing ? 'text-red-400 italic' : 'text-slate-300 font-normal'}`}>
                     {renderReportText(report)}
                   </div>
                 </div>
