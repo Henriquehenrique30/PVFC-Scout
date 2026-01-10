@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Player } from '../types';
 import { getScoutReport } from '../services/geminiService';
@@ -49,23 +48,46 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     }
   };
 
+  // --- FUNÇÃO DE EXPORTAÇÃO CORRIGIDA ---
   const handleExportPDF = async () => {
     if (!reportContainerRef.current) return;
     setIsExporting(true);
 
     try {
-      // Pequeno delay para garantir que o DOM esteja estável
-      await new Promise(resolve => setTimeout(resolve, 600));
+      // Delay para garantir renderização estável
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const element = reportContainerRef.current;
+      
       const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#050807',
+        scale: 2, // Melhor resolução
+        useCORS: true, // Permite carregar imagens externas
+        backgroundColor: '#050807', // Força fundo sólido (remove transparência)
         logging: false,
-        width: element.offsetWidth,
-        height: element.offsetHeight,
-        windowWidth: element.offsetWidth, // Força a captura a respeitar a largura atual
+        onclone: (clonedDoc) => {
+          // Encontra o elemento clonado para aplicar correções de CSS
+          const clonedElement = clonedDoc.querySelector('[data-pdf-target="true"]') as HTMLElement;
+          
+          if (clonedElement) {
+             // 1. Remove efeitos que quebram no PDF (Glassmorphism)
+             clonedElement.style.backdropFilter = 'none';
+             clonedElement.style.boxShadow = 'none';
+             clonedElement.style.background = '#050807'; // Fundo escuro sólido
+             
+             // 2. Remove restrições de altura e scroll
+             clonedElement.style.height = 'auto';
+             clonedElement.style.maxHeight = 'none';
+             clonedElement.style.overflow = 'visible';
+             
+             // 3. Fixa a largura para simular uma folha A4 Paisagem (~1122px)
+             // Isso evita que o PDF quebre se a sua tela for pequena ou muito grande
+             clonedElement.style.width = '1122px'; 
+             clonedElement.style.maxWidth = 'none';
+             
+             // Ajuste opcional para garantir que o texto não fique muito pequeno ou grande
+             clonedElement.style.fontSize = '16px'; 
+          }
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -80,6 +102,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
 
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Dossie_${player.name.replace(/\s+/g, '_')}.pdf`);
+
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       alert("Erro ao exportar PDF.");
@@ -117,7 +140,8 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/98 backdrop-blur-3xl overflow-hidden">
       <div 
-        ref={reportContainerRef} 
+        ref={reportContainerRef}
+        data-pdf-target="true" /* --- IMPORTANTE: Target para o PDF --- */
         className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-[#050807] shadow-2xl border border-white/5 h-[90vh] max-h-[820px] flex flex-col md:flex-row animate-in fade-in zoom-in duration-500"
       >
         
@@ -158,7 +182,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             </div>
           </div>
 
-          {/* GRID DE MÉTRICAS REDUZIDO (3 COLUNAS) - Alinhamento fixo para PDF */}
+          {/* GRID DE MÉTRICAS REDUZIDO (3 COLUNAS) */}
           <div className="mt-5 grid grid-cols-3 gap-2 w-full shrink-0">
             {[
               { label: 'OVR', val: averageRating, color: 'text-[#f1c40f]' },
@@ -197,7 +221,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             </div>
           )}
 
-          {/* GRÁFICO RADAR (Dimensões Estabilizadas para PDF) */}
+          {/* GRÁFICO RADAR */}
           <div className="mt-4 h-40 w-full shrink-0 relative">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
