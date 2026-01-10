@@ -10,18 +10,18 @@ interface ShadowTeamModalProps {
   onClose: () => void;
 }
 
-// --- CONFIGURAÇÃO DE POSIÇÕES EXPANDIDA HORIZONTALMENTE ---
+// --- CONFIGURAÇÃO DE POSIÇÕES OTIMIZADA PARA EVITAR ACHATAMENTO NAS BORDAS ---
 const FORMATION_SLOTS = [
   { id: 'ata', label: 'ATA', top: '15%', left: '50%' }, 
-  { id: 'ext_esq', label: 'EXT', top: '25%', left: '12%' }, 
-  { id: 'ext_dir', label: 'EXT', top: '25%', left: '88%' }, 
+  { id: 'ext_esq', label: 'EXT', top: '25%', left: '15%' }, 
+  { id: 'ext_dir', label: 'EXT', top: '25%', left: '85%' }, 
   { id: 'mei', label: 'MEI', top: '38%', left: '50%' }, 
-  { id: 'vol1', label: 'VOL', top: '55%', left: '30%' }, 
-  { id: 'vol2', label: 'VOL', top: '55%', left: '70%' }, 
-  { id: 'lte', label: 'LTE', top: '70%', left: '8%' },  
-  { id: 'ltd', label: 'LTD', top: '70%', left: '92%' }, 
-  { id: 'zag1', label: 'ZAG', top: '80%', left: '32%' }, 
-  { id: 'zag2', label: 'ZAG', top: '80%', left: '68%' }, 
+  { id: 'vol1', label: 'VOL', top: '55%', left: '32%' }, 
+  { id: 'vol2', label: 'VOL', top: '55%', left: '68%' }, 
+  { id: 'lte', label: 'LTE', top: '70%', left: '10%' },  
+  { id: 'ltd', label: 'LTD', top: '70%', left: '90%' }, 
+  { id: 'zag1', label: 'ZAG', top: '80%', left: '35%' }, 
+  { id: 'zag2', label: 'ZAG', top: '80%', left: '65%' }, 
   { id: 'gol', label: 'GOL', top: '90%', left: '50%' }, 
 ];
 
@@ -146,7 +146,6 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
           onClick={handleExportPDF}
           disabled={isExporting || selectingSlot !== null}
           className="h-12 px-6 bg-[#f1c40f] text-black font-black uppercase text-xs tracking-widest rounded-full hover:bg-white transition-colors flex items-center gap-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          title={selectingSlot ? "Feche a barra lateral para gerar o PDF" : "Gerar PDF"}
         >
           {isExporting ? <i className="fas fa-spinner fa-spin text-lg"></i> : <i className="fas fa-file-pdf text-lg"></i>}
           {isExporting ? 'Gerando...' : 'Salvar PDF'}
@@ -195,28 +194,29 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                   {slot.label} <span className="text-[8px] opacity-70">({playersInSlot.length})</span>
                 </div>
 
-                <div className={`grid grid-cols-2 gap-2 p-2 rounded-xl transition-all ${
-                  playersInSlot.length > 0 ? 'bg-black/20 border border-white/5 backdrop-blur-sm' : ''
+                {/* Grid corrigido: Aumentado Gap e Padding para evitar sobreposição */}
+                <div className={`grid grid-cols-2 gap-3 p-3 rounded-2xl transition-all ${
+                  playersInSlot.length > 0 ? 'bg-black/40 border border-white/10 backdrop-blur-md min-w-[170px]' : ''
                 }`}>
                   {playersInSlot.length > 0 ? (
                     playersInSlot.map((player, idx) => (
-                      <div key={player.id} className="relative flex flex-col items-center justify-center">
-                         <div className={`relative h-20 w-20 rounded-lg overflow-hidden border transition-all ${
+                      <div key={player.id} className="relative flex flex-col items-center justify-center shrink-0">
+                         <div className={`relative h-20 w-20 rounded-xl overflow-hidden border transition-all ${
                             idx === 0 
                               ? 'border-[#f1c40f] shadow-[0_0_20px_rgba(241,196,15,0.5)] z-20 scale-105' 
-                              : 'border-white/10 opacity-90'
+                              : 'border-white/10 opacity-85 hover:opacity-100'
                          }`}>
                            <img 
                               src={player.photoUrl} 
                               crossOrigin="anonymous"
                               className="h-full w-full object-cover" 
                            />
-                           <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-[8px] font-bold text-white text-center py-0.5 uppercase truncate px-0.5">
+                           <div className="absolute bottom-0 left-0 right-0 bg-black/85 text-[8px] font-black text-white text-center py-1 uppercase truncate px-1 border-t border-white/5">
                              {player.name.split(' ')[0]}
                            </div>
                            {idx === 0 && (
-                             <div className="absolute top-0 left-0 bg-black/80 p-0.5 rounded-br-lg border-b border-r border-[#f1c40f]">
-                               <i className="fas fa-crown text-[9px] text-[#f1c40f]"></i>
+                             <div className="absolute top-0 left-0 bg-[#f1c40f] p-1 rounded-br-lg shadow-lg">
+                               <i className="fas fa-crown text-[8px] text-black"></i>
                              </div>
                            )}
                          </div>
@@ -251,11 +251,9 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                 Posição: <span className="text-white bg-[#006837] px-2 py-0.5 rounded ml-1 text-[10px]">{FORMATION_SLOTS.find(s => s.id === selectingSlot)?.label}</span>
               </p>
             </div>
-            <div className="w-16"></div>
           </div>
           
           <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
-            {/* Ordem de Preferência */}
             <div className="p-6 border-b border-white/5 bg-[#0a0f0d]/50">
               <h4 className="text-[9px] font-black text-[#006837] uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <i className="fas fa-list-ol"></i> Ordem de Preferência
@@ -276,7 +274,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                     <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                       {idx > 0 && (
                          <>
-                          <button onClick={() => promoteToStarter(selectingSlot, idx)} className="h-7 w-7 rounded-lg bg-[#f1c40f] text-black text-[10px] flex items-center justify-center hover:scale-110 transition-transform"><i className="fas fa-crown"></i></button>
+                          <button onClick={() => promoteToStarter(selectingSlot, idx)} title="Tornar Titular" className="h-7 w-7 rounded-lg bg-[#f1c40f] text-black text-[10px] flex items-center justify-center hover:scale-110 transition-transform"><i className="fas fa-crown"></i></button>
                           <button onClick={() => movePlayer(selectingSlot, idx, idx - 1)} className="h-7 w-7 rounded-lg bg-slate-800 text-slate-300 text-[10px] flex items-center justify-center hover:bg-white hover:text-black"><i className="fas fa-arrow-up"></i></button>
                          </>
                       )}
@@ -290,7 +288,6 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
               </div>
             </div>
 
-            {/* Banco de Atletas com Filtros */}
             <div className="p-6 flex-1">
               <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <i className="fas fa-search"></i> Banco de Atletas
@@ -308,14 +305,11 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                   <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
                 </div>
 
-                {/* FILTRO DE POSIÇÕES - OTIMIZADO PARA LINHA ÚNICA */}
                 <div className="flex flex-nowrap overflow-x-auto custom-scrollbar gap-1 p-1 bg-black/20 rounded-xl border border-white/5 no-scrollbar">
                   <button 
                     onClick={() => setPosFilter('all')}
                     className={`flex-1 min-w-[38px] px-1.5 py-1.5 rounded-lg text-[7.5px] font-black uppercase tracking-tighter transition-all shrink-0 ${
-                      posFilter === 'all' 
-                      ? 'bg-[#f1c40f] text-black shadow-lg' 
-                      : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                      posFilter === 'all' ? 'bg-[#f1c40f] text-black shadow-lg' : 'text-slate-500 hover:text-slate-300'
                     }`}
                   >
                     TODOS
@@ -325,9 +319,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                       key={p}
                       onClick={() => setPosFilter(p)}
                       className={`flex-1 min-w-[32px] px-1 py-1.5 rounded-lg text-[7.5px] font-black uppercase tracking-tighter transition-all shrink-0 ${
-                        posFilter === p 
-                        ? 'bg-[#006837] text-white shadow-lg' 
-                        : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                        posFilter === p ? 'bg-[#006837] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
                       }`}
                     >
                       {p}
