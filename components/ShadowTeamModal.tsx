@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Player, User } from '../types';
+import { Player, User, Position } from '../types';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -10,18 +11,17 @@ interface ShadowTeamModalProps {
 }
 
 // --- CONFIGURAÇÃO DE POSIÇÕES EXPANDIDA HORIZONTALMENTE ---
-// Afastei as posições do centro (left) para dar espaço aos grids maiores
 const FORMATION_SLOTS = [
   { id: 'ata', label: 'ATA', top: '15%', left: '50%' }, 
-  { id: 'ext_esq', label: 'EXT', top: '25%', left: '12%' }, // Mais aberto (era 15%)
-  { id: 'ext_dir', label: 'EXT', top: '25%', left: '88%' }, // Mais aberto (era 85%)
+  { id: 'ext_esq', label: 'EXT', top: '25%', left: '12%' }, 
+  { id: 'ext_dir', label: 'EXT', top: '25%', left: '88%' }, 
   { id: 'mei', label: 'MEI', top: '38%', left: '50%' }, 
-  { id: 'vol1', label: 'VOL', top: '55%', left: '30%' }, // Mais aberto (era 35%)
-  { id: 'vol2', label: 'VOL', top: '55%', left: '70%' }, // Mais aberto (era 65%)
-  { id: 'lte', label: 'LTE', top: '70%', left: '8%' },  // Mais aberto (era 10%)
-  { id: 'ltd', label: 'LTD', top: '70%', left: '92%' }, // Mais aberto (era 90%)
-  { id: 'zag1', label: 'ZAG', top: '80%', left: '32%' }, // Mais aberto (era 38%)
-  { id: 'zag2', label: 'ZAG', top: '80%', left: '68%' }, // Mais aberto (era 62%)
+  { id: 'vol1', label: 'VOL', top: '55%', left: '30%' }, 
+  { id: 'vol2', label: 'VOL', top: '55%', left: '70%' }, 
+  { id: 'lte', label: 'LTE', top: '70%', left: '8%' },  
+  { id: 'ltd', label: 'LTD', top: '70%', left: '92%' }, 
+  { id: 'zag1', label: 'ZAG', top: '80%', left: '32%' }, 
+  { id: 'zag2', label: 'ZAG', top: '80%', left: '68%' }, 
   { id: 'gol', label: 'GOL', top: '90%', left: '50%' }, 
 ];
 
@@ -41,6 +41,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
 
   const [selectingSlot, setSelectingSlot] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [posFilter, setPosFilter] = useState<Position | 'all'>('all');
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(squad));
@@ -130,6 +131,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
   
   const searchResults = players.filter(p => 
     !selectedPlayerIds.includes(p.id) &&
+    (posFilter === 'all' || p.position1 === posFilter) &&
     (p.name.toLowerCase().includes(search.toLowerCase()) || 
      p.position1.toLowerCase().includes(search.toLowerCase()) ||
      p.club.toLowerCase().includes(search.toLowerCase()))
@@ -170,7 +172,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 pointer-events-none"></div>
 
         <div className="relative w-full h-full bg-[#006837]/10 backdrop-blur-sm">
-          {/* Linhas */}
+          {/* Linhas de Campo */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-b-2 border-x-2 border-white/20"></div>
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/3 h-[10%] border-t-2 border-x-2 border-white/20"></div>
           <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/10"></div>
@@ -193,14 +195,12 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                   {slot.label} <span className="text-[8px] opacity-70">({playersInSlot.length})</span>
                 </div>
 
-                {/* GRID AUMENTADO MAIS AINDA (p-2 gap-2) */}
                 <div className={`grid grid-cols-2 gap-2 p-2 rounded-xl transition-all ${
                   playersInSlot.length > 0 ? 'bg-black/20 border border-white/5 backdrop-blur-sm' : ''
                 }`}>
                   {playersInSlot.length > 0 ? (
                     playersInSlot.map((player, idx) => (
                       <div key={player.id} className="relative flex flex-col items-center justify-center">
-                         {/* AUMENTO DO TAMANHO: h-20 w-20 (80px) */}
                          <div className={`relative h-20 w-20 rounded-lg overflow-hidden border transition-all ${
                             idx === 0 
                               ? 'border-[#f1c40f] shadow-[0_0_20px_rgba(241,196,15,0.5)] z-20 scale-105' 
@@ -236,7 +236,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
         </div>
       </div>
 
-      {/* SIDEBAR (Mantida a correção do botão na esquerda) */}
+      {/* SIDEBAR DE SELEÇÃO */}
       {selectingSlot && (
         <div data-html2canvas-ignore className="w-full md:w-[450px] bg-[#050807] border-l border-white/5 flex flex-col animate-in slide-in-from-right duration-300 z-20 absolute right-0 top-0 bottom-0 md:relative shadow-2xl">
           
@@ -255,6 +255,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
           </div>
           
           <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+            {/* Ordem de Preferência */}
             <div className="p-6 border-b border-white/5 bg-[#0a0f0d]/50">
               <h4 className="text-[9px] font-black text-[#006837] uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <i className="fas fa-list-ol"></i> Ordem de Preferência
@@ -289,25 +290,72 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
               </div>
             </div>
 
+            {/* Banco de Atletas com Filtros */}
             <div className="p-6 flex-1">
               <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <i className="fas fa-search"></i> Banco de Atletas
               </h4>
-              <div className="relative mb-4">
-                <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 text-xs text-white outline-none focus:border-[#f1c40f]" />
-                <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
-              </div>
-              <div className="space-y-2">
-                {searchResults.map(p => (
-                  <button key={p.id} onClick={() => addPlayer(selectingSlot, p.id)} className="w-full flex items-center gap-4 p-3 rounded-xl border border-transparent hover:bg-white/5 hover:border-white/5 transition-all group text-left">
-                    <img src={p.photoUrl} alt={p.name} className="h-9 w-9 rounded-lg object-cover bg-black grayscale group-hover:grayscale-0" />
-                    <div className="flex-1">
-                      <h4 className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase">{p.name}</h4>
-                      <div className="flex gap-2"><span className="text-[8px] font-black text-slate-600 uppercase">{p.position1}</span><span className="text-[8px] font-black text-[#006837] uppercase">{p.recommendation}</span></div>
-                    </div>
-                    <i className="fas fa-plus text-[#f1c40f] opacity-0 group-hover:opacity-100 transition-opacity mr-2"></i>
+              
+              <div className="space-y-4 mb-6">
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="Buscar nome, clube ou posição..." 
+                    value={search} 
+                    onChange={e => setSearch(e.target.value)} 
+                    className="w-full bg-black/30 border border-white/10 rounded-xl py-3.5 pl-10 pr-4 text-xs text-white outline-none focus:border-[#f1c40f] transition-all" 
+                  />
+                  <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
+                </div>
+
+                {/* FILTRO DE POSIÇÕES */}
+                <div className="flex flex-wrap gap-1.5 p-1 bg-black/20 rounded-xl border border-white/5">
+                  <button 
+                    onClick={() => setPosFilter('all')}
+                    className={`flex-1 min-w-[50px] px-2 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${
+                      posFilter === 'all' 
+                      ? 'bg-[#f1c40f] text-black shadow-lg' 
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                    }`}
+                  >
+                    TODOS
                   </button>
-                ))}
+                  {Object.values(Position).map(p => (
+                    <button 
+                      key={p}
+                      onClick={() => setPosFilter(p)}
+                      className={`flex-1 min-w-[40px] px-2 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${
+                        posFilter === p 
+                        ? 'bg-[#006837] text-white shadow-lg' 
+                        : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {searchResults.length > 0 ? (
+                  searchResults.map(p => (
+                    <button key={p.id} onClick={() => addPlayer(selectingSlot, p.id)} className="w-full flex items-center gap-4 p-3 rounded-xl border border-transparent hover:bg-white/5 hover:border-white/5 transition-all group text-left">
+                      <img src={p.photoUrl} alt={p.name} className="h-9 w-9 rounded-lg object-cover bg-black grayscale group-hover:grayscale-0 transition-all" />
+                      <div className="flex-1">
+                        <h4 className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase truncate">{p.name}</h4>
+                        <div className="flex gap-2">
+                          <span className="text-[8px] font-black text-slate-600 uppercase">{p.position1}</span>
+                          <span className="text-[8px] font-black text-[#006837] uppercase">{p.recommendation}</span>
+                        </div>
+                      </div>
+                      <i className="fas fa-plus text-[#f1c40f] opacity-0 group-hover:opacity-100 transition-opacity mr-2"></i>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-12 border border-dashed border-white/5 rounded-2xl opacity-40">
+                    <p className="text-[9px] font-black text-slate-600 uppercase">Nenhum atleta encontrado</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
