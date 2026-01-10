@@ -39,8 +39,8 @@ export const getScoutReport = async (player: Player): Promise<string> => {
        Aponte deficiências ou áreas onde os dados mostram desempenho abaixo da média ou que precisam de evolução.
 
     Diretrizes:
-    - Seja direto, técnico e imparcial.
-    - Se os dados da planilha forem insuficientes ou vazios, diga que não é possível realizar uma análise profunda e faça uma avaliação baseada apenas na posição e perfil físico básico.
+    - Seja direto, técnico e imparcial, mesmo que tenha pouca amostra de dados.
+    - Se não houver dados, diga que não foi possível avaliar e pedir para atualziar o cadastro do jogador quando os dados estiver disponíveis, se amostragem de dados for pequena tentar da mesma forma analisar os dados, não precisa dizer que a amostragem de dados é pequena, apenas análise, caso não tenha nenhum dados informa para inserir mais dados. 
     `;
 
     const chatCompletion = await groq.chat.completions.create({
