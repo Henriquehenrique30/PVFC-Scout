@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Player } from '../types';
 
-// Force update: v2.1
+// Force update: v2.2 - Reduced card height for better image quality
 interface PlayerCardProps {
   player: Player;
   onClick: (player: Player) => void;
@@ -19,16 +20,14 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
       onClick={() => onClick(player)}
       className="group relative w-full bg-[#0a0f0d] rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-[#f1c40f]/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(241,196,15,0.1)] cursor-pointer"
     >
-      {/* --- ÁREA DA FOTO --- */}
-      {/* AUMENTEI A ALTURA PARA h-80 PARA DAR MAIS RESPIRO AO ROSTO */}
-      <div className="relative h-80 w-full bg-[#1a1d1c]">
+      {/* --- ÁREA DA FOTO (REDUZIDA DE h-80 PARA h-64) --- */}
+      <div className="relative h-64 w-full bg-[#1a1d1c]">
         
         <img 
           src={player.photoUrl} 
           alt={player.name}
           loading="lazy"
-          // USANDO STYLE INLINE PARA GARANTIR QUE O ALINHAMENTO FUNCIONE INDEPENDENTE DO TAILWIND
-          // 50% 15% significa: Centralizado horizontalmente, e focado a 15% do topo (altura dos olhos/testa)
+          // Mantendo o foco nos olhos/rosto para fotos com aspect ratio diferente
           style={{ objectPosition: '50% 15%' }}
           className="h-full w-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
         />
@@ -58,7 +57,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
       </div>
 
       {/* --- CONTEÚDO DO CARD --- */}
-      <div className="relative px-6 pb-6 -mt-10">
+      <div className="relative px-6 pb-6 -mt-8">
         
         <div className="mb-6">
            <div className="flex items-center gap-2 mb-2">
