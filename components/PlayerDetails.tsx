@@ -48,49 +48,65 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     }
   };
 
-  // --- FUNÇÃO DE EXPORTAÇÃO CORRIGIDA ---
+  // --- FUNÇÃO DE EXPORTAÇÃO CORRIGIDA (Versão Definitiva) ---
   const handleExportPDF = async () => {
     if (!reportContainerRef.current) return;
     setIsExporting(true);
 
     try {
-      // Delay para garantir renderização estável
+      // 1. Aguarda estabilização visual
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const element = reportContainerRef.current;
-      
+
+      // 2. Captura Inteligente com HTML2Canvas
       const canvas = await html2canvas(element, {
-        scale: 2, // Melhor resolução
-        useCORS: true, // Permite carregar imagens externas
-        backgroundColor: '#050807', // Força fundo sólido (remove transparência)
+        scale: 2, // Mantém alta resolução (Retina)
+        useCORS: true,
+        backgroundColor: '#050807', // Fundo sólido
         logging: false,
         onclone: (clonedDoc) => {
-          // Encontra o elemento clonado para aplicar correções de CSS
-          const clonedElement = clonedDoc.querySelector('[data-pdf-target="true"]') as HTMLElement;
-          
-          if (clonedElement) {
-             // 1. Remove efeitos que quebram no PDF (Glassmorphism)
-             clonedElement.style.backdropFilter = 'none';
-             clonedElement.style.boxShadow = 'none';
-             clonedElement.style.background = '#050807'; // Fundo escuro sólido
-             
-             // 2. Remove restrições de altura e scroll
-             clonedElement.style.height = 'auto';
-             clonedElement.style.maxHeight = 'none';
-             clonedElement.style.overflow = 'visible';
-             
-             // 3. Fixa a largura para simular uma folha A4 Paisagem (~1122px)
-             // Isso evita que o PDF quebre se a sua tela for pequena ou muito grande
-             clonedElement.style.width = '1122px'; 
-             clonedElement.style.maxWidth = 'none';
-             
-             // Ajuste opcional para garantir que o texto não fique muito pequeno ou grande
-             clonedElement.style.fontSize = '16px'; 
+          const target = clonedDoc.querySelector('[data-pdf-target="true"]') as HTMLElement;
+          if (target) {
+            // --- ESTILOS DE CORREÇÃO (CLEANUP) ---
+            
+            // Remove limites de altura e rolagem do container principal
+            target.style.height = 'auto';
+            target.style.maxHeight = 'none';
+            target.style.overflow = 'visible';
+            target.style.borderRadius = '0'; // Remove bordas arredondadas para impressão
+            target.style.border = 'none';
+
+            // Remove efeitos de vidro (Backdrop Blur) que causam bugs visuais no PDF
+            target.style.backdropFilter = 'none';
+            target.style.boxShadow = 'none';
+            target.style.background = '#050807';
+
+            // Força largura fixa de Desktop para manter o layout de 3 colunas estável
+            target.style.width = '1280px';
+            target.style.maxWidth = 'none';
+
+            // Expande o texto longo (Remove scroll interno das divs de conteúdo)
+            const scrollables = target.querySelectorAll('.overflow-y-auto, .overflow-hidden');
+            scrollables.forEach((el) => {
+              (el as HTMLElement).style.overflow = 'visible';
+              (el as HTMLElement).style.height = 'auto';
+              (el as HTMLElement).style.maxHeight = 'none';
+            });
+            
+            // Garante que a Sidebar estique até o fim do novo tamanho
+            const sidebar = target.querySelector('.border-r');
+            if (sidebar) {
+               (sidebar as HTMLElement).style.height = 'auto';
+               (sidebar as HTMLElement).style.minHeight = '100%';
+            }
           }
         }
       });
 
       const imgData = canvas.toDataURL('image/png');
+      
+      // 3. Criação do PDF com Proporção Correta (Sem Distorção)
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -99,8 +115,31 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Calcula as dimensões da imagem capturada
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgRatio = imgProps.width / imgProps.height;
+      const pdfRatio = pdfWidth / pdfHeight;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      let finalWidth = pdfWidth;
+      let finalHeight = pdfHeight;
+
+      // Lógica de "Fit" (Caber na página sem esticar/deformar)
+      if (imgRatio > pdfRatio) {
+        // Imagem mais larga que a página (limita pela largura)
+        finalWidth = pdfWidth;
+        finalHeight = pdfWidth / imgRatio;
+      } else {
+        // Imagem mais alta que a página (limita pela altura)
+        finalHeight = pdfHeight;
+        finalWidth = pdfHeight * imgRatio;
+      }
+
+      // Centraliza a imagem na página
+      const xOffset = (pdfWidth - finalWidth) / 2;
+      const yOffset = (pdfHeight - finalHeight) / 2;
+
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight);
       pdf.save(`Dossie_${player.name.replace(/\s+/g, '_')}.pdf`);
 
     } catch (error) {
@@ -141,7 +180,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/98 backdrop-blur-3xl overflow-hidden">
       <div 
         ref={reportContainerRef}
-        data-pdf-target="true" /* --- IMPORTANTE: Target para o PDF --- */
+        data-pdf-target="true" /* IDENTIFICADOR NECESSÁRIO PARA O PDF */
         className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-[#050807] shadow-2xl border border-white/5 h-[90vh] max-h-[820px] flex flex-col md:flex-row animate-in fade-in zoom-in duration-500"
       >
         
@@ -182,7 +221,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
             </div>
           </div>
 
-          {/* GRID DE MÉTRICAS REDUZIDO (3 COLUNAS) */}
+          {/* GRID DE MÉTRICAS */}
           <div className="mt-5 grid grid-cols-3 gap-2 w-full shrink-0">
             {[
               { label: 'OVR', val: averageRating, color: 'text-[#f1c40f]' },
