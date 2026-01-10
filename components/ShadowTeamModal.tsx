@@ -308,11 +308,11 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                   <i className="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
                 </div>
 
-                {/* FILTRO DE POSIÇÕES */}
-                <div className="flex flex-wrap gap-1.5 p-1 bg-black/20 rounded-xl border border-white/5">
+                {/* FILTRO DE POSIÇÕES - OTIMIZADO PARA LINHA ÚNICA */}
+                <div className="flex flex-nowrap overflow-x-auto custom-scrollbar gap-1 p-1 bg-black/20 rounded-xl border border-white/5 no-scrollbar">
                   <button 
                     onClick={() => setPosFilter('all')}
-                    className={`flex-1 min-w-[50px] px-2 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${
+                    className={`flex-1 min-w-[38px] px-1.5 py-1.5 rounded-lg text-[7.5px] font-black uppercase tracking-tighter transition-all shrink-0 ${
                       posFilter === 'all' 
                       ? 'bg-[#f1c40f] text-black shadow-lg' 
                       : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
@@ -324,7 +324,7 @@ const ShadowTeamModal: React.FC<ShadowTeamModalProps> = ({ players, currentUser,
                     <button 
                       key={p}
                       onClick={() => setPosFilter(p)}
-                      className={`flex-1 min-w-[40px] px-2 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-tighter transition-all ${
+                      className={`flex-1 min-w-[32px] px-1 py-1.5 rounded-lg text-[7.5px] font-black uppercase tracking-tighter transition-all shrink-0 ${
                         posFilter === p 
                         ? 'bg-[#006837] text-white shadow-lg' 
                         : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
