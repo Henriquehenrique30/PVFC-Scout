@@ -64,7 +64,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
               <i className="far fa-calendar text-[7px]"></i> {player.scoutYear}
            </div>
            <div className="px-2 py-1 rounded border border-white/5 bg-[#006837]/10 text-[7px] font-bold text-[#006837] uppercase tracking-wider flex items-center gap-1">
-              <i className="fas fa-eye text-[7px]"></i> {player.gamesWatched} Jogos
+              <i className="fas fa-eye text-[7px]"></i> Jogos Assistidos: {player.gamesWatched}
            </div>
         </div>
       </div>
