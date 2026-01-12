@@ -41,6 +41,7 @@ const App: React.FC = () => {
     recommendations: [],
     competitions: [],
     scoutYears: [],
+    feet: [],
   });
 
   const loadData = async (isAutoRefresh = false) => {
@@ -161,8 +162,9 @@ const App: React.FC = () => {
       const matchRec = filters.recommendations.length === 0 || filters.recommendations.includes(p.recommendation);
       const matchComp = filters.competitions.length === 0 || filters.competitions.includes(p.competition);
       const matchYear = filters.scoutYears.length === 0 || filters.scoutYears.includes(p.scoutYear);
+      const matchFoot = filters.feet.length === 0 || filters.feet.includes(p.foot);
 
-      return matchSearch && matchPos && matchAge && matchRec && matchComp && matchYear;
+      return matchSearch && matchPos && matchAge && matchRec && matchComp && matchYear && matchFoot;
     });
   }, [filters, players]);
 
@@ -186,6 +188,7 @@ const App: React.FC = () => {
       recommendations: [],
       competitions: [],
       scoutYears: [],
+      feet: [],
     });
   };
 
@@ -337,6 +340,30 @@ const App: React.FC = () => {
                       }`}
                     >
                       {pos}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Pé Dominante</label>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {[
+                    { val: 'Right', label: 'Destro' },
+                    { val: 'Left', label: 'Canhoto' },
+                    { val: 'Both', label: 'Ambidestro' }
+                  ].map(f => (
+                    <button 
+                      key={f.val} 
+                      onClick={() => toggleFilter('feet', f.val)}
+                      className={`px-4 py-2.5 rounded-lg text-[9px] font-black uppercase border transition-all flex items-center justify-between ${
+                        filters.feet.includes(f.val as any) 
+                        ? 'bg-[#006837] border-[#006837] text-white' 
+                        : 'bg-black/20 border-white/5 text-slate-600 hover:text-white'
+                      }`}
+                    >
+                      {f.label}
+                      {filters.feet.includes(f.val as any) && <i className="fas fa-check text-[8px]"></i>}
                     </button>
                   ))}
                 </div>

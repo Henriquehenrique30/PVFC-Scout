@@ -73,6 +73,7 @@ export interface FilterState {
   recommendations: Recommendation[];
   competitions: string[];
   scoutYears: number[];
+  feet: ('Left' | 'Right' | 'Both')[];
 }
 
 export type UserRole = 'admin' | 'scout';
