@@ -192,6 +192,52 @@ const App: React.FC = () => {
     });
   };
 
+  const handleExportCSV = () => {
+    if (filteredPlayers.length === 0) {
+      alert("Nenhum jogador para exportar.");
+      return;
+    }
+
+    const headers = [
+      "Nome",
+      "Competição",
+      "Classificação",
+      "Clube",
+      "Nascimento",
+      "Pé Dominante",
+      "Posição",
+      "Agente",
+      "Jogos Vistos",
+      "Link Vídeo"
+    ];
+
+    const csvRows = filteredPlayers.map(p => {
+      const footLabel = p.foot === 'Right' ? 'Destro' : p.foot === 'Left' ? 'Canhoto' : 'Ambidestro';
+      return [
+        `"${p.name.replace(/"/g, '""')}"`,
+        `"${p.competition.replace(/"/g, '""')}"`,
+        `"${p.recommendation.replace(/"/g, '""')}"`,
+        `"${p.club.replace(/"/g, '""')}"`,
+        `"${p.birthDate}"`,
+        `"${footLabel}"`,
+        `"${p.position1}"`,
+        `"${(p.agent || '').replace(/"/g, '""')}"`,
+        p.gamesWatched,
+        `"${(p.videoUrl || '').replace(/"/g, '""')}"`
+      ].join(",");
+    });
+
+    const csvContent = [headers.join(","), ...csvRows].join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Relatorio_Jogadores_PVFC_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (!currentUser) {
     return <Auth onLogin={handleLogin} users={users} onRegister={handleRegister} />;
   }
@@ -418,9 +464,17 @@ const App: React.FC = () => {
               <p className="text-[8px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">Database</p>
               <h2 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight leading-none">Jogadores Monitorados</h2>
             </div>
-            <div className="hidden sm:flex bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 items-center gap-2">
-               <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Base Ativa:</span>
-               <span className="text-[8px] font-bold text-[#f1c40f] uppercase">{filteredPlayers.length} Resultados</span>
+            <div className="flex items-center gap-3">
+               <button 
+                  onClick={handleExportCSV}
+                  className="hidden sm:flex bg-emerald-600/10 px-3 py-1.5 rounded-lg border border-emerald-600/20 items-center gap-2 text-[8px] font-black text-emerald-500 uppercase hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+               >
+                  <i className="fas fa-file-csv"></i> Exportar CSV
+               </button>
+               <div className="hidden sm:flex bg-white/5 px-3 py-1.5 rounded-lg border border-white/5 items-center gap-2">
+                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Base Ativa:</span>
+                  <span className="text-[8px] font-bold text-[#f1c40f] uppercase">{filteredPlayers.length} Resultados</span>
+               </div>
             </div>
           </div>
 
