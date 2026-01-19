@@ -434,23 +434,28 @@ const App: React.FC = () => {
 
               <section>
                 <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Competição</label>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-2 mt-2">
                   {dynamicOptions.competitions.length > 0 ? (
                     dynamicOptions.competitions.map(comp => (
                       <button 
                         key={comp} 
                         onClick={() => toggleFilter('competitions', comp)}
-                        className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase border transition-all ${
+                        className={`w-full text-left px-3 py-2.5 rounded-lg text-[9px] font-black uppercase border transition-all flex items-center justify-between group ${
                           filters.competitions.includes(comp) 
                           ? 'bg-[#006837] border-[#006837] text-white' 
                           : 'bg-black/20 border-white/5 text-slate-600 hover:text-white'
                         }`}
                       >
-                        {comp}
+                        <span className="truncate pr-2">{comp}</span>
+                        {filters.competitions.includes(comp) ? (
+                          <i className="fas fa-times-circle text-[10px] text-[#f1c40f] hover:scale-125 transition-transform"></i>
+                        ) : (
+                          <div className="h-1.5 w-1.5 rounded-full bg-slate-800 group-hover:bg-slate-600 transition-colors"></div>
+                        )}
                       </button>
                     ))
                   ) : (
-                    <span className="text-[9px] text-slate-700 italic">Nenhuma registrada</span>
+                    <span className="text-[9px] text-slate-700 italic px-2 block">Nenhuma registrada</span>
                   )}
                 </div>
               </section>
