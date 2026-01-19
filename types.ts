@@ -52,7 +52,11 @@ export interface ObservedPlayer {
   name: string;
   club: string;
   position: Position;
-  createdAt: string;
+  assigned_analyst_id: string;
+  assigned_analyst_name: string;
+  created_by_id: string;
+  created_by_name: string;
+  created_at: string;
 }
 
 export interface ScoutingGame {
