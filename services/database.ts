@@ -44,6 +44,12 @@ export const dbService = {
     if (error) throw error;
   },
 
+  async updateWatchlistStatus(id: string, status: 'pending' | 'viewed' | 'completed'): Promise<void> {
+    if (!supabase) throw new Error("Nuvem não configurada.");
+    const { error } = await supabase.from('watchlist').update({ status }).eq('id', id);
+    if (error) throw error;
+  },
+
   async deleteWatchlistItem(id: string): Promise<void> {
     if (!supabase) throw new Error("Nuvem não configurada.");
     const { error } = await supabase.from('watchlist').delete().eq('id', id);

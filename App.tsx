@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Player, FilterState, User, Recommendation, Position } from './types';
+import { Player, FilterState, User, Recommendation, Position, ObservedPlayer } from './types';
 import PlayerCard from './components/PlayerCard';
 import PlayerDetails from './components/PlayerDetails';
 import AddPlayerModal from './components/AddPlayerModal';
@@ -10,7 +10,7 @@ import ShadowTeamModal from './components/ShadowTeamModal';
 import ComparisonModal from './components/ComparisonModal';
 import WatchlistPage from './components/WatchlistPage';
 import ScoutingSchedulePage from './components/ScoutingSchedulePage';
-import { dbService, isCloudActive } from './services/database';
+import { dbService, isCloudActive, supabase } from './services/database';
 
 const App: React.FC = () => {
   const SESSION_KEY = 'pvfc_auth_session';
@@ -18,6 +18,7 @@ const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
+  const [notificationsCount, setNotificationsCount] = useState(0);
   
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem(SESSION_KEY);
@@ -43,6 +44,47 @@ const App: React.FC = () => {
     scoutYears: [],
     feet: [],
   });
+
+  // Monitorar notificações em tempo real
+  useEffect(() => {
+    if (!currentUser || !supabase) return;
+
+    // Função para contar notificações pendentes atribuídas ao usuário logado
+    const checkNotifications = async () => {
+      const items = await dbService.getWatchlist();
+      const count = items.filter(i => i.assigned_analyst_id === currentUser.id && i.status === 'pending').length;
+      setNotificationsCount(count);
+    };
+
+    checkNotifications();
+
+    // Inscrição em tempo real para novos itens na watchlist
+    const channel = supabase
+      .channel('watchlist_notifs')
+      .on(
+        'postgres_changes',
+        { event: '*', table: 'watchlist', schema: 'public' },
+        (payload) => {
+          checkNotifications();
+          
+          // Se for um novo item para mim, tocar um som ou disparar um alerta (opcional)
+          if (payload.eventType === 'INSERT') {
+            const newItem = payload.new as ObservedPlayer;
+            if (newItem.assigned_analyst_id === currentUser.id) {
+               // Notificação visual simples se estiver fora da página watchlist
+               if (view !== 'watchlist') {
+                 console.log("Nova solicitação de análise recebida!");
+               }
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser, view]);
 
   const loadData = async (isAutoRefresh = false) => {
     if (isAutoRefresh && (isModalOpen || isAdminPanelOpen || selectedPlayer || isShadowTeamOpen || isComparisonOpen || view !== 'dashboard')) return;
@@ -77,7 +119,6 @@ const App: React.FC = () => {
     }
   }, [currentUser]);
 
-  // Recalcula a idade dinamicamente baseado na data atual para todos os jogadores carregados
   const processedPlayers = useMemo(() => {
     return players.map(p => {
       if (!p.birthDate) return p;
@@ -317,9 +358,18 @@ const App: React.FC = () => {
 
               <button 
                 onClick={() => setView('watchlist')}
-                className="bg-white/5 px-4 py-2 rounded-lg text-[9px] font-black uppercase text-slate-400 hover:text-[#f1c40f] hover:bg-white/10 transition-all border border-white/5 flex items-center gap-2"
+                className={`relative px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all border flex items-center gap-2 ${
+                  notificationsCount > 0 
+                  ? 'bg-[#f1c40f] text-black border-[#f1c40f] shadow-[0_0_15px_rgba(241,196,15,0.4)] animate-pulse' 
+                  : 'bg-white/5 text-slate-400 hover:text-[#f1c40f] border-white/5'
+                }`}
               >
                 <i className="fas fa-binoculars"></i> Watchlist
+                {notificationsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[8px] font-black text-white border border-black animate-bounce shadow-lg">
+                    {notificationsCount}
+                  </span>
+                )}
               </button>
 
               <button 

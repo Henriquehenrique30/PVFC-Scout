@@ -57,6 +57,7 @@ export interface ObservedPlayer {
   created_by_id: string;
   created_by_name: string;
   created_at: string;
+  status: 'pending' | 'viewed' | 'completed';
 }
 
 export interface ScoutingGame {

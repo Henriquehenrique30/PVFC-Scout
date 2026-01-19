@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { ObservedPlayer, Position, User } from '../types';
-import { dbService } from '../services/database';
+import { dbService, supabase } from '../services/database';
 
 interface WatchlistPageProps {
   onBack: () => void;
@@ -30,7 +30,16 @@ const WatchlistPage: React.FC<WatchlistPageProps> = ({ onBack }) => {
       setUsers(usersData);
       
       // Auto-seleciona o primeiro usuário como analista por padrão se disponível
-      if (usersData.length > 0) setAssignedAnalystId(usersData[0].id);
+      if (usersData.length > 0 && !assignedAnalystId) setAssignedAnalystId(usersData[0].id);
+
+      // MARCAR COMO VISUALIZADO:
+      // Se eu sou o analista atribuído e o status é 'pending', mudo para 'viewed'
+      if (currentUser) {
+        const myPendingItems = watchlistData.filter(i => i.assigned_analyst_id === currentUser.id && i.status === 'pending');
+        for (const item of myPendingItems) {
+          await dbService.updateWatchlistStatus(item.id, 'viewed');
+        }
+      }
     } catch (err) {
       console.error("Erro ao carregar watchlist cloud:", err);
     } finally {
@@ -40,6 +49,19 @@ const WatchlistPage: React.FC<WatchlistPageProps> = ({ onBack }) => {
 
   useEffect(() => {
     loadData();
+
+    // Listen to real-time changes while the page is open
+    if (!supabase) return;
+    const channel = supabase
+      .channel('watchlist_page_realtime')
+      .on('postgres_changes', { event: '*', table: 'watchlist', schema: 'public' }, () => {
+        loadData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -61,14 +83,15 @@ const WatchlistPage: React.FC<WatchlistPageProps> = ({ onBack }) => {
       assigned_analyst_name: assignedAnalyst?.name || 'Desconhecido',
       created_by_id: currentUser.id,
       created_by_name: currentUser.name,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      status: 'pending'
     };
 
     try {
       await dbService.saveWatchlistItem(newItem);
       setName('');
       setClub('');
-      loadData();
+      // loadData será chamado pelo realtime subscription
     } catch (err) {
       alert("Erro ao salvar no banco de dados.");
     }
@@ -78,10 +101,19 @@ const WatchlistPage: React.FC<WatchlistPageProps> = ({ onBack }) => {
     if (window.confirm("Remover este atleta do radar cloud?")) {
       try {
         await dbService.deleteWatchlistItem(id);
-        loadData();
+        // loadData será chamado pelo realtime subscription
       } catch (err) {
         alert("Erro ao remover do banco de dados.");
       }
+    }
+  };
+
+  const handleToggleCompleted = async (item: ObservedPlayer) => {
+    const nextStatus = item.status === 'completed' ? 'viewed' : 'completed';
+    try {
+      await dbService.updateWatchlistStatus(item.id, nextStatus);
+    } catch (err) {
+      alert("Erro ao atualizar status.");
     }
   };
 
@@ -193,46 +225,72 @@ const WatchlistPage: React.FC<WatchlistPageProps> = ({ onBack }) => {
 
           <div className="grid grid-cols-1 gap-4">
             {list.length > 0 ? (
-              list.map(item => (
-                <div 
-                  key={item.id} 
-                  className="group flex flex-col md:flex-row md:items-center justify-between p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-[#006837]/30 transition-all hover:bg-white/[0.07] animate-in slide-in-from-top-2 gap-4"
-                >
-                  <div className="flex items-center gap-6 flex-1 min-w-0">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#006837] to-[#0a0f0d] flex items-center justify-center text-[#f1c40f] font-black shadow-lg shrink-0 text-xl">
-                      {item.position}
+              list.map(item => {
+                const isMine = item.assigned_analyst_id === currentUser?.id;
+                const isPending = item.status === 'pending';
+                const isCompleted = item.status === 'completed';
+
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`group flex flex-col md:flex-row md:items-center justify-between p-6 rounded-2xl bg-white/5 border transition-all hover:bg-white/[0.07] animate-in slide-in-from-top-2 gap-4 ${
+                      isMine && isPending ? 'border-[#f1c40f] bg-[#f1c40f]/5 shadow-[0_0_20px_rgba(241,196,15,0.1)]' : 'border-white/5'
+                    } ${isCompleted ? 'opacity-50 grayscale border-slate-800' : ''}`}
+                  >
+                    <div className="flex items-center gap-6 flex-1 min-w-0">
+                      <div className={`h-14 w-14 rounded-2xl flex items-center justify-center text-[#f1c40f] font-black shadow-lg shrink-0 text-xl transition-all ${
+                        isCompleted ? 'bg-slate-800' : 'bg-gradient-to-br from-[#006837] to-[#0a0f0d]'
+                      }`}>
+                        {isCompleted ? <i className="fas fa-check text-[#006837]"></i> : item.position}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-lg font-bold text-white uppercase truncate leading-none">{item.name}</h4>
+                          {isMine && isPending && (
+                            <span className="px-2 py-0.5 rounded bg-red-600 text-[7px] font-black text-white uppercase animate-pulse">NOVO</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">{item.club}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h4 className="text-lg font-bold text-white uppercase truncate leading-none mb-1">{item.name}</h4>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">{item.club}</p>
+                    
+                    <div className="flex items-center justify-between md:justify-end gap-8 border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
+                      <div className="text-left md:text-right">
+                         <p className="text-[8px] font-black text-[#006837] uppercase tracking-widest mb-1">Analista Responsável</p>
+                         <div className="flex items-center gap-2 md:justify-end">
+                           <span className={`h-2 w-2 rounded-full ${isCompleted ? 'bg-[#006837]' : isPending ? 'bg-red-600 animate-pulse' : 'bg-[#f1c40f]'}`}></span>
+                           <p className="text-[11px] font-black text-white uppercase tracking-wider">{item.assigned_analyst_name}</p>
+                         </div>
+                      </div>
+
+                      <div className="hidden lg:block text-right border-l border-white/10 pl-8">
+                         <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Solicitado por</p>
+                         <p className="text-[10px] font-medium text-slate-400 uppercase">{item.created_by_name}</p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {isMine && (
+                          <button 
+                            onClick={() => handleToggleCompleted(item)}
+                            title={isCompleted ? "Reabrir Análise" : "Marcar como Finalizado"}
+                            className={`h-11 w-11 rounded-xl flex items-center justify-center border transition-all ${
+                              isCompleted ? 'bg-[#006837]/20 border-[#006837]/30 text-[#006837]' : 'bg-white/5 border-white/10 text-slate-400 hover:bg-[#006837] hover:text-white'
+                            }`}
+                          >
+                            <i className={`fas ${isCompleted ? 'fa-undo' : 'fa-check-circle'} text-base`}></i>
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => handleRemove(item.id)}
+                          className="h-11 w-11 rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center border border-red-500/20"
+                        >
+                          <i className="fas fa-trash-alt text-base"></i>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center justify-between md:justify-end gap-8 border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
-                    <div className="text-left md:text-right">
-                       <p className="text-[8px] font-black text-[#006837] uppercase tracking-widest mb-1">Analista Responsável</p>
-                       <div className="flex items-center gap-2 md:justify-end">
-                         <span className="h-2 w-2 rounded-full bg-[#f1c40f] animate-pulse"></span>
-                         <p className="text-[11px] font-black text-white uppercase tracking-wider">{item.assigned_analyst_name}</p>
-                       </div>
-                    </div>
-
-                    <div className="hidden lg:block text-right border-l border-white/10 pl-8">
-                       <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mb-1">Solicitado por</p>
-                       <p className="text-[10px] font-medium text-slate-400 uppercase">{item.created_by_name}</p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <button 
-                        onClick={() => handleRemove(item.id)}
-                        className="h-11 w-11 rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center border border-red-500/20"
-                      >
-                        <i className="fas fa-trash-alt text-base"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="py-24 text-center glass-panel rounded-[2rem] border-dashed border-white/5">
                  <i className="fas fa-cloud-sun text-5xl text-slate-800 mb-4"></i>
