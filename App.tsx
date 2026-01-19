@@ -369,23 +369,41 @@ const App: React.FC = () => {
 
               <section>
                 <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Prioridade</label>
-                <div className="space-y-1.5">
-                  {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
-                    <button 
-                      key={rec}
-                      onClick={() => toggleFilter('recommendations', rec)}
-                      className={`w-full text-left px-4 py-2.5 rounded-lg text-[10px] font-black uppercase border transition-all flex items-center justify-between ${
-                        filters.recommendations.includes(rec as Recommendation) 
-                        ? 'bg-[#006837] border-[#006837] text-white' 
-                        : 'bg-black/20 border-white/5 text-slate-600 hover:text-slate-400'
-                      }`}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <select 
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          toggleFilter('recommendations', e.target.value);
+                          e.target.value = ""; 
+                        }
+                      }}
+                      className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 px-4 text-[10px] font-black uppercase text-slate-300 outline-none focus:ring-1 focus:ring-[#006837] appearance-none cursor-pointer"
                     >
-                      {rec}
-                      <div className={`h-1.5 w-1.5 rounded-full ${
-                        filters.recommendations.includes(rec as Recommendation) ? 'bg-white' : 'bg-slate-800'
-                      }`}></div>
-                    </button>
-                  ))}
+                      <option value="" className="bg-[#0a0f0d]">Selecionar...</option>
+                      {['G1 Elite', 'G2 Titular', 'G3 Monitoramento', 'Base'].map(rec => (
+                        <option key={rec} value={rec} className="bg-[#0a0f0d]">
+                          {rec.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600 text-[8px]">
+                      <i className="fas fa-chevron-down"></i>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar pr-1">
+                    {filters.recommendations.map(rec => (
+                      <button 
+                        key={rec}
+                        onClick={() => toggleFilter('recommendations', rec)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#006837]/20 border border-[#006837]/30 text-[8px] font-black text-[#006837] uppercase hover:bg-red-600/20 hover:text-red-500 hover:border-red-500/30 transition-all group"
+                      >
+                        <span className="truncate max-w-[100px]">{rec}</span>
+                        <i className="fas fa-times text-[7px] opacity-50 group-hover:opacity-100"></i>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </section>
 
@@ -410,25 +428,41 @@ const App: React.FC = () => {
 
               <section>
                 <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Pé Dominante</label>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {[
-                    { val: 'Right', label: 'Destro' },
-                    { val: 'Left', label: 'Canhoto' },
-                    { val: 'Both', label: 'Ambidestro' }
-                  ].map(f => (
-                    <button 
-                      key={f.val} 
-                      onClick={() => toggleFilter('feet', f.val)}
-                      className={`px-4 py-2.5 rounded-lg text-[9px] font-black uppercase border transition-all flex items-center justify-between ${
-                        filters.feet.includes(f.val as any) 
-                        ? 'bg-[#006837] border-[#006837] text-white' 
-                        : 'bg-black/20 border-white/5 text-slate-600 hover:text-white'
-                      }`}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <select 
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          toggleFilter('feet', e.target.value);
+                          e.target.value = ""; 
+                        }
+                      }}
+                      className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 px-4 text-[10px] font-black uppercase text-slate-300 outline-none focus:ring-1 focus:ring-[#006837] appearance-none cursor-pointer"
                     >
-                      {f.label}
-                      {filters.feet.includes(f.val as any) && <i className="fas fa-check text-[8px]"></i>}
-                    </button>
-                  ))}
+                      <option value="" className="bg-[#0a0f0d]">Selecionar...</option>
+                      <option value="Right" className="bg-[#0a0f0d]">DESTRO</option>
+                      <option value="Left" className="bg-[#0a0f0d]">CANHOTO</option>
+                      <option value="Both" className="bg-[#0a0f0d]">AMBIDESTRO</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600 text-[8px]">
+                      <i className="fas fa-chevron-down"></i>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar pr-1">
+                    {filters.feet.map(foot => (
+                      <button 
+                        key={foot}
+                        onClick={() => toggleFilter('feet', foot)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#006837]/20 border border-[#006837]/30 text-[8px] font-black text-[#006837] uppercase hover:bg-red-600/20 hover:text-red-500 hover:border-red-500/30 transition-all group"
+                      >
+                        <span className="truncate max-w-[100px]">
+                          {foot === 'Right' ? 'DESTRO' : foot === 'Left' ? 'CANHOTO' : 'AMBIDESTRO'}
+                        </span>
+                        <i className="fas fa-times text-[7px] opacity-50 group-hover:opacity-100"></i>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </section>
 
