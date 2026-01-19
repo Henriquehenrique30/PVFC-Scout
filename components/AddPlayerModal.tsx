@@ -77,7 +77,16 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const age = new Date().getFullYear() - new Date(birthDate).getFullYear();
+    
+    // Cálculo preciso da idade (considerando aniversário)
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+
     const updatedPlayerData: Player = {
       id: player?.id || Date.now().toString(),
       name, age, birthDate, position1,

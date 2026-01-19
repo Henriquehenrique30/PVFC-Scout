@@ -77,11 +77,28 @@ const App: React.FC = () => {
     }
   }, [currentUser]);
 
-  const dynamicOptions = useMemo(() => {
-    const competitions = [...new Set(players.map(p => p.competition))].filter(Boolean).sort();
-    const years = [...new Set(players.map(p => p.scoutYear))].sort((a: number, b: number) => b - a);
-    return { competitions, years };
+  // Recalcula a idade dinamicamente baseado na data atual para todos os jogadores carregados
+  const processedPlayers = useMemo(() => {
+    return players.map(p => {
+      if (!p.birthDate) return p;
+      const today = new Date();
+      const birth = new Date(p.birthDate);
+      if (isNaN(birth.getTime())) return p;
+      
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return { ...p, age };
+    });
   }, [players]);
+
+  const dynamicOptions = useMemo(() => {
+    const competitions = [...new Set(processedPlayers.map(p => p.competition))].filter(Boolean).sort();
+    const years = [...new Set(processedPlayers.map(p => p.scoutYear))].sort((a: number, b: number) => b - a);
+    return { competitions, years };
+  }, [processedPlayers]);
 
   const handleLogin = (user: User) => setCurrentUser(user);
   const handleLogout = () => setCurrentUser(null);
@@ -154,7 +171,7 @@ const App: React.FC = () => {
   };
 
   const filteredPlayers = useMemo(() => {
-    return players.filter(p => {
+    return processedPlayers.filter(p => {
       const matchSearch = p.name.toLowerCase().includes(filters.search.toLowerCase()) || 
                           p.club.toLowerCase().includes(filters.search.toLowerCase());
       const matchPos = filters.positions.length === 0 || filters.positions.includes(p.position1);
@@ -166,7 +183,7 @@ const App: React.FC = () => {
 
       return matchSearch && matchPos && matchAge && matchRec && matchComp && matchYear && matchFoot;
     });
-  }, [filters, players]);
+  }, [filters, processedPlayers]);
 
   const toggleFilter = (key: keyof FilterState, value: any) => {
     setFilters(prev => {
@@ -478,7 +495,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {loading && players.length === 0 ? (
+          {loading && processedPlayers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32">
               <div className="h-8 w-8 border-2 border-[#006837] border-t-[#f1c40f] rounded-full animate-spin mb-4"></div>
               <p className="text-[8px] text-slate-600 uppercase font-black tracking-widest">Acessando Cloud...</p>
@@ -530,7 +547,7 @@ const App: React.FC = () => {
 
       {isShadowTeamOpen && currentUser && (
         <ShadowTeamModal 
-          players={players} 
+          players={processedPlayers} 
           currentUser={currentUser} 
           onClose={() => setIsShadowTeamOpen(false)} 
         />
@@ -548,7 +565,7 @@ const App: React.FC = () => {
       {isAdminPanelOpen && (
         <AdminUserManagement 
           users={users} 
-          players={players} 
+          players={processedPlayers} 
           onUpdateStatus={handleUpdateUserStatus} 
           onUpdateUser={handleUpdateUser} 
           onClose={() => setIsAdminPanelOpen(false)} 
