@@ -434,29 +434,42 @@ const App: React.FC = () => {
 
               <section>
                 <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-[0.2em]">Competição</label>
-                <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-2 mt-2">
-                  {dynamicOptions.competitions.length > 0 ? (
-                    dynamicOptions.competitions.map(comp => (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <select 
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          toggleFilter('competitions', e.target.value);
+                          e.target.value = ""; 
+                        }
+                      }}
+                      className="w-full bg-black/40 border border-white/5 rounded-xl py-2.5 px-4 text-[10px] font-black uppercase text-slate-300 outline-none focus:ring-1 focus:ring-[#006837] appearance-none cursor-pointer"
+                    >
+                      <option value="" className="bg-[#0a0f0d]">Selecionar...</option>
+                      {dynamicOptions.competitions.map(comp => (
+                        <option key={comp} value={comp} className="bg-[#0a0f0d]">
+                          {comp.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600 text-[8px]">
+                      <i className="fas fa-chevron-down"></i>
+                    </div>
+                  </div>
+                  
+                  {/* Chips: Lista de competições selecionadas */}
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar pr-1">
+                    {filters.competitions.map(comp => (
                       <button 
-                        key={comp} 
+                        key={comp}
                         onClick={() => toggleFilter('competitions', comp)}
-                        className={`w-full text-left px-3 py-2.5 rounded-lg text-[9px] font-black uppercase border transition-all flex items-center justify-between group ${
-                          filters.competitions.includes(comp) 
-                          ? 'bg-[#006837] border-[#006837] text-white' 
-                          : 'bg-black/20 border-white/5 text-slate-600 hover:text-white'
-                        }`}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#006837]/20 border border-[#006837]/30 text-[8px] font-black text-[#006837] uppercase hover:bg-red-600/20 hover:text-red-500 hover:border-red-500/30 transition-all group"
                       >
-                        <span className="truncate pr-2">{comp}</span>
-                        {filters.competitions.includes(comp) ? (
-                          <i className="fas fa-times-circle text-[10px] text-[#f1c40f] hover:scale-125 transition-transform"></i>
-                        ) : (
-                          <div className="h-1.5 w-1.5 rounded-full bg-slate-800 group-hover:bg-slate-600 transition-colors"></div>
-                        )}
+                        <span className="truncate max-w-[100px]">{comp}</span>
+                        <i className="fas fa-times text-[7px] opacity-50 group-hover:opacity-100"></i>
                       </button>
-                    ))
-                  ) : (
-                    <span className="text-[9px] text-slate-700 italic px-2 block">Nenhuma registrada</span>
-                  )}
+                    ))}
+                  </div>
                 </div>
               </section>
 
