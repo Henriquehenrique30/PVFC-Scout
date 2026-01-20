@@ -13,7 +13,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
       onClick={() => onClick(player)}
       className="group relative w-full bg-[#0a0f0d] rounded-[2rem] overflow-hidden border border-white/5 hover:border-[#f1c40f]/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(241,196,15,0.1)] cursor-pointer"
     >
-      {/* --- ÁREA DA FOTO (REDUZIDA PARA h-56 PARA MAIOR COMPACIDADE) --- */}
+      {/* --- ÁREA DA FOTO --- */}
       <div className="relative h-56 w-full bg-[#1a1d1c]">
         <img 
           src={player.photoUrl} 
@@ -25,6 +25,15 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
         
         {/* Degradê inferior */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0d] via-[#0a0f0d]/10 to-transparent"></div>
+
+        {/* Logo do Clube (Branding) */}
+        <div className="absolute top-4 right-4 h-8 w-8 bg-white rounded-lg p-1 shadow-xl border border-white/10 opacity-80 group-hover:opacity-100 transition-opacity">
+          <img 
+            src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" 
+            alt="Porto Vitória FC"
+            className="h-full w-full object-contain"
+          />
+        </div>
 
         {/* Badge: Recomendação */}
         <div className="absolute top-4 left-4">
@@ -64,7 +73,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
               <i className="far fa-calendar text-[7px]"></i> {player.scoutYear}
            </div>
            <div className="px-2 py-1 rounded border border-white/5 bg-[#006837]/10 text-[7px] font-bold text-[#006837] uppercase tracking-wider flex items-center gap-1">
-              <i className="fas fa-eye text-[7px]"></i> Jogos Assistidos: {player.gamesWatched}
+              <i className="fas fa-eye text-[7px]"></i> {player.gamesWatched} Jogos
            </div>
         </div>
       </div>

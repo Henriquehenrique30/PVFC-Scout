@@ -40,6 +40,7 @@ export const getScoutReport = async (player: Player): Promise<string> => {
 
     Diretrizes:
     - Seja direto, técnico e imparcial, mesmo que tenha pouca amostra de dados.
+    - no arquivo de dados upload onde esta "-" é "= 0"
     - Se não houver dados, diga que não foi possível avaliar e pedir para atualziar o cadastro do jogador quando os dados estiver disponíveis, se amostragem de dados for pequena tentar da mesma forma analisar os dados, não precisa dizer que a amostragem de dados é pequena, apenas análise, caso não tenha nenhum dados informa para inserir mais dados. 
     `;
 

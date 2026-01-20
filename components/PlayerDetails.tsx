@@ -116,6 +116,19 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
         {/* SIDEBAR ESQUERDA (DADOS CADASTRAIS) */}
         <div className="md:w-[30%] lg:w-[25%] p-10 bg-[#0a0f0d] border-r border-white/5 flex flex-col items-center shrink-0 h-full">
           
+          {/* Logo do Clube para validação do sistema */}
+          <div className="mb-6 flex flex-col items-center">
+            <div className="h-16 w-16 bg-white rounded-2xl p-2 shadow-2xl border border-white/10 mb-2">
+              <img 
+                src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" 
+                alt="Porto Vitória FC" 
+                className="h-full w-full object-contain"
+                crossOrigin="anonymous"
+              />
+            </div>
+            <p className="text-[7px] font-black text-[#006837] uppercase tracking-[0.4em]">Propriedade Institucional</p>
+          </div>
+
           <div className="relative shrink-0">
             <div className="absolute -inset-2 bg-gradient-to-tr from-[#006837] to-[#f1c40f] rounded-[2.5rem] blur-md opacity-20"></div>
             <img 
@@ -189,13 +202,14 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                   <p className="text-[10px] font-black text-[#006837] uppercase tracking-[0.4em] mt-1">Gemini Intelligence AI Engine</p>
                 </div>
               </div>
-              <button 
-                data-html2canvas-ignore
-                onClick={handleOpenConfig}
-                className="text-[10px] font-black uppercase text-slate-500 hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5"
-              >
-                <i className="fas fa-cog"></i> Configurar IA
-              </button>
+              <div className="flex items-center gap-4" data-html2canvas-ignore>
+                <button 
+                  onClick={handleOpenConfig}
+                  className="text-[10px] font-black uppercase text-slate-500 hover:text-white transition-colors flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5"
+                >
+                  <i className="fas fa-cog"></i> Configurar IA
+                </button>
+              </div>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
