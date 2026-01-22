@@ -7,10 +7,11 @@ interface AdminUserManagementProps {
   players: Player[];
   onUpdateStatus: (userId: string, status: 'approved' | 'rejected') => void;
   onUpdateUser: (user: User) => void;
+  onDeleteUser: (userId: string) => void;
   onClose: () => void;
 }
 
-const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, players, onUpdateStatus, onUpdateUser, onClose }) => {
+const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, players, onUpdateStatus, onUpdateUser, onDeleteUser, onClose }) => {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'pending' | 'all' | 'database'>('pending');
@@ -60,8 +61,9 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, player
                 </>
               ) : (
                 <>
-                  <button onClick={() => handleToggleRole(user)} className="p-2 text-slate-500 hover:text-[#f1c40f] transition-colors"><i className="fas fa-user-shield text-xs"></i></button>
-                  <button onClick={() => setEditingUserId(editingUserId === user.id ? null : user.id)} className="p-2 text-slate-500 hover:text-[#f1c40f] transition-colors"><i className="fas fa-key text-xs"></i></button>
+                  <button onClick={() => handleToggleRole(user)} className="p-2 text-slate-500 hover:text-[#f1c40f] transition-colors" title="Mudar Acesso"><i className="fas fa-user-shield text-xs"></i></button>
+                  <button onClick={() => setEditingUserId(editingUserId === user.id ? null : user.id)} className="p-2 text-slate-500 hover:text-[#f1c40f] transition-colors" title="Trocar Senha"><i className="fas fa-key text-xs"></i></button>
+                  <button onClick={() => onDeleteUser(user.id)} className="p-2 text-slate-500 hover:text-red-500 transition-colors" title="Excluir Login"><i className="fas fa-trash-alt text-xs"></i></button>
                 </>
               )}
             </div>

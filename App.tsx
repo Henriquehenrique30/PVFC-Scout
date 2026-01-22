@@ -142,6 +142,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (window.confirm("Deseja excluir este acesso permanentemente do sistema?")) {
+      try {
+        await dbService.deleteUser(userId);
+        loadData();
+      } catch (err) {
+        alert("Erro ao excluir usuário.");
+      }
+    }
+  };
+
   const handleEditPlayer = (player: Player) => {
     setEditingPlayer(player);
     setIsModalOpen(true);
@@ -182,8 +193,8 @@ const App: React.FC = () => {
                <span className="text-[10px] font-bold text-white uppercase">{currentUser.name}</span>
             </div>
             
-            <button onClick={() => setView('schedule')} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase text-slate-400 hover:text-[#f1c40f] transition-all"><i className="fas fa-calendar-alt mr-2"></i> Agenda</button>
-            <button onClick={() => setView('watchlist')} className={`relative px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all flex items-center gap-2 ${notificationsCount > 0 ? 'bg-[#f1c40f] text-black border-[#f1c40f] animate-pulse' : 'bg-white/5 border-white/10 text-slate-400'}`}>
+            <button onClick={() => setView('schedule')} className="px-4 py-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-[10px] font-black uppercase text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-lg"><i className="fas fa-calendar-alt mr-2"></i> Agenda</button>
+            <button onClick={() => setView('watchlist')} className={`relative px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all flex items-center gap-2 shadow-lg ${notificationsCount > 0 ? 'bg-amber-500 text-black border-amber-600 animate-pulse' : 'bg-sky-600/20 border-sky-500/30 text-sky-400 hover:bg-sky-600 hover:text-white'}`}>
               <i className="fas fa-binoculars"></i> Radar
               {notificationsCount > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-600 rounded-full border-2 border-black"></span>}
             </button>
@@ -191,7 +202,7 @@ const App: React.FC = () => {
             <button onClick={() => setIsShadowTeamOpen(true)} className="px-4 py-2 rounded-xl bg-[#006837]/20 border border-[#006837]/40 text-[10px] font-black uppercase text-[#006837] hover:bg-[#006837] hover:text-white transition-all"><i className="fas fa-chess-board mr-2"></i> Shadow Team</button>
             
             {currentUser.role === 'admin' && (
-              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-[10px] font-black uppercase text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all">
+              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-xl bg-violet-600/20 border border-violet-500/40 text-[10px] font-black uppercase text-violet-400 hover:bg-violet-600 hover:text-white transition-all">
                 <i className="fas fa-users-cog mr-2"></i> Painel Admin
               </button>
             )}
@@ -362,6 +373,7 @@ const App: React.FC = () => {
           players={players} 
           onUpdateStatus={handleUpdateUserStatus} 
           onUpdateUser={handleUpdateUser} 
+          onDeleteUser={handleDeleteUser}
           onClose={() => setIsAdminPanelOpen(false)} 
         />
       )}
