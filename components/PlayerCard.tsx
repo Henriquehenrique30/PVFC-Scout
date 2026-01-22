@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Player } from '../types';
+import { Player, Position } from '../types';
 
 interface PlayerCardProps {
   player: Player;
@@ -10,6 +9,26 @@ interface PlayerCardProps {
 }
 
 const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onEdit, onDelete }) => {
+  // Mapeamento de cores por posição para facilitar a identificação visual rápida
+  const getPositionColor = (pos: string) => {
+    switch (pos) {
+      case Position.ATA:
+      case Position.EXT:
+        return 'text-red-500';
+      case Position.MEI:
+      case Position.VOL:
+        return 'text-[#f1c40f]';
+      case Position.ZAG:
+      case Position.LTD:
+      case Position.LTE:
+        return 'text-blue-500';
+      case Position.GOL:
+        return 'text-slate-400';
+      default:
+        return 'text-[#006837]';
+    }
+  };
+
   return (
     <div 
       onClick={() => onClick(player)}
@@ -73,9 +92,19 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onEdit, onDele
 
       {/* Content */}
       <div className="px-8 pb-8 pt-4 relative z-20 bg-gradient-to-b from-transparent to-black/40">
+        {/* Header Content with Position Color and Games Watched */}
+        <div className="flex items-center justify-between mb-2">
+          <div className={`text-[10px] font-black uppercase tracking-[0.3em] ${getPositionColor(player.position1)}`}>
+            {player.position1}
+          </div>
+          <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-lg">
+            <i className="far fa-eye text-[10px]"></i>
+            {player.gamesWatched}
+          </div>
+        </div>
+
         <div className="flex justify-between items-end mb-6">
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">{player.position1}</div>
             <h3 className="font-oswald text-xl font-bold uppercase text-white tracking-tight leading-none group-hover:text-[#f1c40f] transition-colors truncate">
               {player.name}
             </h3>
