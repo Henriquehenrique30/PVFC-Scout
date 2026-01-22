@@ -3,7 +3,6 @@ import { Player } from '../types';
 import { getScoutReport } from '../services/geminiService';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 
 interface PlayerDetailsProps {
   player: Player;
@@ -15,16 +14,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const reportContainerRef = useRef<HTMLDivElement>(null);
-
-  // Mapeamento para o Gráfico de Radar
-  const radarData = [
-    { subject: 'RITMO', A: (player.stats.pace || 3) * 20, fullMark: 100 },
-    { subject: 'CHUTE', A: (player.stats.shooting || 3) * 20, fullMark: 100 },
-    { subject: 'PASSE', A: (player.stats.passing || 3) * 20, fullMark: 100 },
-    { subject: 'DRIBLE', A: (player.stats.dribbling || 3) * 20, fullMark: 100 },
-    { subject: 'DEFESA', A: (player.stats.defending || 3) * 20, fullMark: 100 },
-    { subject: 'FÍSICO', A: (player.stats.physical || 3) * 20, fullMark: 100 },
-  ];
 
   const fetchReport = async () => {
     setLoading(true);
@@ -89,58 +78,41 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
           <i className="fas fa-times text-lg"></i>
         </button>
 
-        {/* Painel Lateral: Visual e Radar */}
-        <div className="md:w-[35%] bg-[#080b09] border-r border-white/10 p-10 flex flex-col h-full shrink-0">
-          <div className="flex flex-col items-center mb-6">
-            <div className="h-12 w-12 bg-white rounded-xl p-2 shadow-2xl mb-4">
+        {/* Painel Lateral: Visual e Informações Básicas */}
+        <div className="md:w-[30%] bg-[#080b09] border-r border-white/10 p-10 flex flex-col h-full shrink-0">
+          <div className="flex flex-col items-center mb-10">
+            <div className="h-14 w-14 bg-white rounded-xl p-2 shadow-2xl mb-4">
               <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" alt="Logo PVFC" />
             </div>
             <p className="text-[7px] font-black text-[#006837] uppercase tracking-[0.4em]">Porto Vitória FC • Scouting</p>
           </div>
 
-          <div className="relative mx-auto mb-6 group">
+          <div className="relative mx-auto mb-8 group">
             <div className="absolute -inset-4 bg-[#006837]/20 blur-2xl rounded-full"></div>
             <img 
               src={player.photoUrl} 
-              className="relative h-48 w-48 rounded-[2.5rem] object-cover object-top border-2 border-white/10 shadow-2xl transition-transform group-hover:scale-105" 
+              className="relative h-56 w-56 rounded-[2.5rem] object-cover object-top border-2 border-white/10 shadow-2xl transition-transform group-hover:scale-105" 
             />
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#f1c40f] text-black text-[9px] font-black uppercase px-6 py-2 rounded-full shadow-2xl border border-black/10 whitespace-nowrap">
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#f1c40f] text-black text-[10px] font-black uppercase px-8 py-2.5 rounded-full shadow-2xl border border-black/10 whitespace-nowrap">
               {player.recommendation}
             </div>
           </div>
 
-          <div className="text-center mb-8">
-            <h2 className="font-oswald text-3xl font-bold uppercase text-white leading-none tracking-tight">{player.name}</h2>
-            <p className="text-[11px] font-bold text-[#006837] uppercase tracking-widest mt-2">{player.club}</p>
+          <div className="text-center mb-10">
+            <h2 className="font-oswald text-4xl font-bold uppercase text-white leading-none tracking-tight">{player.name}</h2>
+            <p className="text-[12px] font-bold text-[#006837] uppercase tracking-widest mt-3">{player.club}</p>
           </div>
 
-          {/* Radar Chart */}
-          <div className="flex-1 min-h-[220px] bg-black/20 rounded-3xl border border-white/5 mb-6 p-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                <PolarGrid stroke="#ffffff10" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 900 }} />
-                <Radar
-                  name={player.name}
-                  dataKey="A"
-                  stroke="#f1c40f"
-                  fill="#f1c40f"
-                  fillOpacity={0.5}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3 mt-auto">
             {[
               { l: 'IDADE', v: player.age },
-              { l: 'PERNA', v: player.foot === 'Right' ? 'DESTRO' : 'CANHOTO' },
+              { l: 'PERNA', v: player.foot === 'Right' ? 'DESTRO' : player.foot === 'Left' ? 'CANHOTO' : 'AMB.' },
               { l: 'ALTURA', v: `${player.height}cm` },
               { l: 'POSIÇÃO', v: player.position1 }
             ].map((stat, i) => (
-              <div key={i} className="bg-white/5 border border-white/5 p-3 rounded-2xl text-center">
-                <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest block mb-0.5">{stat.l}</span>
-                <span className="text-[11px] font-bold text-white uppercase">{stat.v}</span>
+              <div key={i} className="bg-white/5 border border-white/5 p-4 rounded-2xl text-center">
+                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">{stat.l}</span>
+                <span className="text-[12px] font-bold text-white uppercase">{stat.v}</span>
               </div>
             ))}
           </div>
