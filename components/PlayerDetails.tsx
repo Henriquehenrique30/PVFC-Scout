@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Player } from '../types';
 import { getScoutReport } from '../services/geminiService';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jsPDF';
+import jsPDF from 'jspdf';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 
 interface PlayerDetailsProps {
   player: Player;
@@ -16,13 +16,23 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   const [isExporting, setIsExporting] = useState(false);
   const reportContainerRef = useRef<HTMLDivElement>(null);
 
+  // Mapeamento para o Gráfico de Radar
+  const radarData = [
+    { subject: 'RITMO', A: (player.stats.pace || 3) * 20, fullMark: 100 },
+    { subject: 'CHUTE', A: (player.stats.shooting || 3) * 20, fullMark: 100 },
+    { subject: 'PASSE', A: (player.stats.passing || 3) * 20, fullMark: 100 },
+    { subject: 'DRIBLE', A: (player.stats.dribbling || 3) * 20, fullMark: 100 },
+    { subject: 'DEFESA', A: (player.stats.defending || 3) * 20, fullMark: 100 },
+    { subject: 'FÍSICO', A: (player.stats.physical || 3) * 20, fullMark: 100 },
+  ];
+
   const fetchReport = async () => {
     setLoading(true);
     try {
       const res = await getScoutReport(player);
       setReport(res);
     } catch (err: any) {
-      setReport("ERRO NO PROCESSAMENTO: Sistema de IA indisponível.");
+      setReport("ERRO NO PROCESSAMENTO: Sistema de IA indisponível no momento.");
     } finally {
       setLoading(false);
     }
@@ -44,9 +54,9 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('l', 'mm', 'a4');
       pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
-      pdf.save(`PVFC_DOSSIE_${player.name.replace(/\s+/g, '_')}.pdf`);
+      pdf.save(`PVFC_RELATORIO_${player.name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
-      alert("Falha ao exportar dossiê.");
+      alert("Falha ao exportar relatório técnico.");
     } finally {
       setIsExporting(false);
     }
@@ -54,15 +64,12 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
 
   const renderReportText = (text: string) => {
     return text.split('\n').map((line, i) => {
-      if (line.match(/^\d\./)) {
-        return <h4 key={i} className="text-[#f1c40f] font-oswald text-xl font-bold uppercase mt-8 mb-4 tracking-tight border-l-4 border-[#006837] pl-4">{line}</h4>;
+      if (line.match(/^\d\./) || line.startsWith('**')) {
+        return <h4 key={i} className="text-[#f1c40f] font-oswald text-xl font-bold uppercase mt-6 mb-3 tracking-tight border-l-4 border-[#006837] pl-4">{line.replace(/\*\*/g, '')}</h4>;
       }
-      const boldParts = line.split(/(\*\*.*?\*\*)/g);
       return (
         <p key={i} className="mb-3 text-slate-300 leading-relaxed text-[14px]">
-          {boldParts.map((part, j) => 
-            part.startsWith('**') ? <span key={j} className="text-white font-black">{part.slice(2, -2)}</span> : part
-          )}
+          {line.replace(/\*\*/g, '')}
         </p>
       );
     });
@@ -72,66 +79,83 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/95 backdrop-blur-2xl">
       <div 
         ref={reportContainerRef}
-        className="relative w-full max-w-7xl h-[85vh] overflow-hidden rounded-[2.5rem] glass-panel border border-white/10 flex flex-col md:flex-row"
+        className="relative w-full max-w-7xl h-[85vh] overflow-hidden rounded-[2.5rem] glass-panel border border-white/10 flex flex-col md:flex-row shadow-[0_0_80px_rgba(0,104,55,0.15)]"
       >
         <button 
           onClick={onClose}
           data-html2canvas-ignore
-          className="absolute right-8 top-8 z-50 h-10 w-10 bg-white/5 text-white hover:bg-red-600 rounded-full transition-all border border-white/10"
+          className="absolute right-8 top-8 z-50 h-10 w-10 bg-white/5 text-white hover:bg-red-600 rounded-full transition-all border border-white/10 flex items-center justify-center"
         >
-          <i className="fas fa-times"></i>
+          <i className="fas fa-times text-lg"></i>
         </button>
 
-        {/* Left Section: Visual Identity */}
-        <div className="md:w-[32%] lg:w-[28%] bg-[#080b09] border-r border-white/10 p-10 flex flex-col h-full shrink-0">
-          <div className="flex flex-col items-center mb-8">
+        {/* Painel Lateral: Visual e Radar */}
+        <div className="md:w-[35%] bg-[#080b09] border-r border-white/10 p-10 flex flex-col h-full shrink-0">
+          <div className="flex flex-col items-center mb-6">
             <div className="h-12 w-12 bg-white rounded-xl p-2 shadow-2xl mb-4">
-              <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" />
+              <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" alt="Logo PVFC" />
             </div>
-            <p className="text-[7px] font-black text-[#006837] uppercase tracking-[0.4em]">Propriedade do Porto Vitória FC</p>
+            <p className="text-[7px] font-black text-[#006837] uppercase tracking-[0.4em]">Porto Vitória FC • Scouting</p>
           </div>
 
-          <div className="relative mx-auto mb-8">
+          <div className="relative mx-auto mb-6 group">
             <div className="absolute -inset-4 bg-[#006837]/20 blur-2xl rounded-full"></div>
             <img 
               src={player.photoUrl} 
-              className="relative h-56 w-56 rounded-[3rem] object-cover object-top border-2 border-white/10 shadow-2xl shadow-black/80" 
+              className="relative h-48 w-48 rounded-[2.5rem] object-cover object-top border-2 border-white/10 shadow-2xl transition-transform group-hover:scale-105" 
             />
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#f1c40f] text-black text-[10px] font-black uppercase px-6 py-2 rounded-full shadow-2xl border border-black/10">
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#f1c40f] text-black text-[9px] font-black uppercase px-6 py-2 rounded-full shadow-2xl border border-black/10 whitespace-nowrap">
               {player.recommendation}
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="font-oswald text-4xl font-bold uppercase text-white leading-none tracking-tight">{player.name}</h2>
-            <p className="text-[12px] font-bold text-[#006837] uppercase tracking-widest mt-2">{player.club}</p>
+            <h2 className="font-oswald text-3xl font-bold uppercase text-white leading-none tracking-tight">{player.name}</h2>
+            <p className="text-[11px] font-bold text-[#006837] uppercase tracking-widest mt-2">{player.club}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-auto">
+          {/* Radar Chart */}
+          <div className="flex-1 min-h-[220px] bg-black/20 rounded-3xl border border-white/5 mb-6 p-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <PolarGrid stroke="#ffffff10" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 900 }} />
+                <Radar
+                  name={player.name}
+                  dataKey="A"
+                  stroke="#f1c40f"
+                  fill="#f1c40f"
+                  fillOpacity={0.5}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
             {[
               { l: 'IDADE', v: player.age },
               { l: 'PERNA', v: player.foot === 'Right' ? 'DESTRO' : 'CANHOTO' },
               { l: 'ALTURA', v: `${player.height}cm` },
               { l: 'POSIÇÃO', v: player.position1 }
             ].map((stat, i) => (
-              <div key={i} className="bg-white/5 border border-white/5 p-4 rounded-2xl text-center">
-                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">{stat.l}</span>
-                <span className="text-[12px] font-bold text-white uppercase">{stat.v}</span>
+              <div key={i} className="bg-white/5 border border-white/5 p-3 rounded-2xl text-center">
+                <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest block mb-0.5">{stat.l}</span>
+                <span className="text-[11px] font-bold text-white uppercase">{stat.v}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right Section: Intel Report */}
+        {/* Painel de Conteúdo: Relatório da IA */}
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#050807]/40">
           <div className="p-10 pb-6 border-b border-white/5 shrink-0 flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="h-14 w-14 rounded-2xl bg-[#006837]/10 flex items-center justify-center text-[#f1c40f] border border-[#006837]/20">
-                <i className="fas fa-microchip text-2xl"></i>
+                <i className="fas fa-brain text-2xl"></i>
               </div>
               <div>
                 <h3 className="font-oswald text-2xl font-bold uppercase text-white tracking-tighter">Relatório Técnico</h3>
-                <p className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mt-1">Sincronizado via Scout Engine</p>
+                <p className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mt-1">Análise Avançada de Mercado</p>
               </div>
             </div>
             
@@ -141,35 +165,34 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
               disabled={isExporting}
               className="px-6 py-3 rounded-xl bg-[#f1c40f] text-black font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-xl disabled:opacity-50"
             >
-              <i className="fas fa-file-pdf mr-2"></i> Exportar
+              <i className="fas fa-file-pdf mr-2"></i> Exportar PDF
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-10 bg-gradient-to-b from-transparent to-[#000]/40">
              <div className="max-w-4xl mx-auto">
                 {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20 opacity-50">
-                    <div className="h-8 w-8 border-2 border-[#f1c40f] border-t-transparent rounded-full animate-spin mb-4"></div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em]">Decodificando Atributos...</p>
+                  <div className="flex flex-col items-center justify-center py-24 opacity-50">
+                    <div className="h-10 w-10 border-2 border-[#f1c40f] border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sincronizando Insights Táticos...</p>
                   </div>
                 ) : (
-                  <div className="animate-in fade-in duration-1000">
+                  <div className="animate-in fade-in duration-1000 slide-in-from-bottom-4">
                     {renderReportText(report)}
                   </div>
                 )}
              </div>
           </div>
 
-          {/* External Links */}
-          <div className="p-10 pt-6 border-t border-white/5 shrink-0 flex gap-4" data-html2canvas-ignore>
+          <div className="p-8 border-t border-white/5 shrink-0 flex gap-4" data-html2canvas-ignore>
              {player.videoUrl && (
                <a href={player.videoUrl} target="_blank" className="flex-1 bg-red-600/10 border border-red-600/30 py-4 rounded-2xl flex items-center justify-center gap-3 text-red-500 font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all">
-                 <i className="fab fa-youtube text-lg"></i> Vídeo Scouting
+                 <i className="fab fa-youtube text-lg"></i> Galeria de Vídeos
                </a>
              )}
              {player.ogolUrl && (
                <a href={player.ogolUrl} target="_blank" className="flex-1 bg-white/5 border border-white/10 py-4 rounded-2xl flex items-center justify-center gap-3 text-slate-300 font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-black transition-all">
-                 <i className="fas fa-link text-lg"></i> Base oGol
+                 <i className="fas fa-external-link-alt text-lg"></i> Perfil oGol
                </a>
              )}
           </div>
