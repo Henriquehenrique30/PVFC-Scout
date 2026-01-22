@@ -137,7 +137,7 @@ export const comparePlayersWithAI = async (candidates: ComparisonCandidate[]): P
         },
       ],
       model: "llama-3.3-70b-versatile", // Modelo potente para análise de dados complexos
-      temperature: 0.2, // Temperatura baixa para máxima precisão matemática
+      temperature: 0.3, // Temperatura baixa para máxima precisão matemática
       max_tokens: 2048,
     });
 

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Player, Position } from '../types';
 
@@ -9,23 +10,27 @@ interface PlayerCardProps {
 }
 
 const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onEdit, onDelete }) => {
-  // Mapeamento de cores por posição para facilitar a identificação visual rápida
-  const getPositionColor = (pos: string) => {
+  // Cores exclusivas e estilizadas por posição para máxima distinção visual
+  const getPositionStyles = (pos: string) => {
     switch (pos) {
-      case Position.ATA:
-      case Position.EXT:
-        return 'text-red-500';
-      case Position.MEI:
-      case Position.VOL:
-        return 'text-[#f1c40f]';
-      case Position.ZAG:
-      case Position.LTD:
-      case Position.LTE:
-        return 'text-blue-500';
       case Position.GOL:
-        return 'text-slate-400';
+        return 'text-slate-400 border-slate-400/30 bg-slate-400/5';
+      case Position.ZAG:
+        return 'text-blue-500 border-blue-500/30 bg-blue-500/5';
+      case Position.LTD:
+        return 'text-sky-400 border-sky-400/30 bg-sky-400/5';
+      case Position.LTE:
+        return 'text-indigo-400 border-indigo-400/30 bg-indigo-400/5';
+      case Position.VOL:
+        return 'text-emerald-500 border-emerald-500/30 bg-emerald-500/5';
+      case Position.MEI:
+        return 'text-[#f1c40f] border-[#f1c40f]/30 bg-[#f1c40f]/5';
+      case Position.EXT:
+        return 'text-orange-500 border-orange-500/30 bg-orange-500/5';
+      case Position.ATA:
+        return 'text-red-500 border-red-500/30 bg-red-500/5';
       default:
-        return 'text-[#006837]';
+        return 'text-[#006837] border-[#006837]/30 bg-[#006837]/5';
     }
   };
 
@@ -92,13 +97,13 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onEdit, onDele
 
       {/* Content */}
       <div className="px-8 pb-8 pt-4 relative z-20 bg-gradient-to-b from-transparent to-black/40">
-        {/* Header Content with Position Color and Games Watched */}
-        <div className="flex items-center justify-between mb-2">
-          <div className={`text-[10px] font-black uppercase tracking-[0.3em] ${getPositionColor(player.position1)}`}>
+        {/* Header Content with Enhanced Position Badge and Games Watched */}
+        <div className="flex items-center justify-between mb-4">
+          <div className={`text-[9px] font-black uppercase tracking-[0.3em] px-3 py-1 rounded-lg border backdrop-blur-sm transition-colors ${getPositionStyles(player.position1)}`}>
             {player.position1}
           </div>
-          <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-lg">
-            <i className="far fa-eye text-[10px]"></i>
+          <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+            <i className="far fa-eye text-[10px] text-slate-600"></i>
             {player.gamesWatched}
           </div>
         </div>
