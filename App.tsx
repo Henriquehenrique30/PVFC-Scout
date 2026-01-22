@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, FilterState, User, Recommendation, Position, ObservedPlayer } from './types';
 import PlayerCard from './components/PlayerCard';
@@ -119,11 +118,15 @@ const App: React.FC = () => {
 
   const handleUpdateUserStatus = async (userId: string, status: 'approved' | 'rejected') => {
     try {
-      const user = users.find(u => u.id === userId);
-      if (user) {
-        await dbService.saveUser({ ...user, status: status === 'approved' ? 'approved' : 'pending' });
-        loadData();
+      if (status === 'rejected') {
+        await dbService.deleteUser(userId);
+      } else {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+          await dbService.saveUser({ ...user, status: 'approved' });
+        }
       }
+      loadData();
     } catch (err) {
       alert("Erro ao atualizar status do usuário.");
     }

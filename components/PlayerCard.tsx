@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Player } from '../types';
 
@@ -56,7 +55,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
         <div className="flex justify-between items-end mb-6">
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">{player.position1}</div>
-            <h3 className="font-oswald text-3xl font-bold uppercase text-white tracking-tight leading-none group-hover:text-[#f1c40f] transition-colors truncate">
+            <h3 className="font-oswald text-[24px] font-bold uppercase text-white tracking-tight leading-none group-hover:text-[#f1c40f] transition-colors truncate">
               {player.name}
             </h3>
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2">
