@@ -48,17 +48,9 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
              {player.recommendation}
           </div>
           
-          {/* Position Badge added near photo as requested */}
           <div className="bg-black/60 text-[#f1c40f] border border-[#f1c40f]/30 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest backdrop-blur-md self-start">
             {player.position1}
           </div>
-        </div>
-
-        {/* Floating Background Text */}
-        <div className="absolute bottom-4 left-6 z-20">
-          <span className="text-4xl font-oswald font-black text-white/10 uppercase tracking-tighter leading-none block">
-            {player.gamesWatched} JGS
-          </span>
         </div>
       </div>
 
@@ -79,7 +71,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           </div>
         </div>
 
-        {/* Stats Strip - Grid maintained exactly as it was */}
+        {/* Stats Strip */}
         <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/5 mb-4">
           <div className="text-center">
             <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">JOGOS</p>
@@ -97,7 +89,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           </div>
         </div>
 
-        {/* Competition Footer - Showing Scout Year */}
+        {/* Competition Footer */}
         <div className="flex items-center justify-between">
            <div className="flex items-center gap-2">
               <i className="fas fa-trophy text-[#f1c40f] text-[10px]"></i>

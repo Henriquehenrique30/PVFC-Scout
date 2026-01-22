@@ -91,7 +91,6 @@ const App: React.FC = () => {
     });
   }, [players]);
 
-  // Dynamic list of competitions for the filter
   const allCompetitions = useMemo(() => {
     const set = new Set(processedPlayers.map(p => p.competition).filter(Boolean));
     return Array.from(set).sort();
@@ -165,7 +164,6 @@ const App: React.FC = () => {
             <button onClick={() => setIsComparisonOpen(true)} className="px-4 py-2 rounded-xl bg-slate-900 border border-white/5 text-[10px] font-black uppercase text-slate-300 hover:text-white transition-all"><i className="fas fa-database mr-2"></i> Data Lab</button>
             <button onClick={() => setIsShadowTeamOpen(true)} className="px-4 py-2 rounded-xl bg-[#006837]/20 border border-[#006837]/40 text-[10px] font-black uppercase text-[#006837] hover:bg-[#006837] hover:text-white transition-all"><i className="fas fa-chess-board mr-2"></i> Shadow Team</button>
             
-            {/* Re-enabled Admin Panel Button */}
             {currentUser.role === 'admin' && (
               <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-[10px] font-black uppercase text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all">
                 <i className="fas fa-users-cog mr-2"></i> Painel Admin
@@ -233,34 +231,67 @@ const App: React.FC = () => {
               </div>
             </section>
 
+            {/* PERNA DOMINANTE (MULTI-SELECT DROPDOWN) */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Perna Dominante</label>
-              <div className="grid grid-cols-2 gap-1.5">
-                {['Right', 'Left', 'Both'].map((f) => (
-                  <button 
-                    key={f} 
-                    onClick={() => toggleFilter('feet', f)} 
-                    className={`py-2 rounded-lg text-[10px] font-black transition-all ${filters.feet.includes(f as any) ? 'bg-[#006837] text-white shadow-lg' : 'bg-white/5 text-slate-500 hover:text-white'}`}
-                  >
-                    {f === 'Right' ? 'DESTRO' : f === 'Left' ? 'CANHOTO' : 'AMBI.'}
-                  </button>
-                ))}
+              <div className="space-y-3">
+                <select 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val && !filters.feet.includes(val as any)) {
+                      toggleFilter('feet', val);
+                    }
+                    e.target.value = "";
+                  }}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#006837]"
+                >
+                  <option value="">Adicionar pé...</option>
+                  <option value="Right">DESTRO</option>
+                  <option value="Left">CANHOTO</option>
+                  <option value="Both">AMBIDESTRO</option>
+                </select>
+                <div className="flex flex-wrap gap-2">
+                  {filters.feet.map(f => (
+                    <span key={f} className="flex items-center gap-2 bg-[#006837]/20 border border-[#006837]/40 text-[#006837] px-2 py-1 rounded text-[10px] font-black uppercase">
+                      {f === 'Right' ? 'DESTRO' : f === 'Left' ? 'CANHOTO' : 'AMB.'}
+                      <button onClick={() => toggleFilter('feet', f)} className="hover:text-white">
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
             </section>
 
-            {/* COMPETIÇÃO (MULTI-SELECT GRID) as requested */}
+            {/* COMPETIÇÕES (MULTI-SELECT DROPDOWN) */}
             <section>
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Competições (Múltiplas)</label>
-              <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
-                {allCompetitions.map(comp => (
-                  <button 
-                    key={comp} 
-                    onClick={() => toggleFilter('competitions', comp)} 
-                    className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${filters.competitions.includes(comp) ? 'bg-[#f1c40f]/20 border-[#f1c40f] text-[#f1c40f] shadow-lg' : 'bg-white/5 border-transparent text-slate-500 hover:text-white'}`}
-                  >
-                    {comp.toUpperCase()}
-                  </button>
-                ))}
+              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Competições</label>
+              <div className="space-y-3">
+                <select 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val && !filters.competitions.includes(val)) {
+                      toggleFilter('competitions', val);
+                    }
+                    e.target.value = "";
+                  }}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#f1c40f]"
+                >
+                  <option value="">Adicionar competição...</option>
+                  {allCompetitions.map(comp => (
+                    <option key={comp} value={comp}>{comp.toUpperCase()}</option>
+                  ))}
+                </select>
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                  {filters.competitions.map(comp => (
+                    <span key={comp} className="flex items-center gap-2 bg-[#f1c40f]/20 border border-[#f1c40f]/40 text-[#f1c40f] px-2 py-1 rounded text-[9px] font-black uppercase">
+                      {comp}
+                      <button onClick={() => toggleFilter('competitions', comp)} className="hover:text-white">
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
             </section>
 
@@ -293,7 +324,6 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Admin Panel Modal Integrated */}
       {isAdminPanelOpen && (
         <AdminUserManagement 
           users={users} 
