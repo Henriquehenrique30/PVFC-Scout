@@ -27,43 +27,22 @@ export const getScoutReport = async (player: Player): Promise<string> => {
     ${player.aiContextData?.slice(0, 8000) || "Nenhum dado de planilha anexado."}
     """
 
-   Instrução de Análise Técnica de Desempenho
+    Com base APENAS nos dados acima e na posição do jogador, gere um relatório técnico seguindo estritamente esta estrutura:
 
-Com base APENAS nos dados fornecidos e na posição do jogador, gere um relatório técnico seguindo esta estrutura:
+    1. **CARACTERÍSTICAS DO JOGADOR**:
+       Descreva o perfil geral do atleta, seu estilo de jogo e como ele se comporta em campo baseando-se nos números apresentados.
 
-PERFIL E ESTILO DE JOGO:
+    2. **PONTOS FORTES**:
+       Liste as qualidades que se destacam nos dados (ex: altas porcentagens de acerto, bons números defensivos ou ofensivos). Seja específico citando métricas se possível.
 
-Descreva o arquétipo do jogador (ex: "meia box-to-box", "zagueiro de antecipação", "centroavante de referência").
+    3. **PONTOS FRACOS / ATENÇÃO** (Se houver):
+       Aponte deficiências ou áreas onde os dados mostram desempenho abaixo da média ou que precisam de evolução.
 
-Como ele se comporta com e sem a bola com base no volume das métricas apresentadas?
-
-ANÁLISE DE KPIs POR SETOR:
-
-Fase Ofensiva: (Finalização, drible, participação em gols).
-
-Fase de Construção: (Passes curtos/longos, passes progressivos, precisão).
-
-Fase Defensiva: (Desarmes, interceptações, duelos ganhos). Cite números específicos e porcentagens para validar a análise.
-
-PONTOS FORTES (Destaques Estatísticos):
-
-Liste as métricas onde o jogador está acima da média esperada para sua posição.
-
-PONTOS DE ATENÇÃO / MELHORIA:
-
-Identifique lacunas técnicas ou falta de volume em ações cruciais para a função dele.
-Diretrizes Estritas:
-
-Trate o caractere "-" como valor "0".
-
-Se houver poucos dados, priorize a análise de eficiência (porcentagens) sobre o volume (números totais).
-
-Se não houver dados, responda: "Dados insuficientes para análise. Favor atualizar o cadastro do atleta."
-
-Linguagem: Técnica, imparcial, direta e sem adjetivos vazios (como "espetacular" ou "incrível"). Use termos como "eficiente", "consistente", "baixo volume".
-
-
-;
+    Diretrizes:
+    - Seja direto, técnico e imparcial, mesmo que tenha pouca amostra de dados.
+    - no arquivo de dados upload onde esta "-" é "= 0"
+    - Se não houver dados, diga que não foi possível avaliar e pedir para atualziar o cadastro do jogador quando os dados estiver disponíveis, se amostragem de dados for pequena tentar da mesma forma analisar os dados, não precisa dizer que a amostragem de dados é pequena, apenas análise, caso não tenha nenhum dados informa para inserir mais dados. 
+    `;
 
     const chatCompletion = await groq.chat.completions.create({
       messages: [
