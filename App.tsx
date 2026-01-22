@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, FilterState, User, Recommendation, Position, ObservedPlayer } from './types';
 import PlayerCard from './components/PlayerCard';
@@ -92,7 +91,7 @@ const App: React.FC = () => {
     });
   }, [players]);
 
-  // Lista dinâmica de competições para o dropdown
+  // Dynamic list of competitions for the filter
   const allCompetitions = useMemo(() => {
     const set = new Set(processedPlayers.map(p => p.competition).filter(Boolean));
     return Array.from(set).sort();
@@ -118,20 +117,25 @@ const App: React.FC = () => {
     });
   };
 
-  const handleCompetitionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setFilters(prev => ({
-      ...prev,
-      competitions: val === 'all' ? [] : [val]
-    }));
+  const handleUpdateUserStatus = async (userId: string, status: 'approved' | 'rejected') => {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (user) {
+        await dbService.saveUser({ ...user, status: status === 'approved' ? 'approved' : 'pending' });
+        loadData();
+      }
+    } catch (err) {
+      alert("Erro ao atualizar status do usuário.");
+    }
   };
 
-  const handleFootChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setFilters(prev => ({
-      ...prev,
-      feet: val === 'all' ? [] : [val as any]
-    }));
+  const handleUpdateUser = async (user: User) => {
+    try {
+      await dbService.saveUser(user);
+      loadData();
+    } catch (err) {
+      alert("Erro ao atualizar usuário.");
+    }
   };
 
   if (!currentUser) return <Auth onLogin={setCurrentUser} users={users} onRegister={(u) => dbService.saveUser(u).then(() => loadData())} />;
@@ -144,7 +148,7 @@ const App: React.FC = () => {
         <div className="mx-auto max-w-[1600px] flex items-center justify-between px-10">
           <div className="flex items-center gap-6">
             <div className="h-14 w-14 bg-white rounded-2xl p-2 shadow-xl border border-white/20 transform hover:scale-110 transition-transform">
-               <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" />
+               <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" alt="PVFC Logo" />
             </div>
             <div>
               <h1 className="font-oswald text-2xl font-bold uppercase tracking-tighter text-white">PORTO VITÓRIA <span className="text-[#f1c40f]">FC</span></h1>
@@ -160,6 +164,14 @@ const App: React.FC = () => {
             </button>
             <button onClick={() => setIsComparisonOpen(true)} className="px-4 py-2 rounded-xl bg-slate-900 border border-white/5 text-[10px] font-black uppercase text-slate-300 hover:text-white transition-all"><i className="fas fa-database mr-2"></i> Data Lab</button>
             <button onClick={() => setIsShadowTeamOpen(true)} className="px-4 py-2 rounded-xl bg-[#006837]/20 border border-[#006837]/40 text-[10px] font-black uppercase text-[#006837] hover:bg-[#006837] hover:text-white transition-all"><i className="fas fa-chess-board mr-2"></i> Shadow Team</button>
+            
+            {/* Re-enabled Admin Panel Button */}
+            {currentUser.role === 'admin' && (
+              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-[10px] font-black uppercase text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all">
+                <i className="fas fa-users-cog mr-2"></i> Painel Admin
+              </button>
+            )}
+
             <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="px-6 py-2 rounded-xl bg-[#006837] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#006837]/30">Adicionar Atleta</button>
             <button onClick={() => setCurrentUser(null)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all"><i className="fas fa-power-off"></i></button>
           </div>
@@ -174,7 +186,6 @@ const App: React.FC = () => {
                <h3 className="text-[12px] font-black text-white uppercase tracking-widest">Parâmetros</h3>
             </div>
             
-            {/* PESQUISA */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Nome ou Clube</label>
               <input 
@@ -186,7 +197,6 @@ const App: React.FC = () => {
               />
             </section>
 
-            {/* RANGE DE IDADE */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Idade (Mín - Máx)</label>
               <div className="flex items-center gap-3">
@@ -208,7 +218,6 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* POSIÇÃO */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Posição</label>
               <div className="grid grid-cols-4 gap-1.5">
@@ -224,34 +233,35 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* PERNA DOMINANTE (DROPDOWN) */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Perna Dominante</label>
-              <select 
-                onChange={handleFootChange}
-                value={filters.feet.length > 0 ? filters.feet[0] : 'all'}
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-[#f1c40f] outline-none appearance-none cursor-pointer"
-              >
-                <option value="all">TODAS</option>
-                <option value="Right">DESTRO</option>
-                <option value="Left">CANHOTO</option>
-                <option value="Both">AMBIDESTRO</option>
-              </select>
+              <div className="grid grid-cols-2 gap-1.5">
+                {['Right', 'Left', 'Both'].map((f) => (
+                  <button 
+                    key={f} 
+                    onClick={() => toggleFilter('feet', f)} 
+                    className={`py-2 rounded-lg text-[10px] font-black transition-all ${filters.feet.includes(f as any) ? 'bg-[#006837] text-white shadow-lg' : 'bg-white/5 text-slate-500 hover:text-white'}`}
+                  >
+                    {f === 'Right' ? 'DESTRO' : f === 'Left' ? 'CANHOTO' : 'AMBI.'}
+                  </button>
+                ))}
+              </div>
             </section>
 
-            {/* COMPETIÇÃO (DROPDOWN) */}
+            {/* COMPETIÇÃO (MULTI-SELECT GRID) as requested */}
             <section>
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Competição</label>
-              <select 
-                onChange={handleCompetitionChange}
-                value={filters.competitions.length > 0 ? filters.competitions[0] : 'all'}
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-[#f1c40f] outline-none appearance-none cursor-pointer"
-              >
-                <option value="all">TODAS AS COMPETIÇÕES</option>
+              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Competições (Múltiplas)</label>
+              <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto custom-scrollbar p-1">
                 {allCompetitions.map(comp => (
-                  <option key={comp} value={comp}>{comp.toUpperCase()}</option>
+                  <button 
+                    key={comp} 
+                    onClick={() => toggleFilter('competitions', comp)} 
+                    className={`px-3 py-2 rounded-lg text-[9px] font-black transition-all border ${filters.competitions.includes(comp) ? 'bg-[#f1c40f]/20 border-[#f1c40f] text-[#f1c40f] shadow-lg' : 'bg-white/5 border-transparent text-slate-500 hover:text-white'}`}
+                  >
+                    {comp.toUpperCase()}
+                  </button>
                 ))}
-              </select>
+              </div>
             </section>
 
             <button onClick={() => setFilters({search: '', positions: [], minAge: 0, maxAge: 50, recommendations: [], competitions: [], scoutYears: [], feet: []})} className="w-full py-3 text-[10px] font-black text-slate-600 uppercase hover:text-[#f1c40f] transition-colors tracking-widest border-t border-white/5 pt-6">Limpar Filtros</button>
@@ -282,6 +292,17 @@ const App: React.FC = () => {
           )}
         </div>
       </main>
+
+      {/* Admin Panel Modal Integrated */}
+      {isAdminPanelOpen && (
+        <AdminUserManagement 
+          users={users} 
+          players={players} 
+          onUpdateStatus={handleUpdateUserStatus} 
+          onUpdateUser={handleUpdateUser} 
+          onClose={() => setIsAdminPanelOpen(false)} 
+        />
+      )}
 
       {isShadowTeamOpen && currentUser && <ShadowTeamModal players={processedPlayers} currentUser={currentUser} onClose={() => setIsShadowTeamOpen(false)} />}
       {isComparisonOpen && <ComparisonModal onClose={() => setIsComparisonOpen(false)} />}

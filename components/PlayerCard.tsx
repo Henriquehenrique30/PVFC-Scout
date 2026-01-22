@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Player } from '../types';
 
@@ -38,8 +37,8 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           />
         </div>
 
-        {/* Recommendation Badge */}
-        <div className="absolute top-4 left-4 z-20">
+        {/* Badges Container: Recommendation & Position */}
+        <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
           <div className={`px-3 py-1 rounded border text-[9px] font-black uppercase tracking-[0.15em] shadow-xl backdrop-blur-md flex items-center gap-2 ${
             player.recommendation.includes('Elite') ? 'bg-[#f1c40f]/90 text-black border-[#f1c40f]' : 
             player.recommendation.includes('Titular') ? 'bg-[#006837]/90 text-white border-[#006837]' :
@@ -48,9 +47,14 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
              <div className={`h-1.5 w-1.5 rounded-full ${player.recommendation.includes('Elite') ? 'bg-black animate-pulse' : 'bg-white'}`}></div>
              {player.recommendation}
           </div>
+          
+          {/* Position Badge added near photo as requested */}
+          <div className="bg-black/60 text-[#f1c40f] border border-[#f1c40f]/30 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest backdrop-blur-md self-start">
+            {player.position1}
+          </div>
         </div>
 
-        {/* Floating Background Text (Jogos instead of Position) */}
+        {/* Floating Background Text */}
         <div className="absolute bottom-4 left-6 z-20">
           <span className="text-4xl font-oswald font-black text-white/10 uppercase tracking-tighter leading-none block">
             {player.gamesWatched} JGS
@@ -75,7 +79,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           </div>
         </div>
 
-        {/* Stats Strip - Updated: POSIÇÃO -> JOGOS */}
+        {/* Stats Strip - Grid maintained exactly as it was */}
         <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/5 mb-4">
           <div className="text-center">
             <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">JOGOS</p>
@@ -93,7 +97,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           </div>
         </div>
 
-        {/* Competition Footer - Updated: Show only Year */}
+        {/* Competition Footer - Showing Scout Year */}
         <div className="flex items-center justify-between">
            <div className="flex items-center gap-2">
               <i className="fas fa-trophy text-[#f1c40f] text-[10px]"></i>
