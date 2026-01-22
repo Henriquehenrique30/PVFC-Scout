@@ -78,7 +78,8 @@ export const dbService = {
   // --- USUÁRIOS ---
   async getUsers(): Promise<User[]> {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('users').select('*').eq('status', 'approved');
+    // Removido o filtro de 'approved' para que o Auth consiga identificar usuários 'pending'
+    const { data, error } = await supabase.from('users').select('*');
     return data || [];
   },
 
