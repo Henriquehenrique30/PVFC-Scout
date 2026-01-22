@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Player } from '../types';
 import { getScoutReport } from '../services/geminiService';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import jsPDF from 'jsPDF';
 
 interface PlayerDetailsProps {
   player: Player;
@@ -130,7 +130,7 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
                 <i className="fas fa-microchip text-2xl"></i>
               </div>
               <div>
-                <h3 className="font-oswald text-2xl font-bold uppercase text-white tracking-tighter">Dossiê Técnico de Performance</h3>
+                <h3 className="font-oswald text-2xl font-bold uppercase text-white tracking-tighter">Relatório Técnico</h3>
                 <p className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mt-1">Sincronizado via Scout Engine</p>
               </div>
             </div>

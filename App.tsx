@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, FilterState, User, Recommendation, Position, ObservedPlayer } from './types';
 import PlayerCard from './components/PlayerCard';
@@ -151,11 +152,16 @@ const App: React.FC = () => {
             </div>
             <div>
               <h1 className="font-oswald text-2xl font-bold uppercase tracking-tighter text-white">PORTO VITÓRIA <span className="text-[#f1c40f]">FC</span></h1>
-              <p className="text-[9px] font-black text-[#006837] uppercase tracking-[0.4em] mt-1">Intelligence Scouting Platform</p>
+              <p className="text-[9px] font-black text-[#006837] uppercase tracking-[0.4em] mt-1">Departamento de Análise de Mercado</p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end mr-2">
+               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Acesso</span>
+               <span className="text-[10px] font-bold text-white uppercase">{currentUser.name}</span>
+            </div>
+            
             <button onClick={() => setView('schedule')} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase text-slate-400 hover:text-[#f1c40f] transition-all"><i className="fas fa-calendar-alt mr-2"></i> Agenda</button>
             <button onClick={() => setView('watchlist')} className={`relative px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all flex items-center gap-2 ${notificationsCount > 0 ? 'bg-[#f1c40f] text-black border-[#f1c40f] animate-pulse' : 'bg-white/5 border-white/10 text-slate-400'}`}>
               <i className="fas fa-binoculars"></i> Radar
