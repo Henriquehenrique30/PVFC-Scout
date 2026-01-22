@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, FilterState, User, Recommendation, Position, ObservedPlayer } from './types';
 import PlayerCard from './components/PlayerCard';
@@ -138,6 +139,22 @@ const App: React.FC = () => {
       loadData();
     } catch (err) {
       alert("Erro ao atualizar usuário.");
+    }
+  };
+
+  const handleEditPlayer = (player: Player) => {
+    setEditingPlayer(player);
+    setIsModalOpen(true);
+  };
+
+  const handleDeletePlayer = async (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir este atleta permanentemente do banco de dados?")) {
+      try {
+        await dbService.deletePlayer(id);
+        loadData();
+      } catch (err) {
+        alert("Erro ao excluir atleta.");
+      }
     }
   };
 
@@ -319,7 +336,13 @@ const App: React.FC = () => {
               {filteredPlayers.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {filteredPlayers.map(p => (
-                    <PlayerCard key={p.id} player={p} onClick={setSelectedPlayer} />
+                    <PlayerCard 
+                      key={p.id} 
+                      player={p} 
+                      onClick={setSelectedPlayer} 
+                      onEdit={handleEditPlayer} 
+                      onDelete={handleDeletePlayer} 
+                    />
                   ))}
                 </div>
               ) : (
@@ -346,7 +369,14 @@ const App: React.FC = () => {
       {isShadowTeamOpen && currentUser && <ShadowTeamModal players={processedPlayers} currentUser={currentUser} onClose={() => setIsShadowTeamOpen(false)} />}
       {isComparisonOpen && <ComparisonModal onClose={() => setIsComparisonOpen(false)} />}
       {selectedPlayer && <PlayerDetails player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
-      {isModalOpen && <AddPlayerModal player={editingPlayer || undefined} onClose={() => setIsModalOpen(false)} onAdd={(p) => dbService.savePlayer(p).then(() => loadData())} onUpdate={(p) => dbService.savePlayer(p).then(() => loadData())} />}
+      {isModalOpen && (
+        <AddPlayerModal 
+          player={editingPlayer || undefined} 
+          onClose={() => { setIsModalOpen(false); setEditingPlayer(null); }} 
+          onAdd={(p) => dbService.savePlayer(p).then(() => loadData())} 
+          onUpdate={(p) => dbService.savePlayer(p).then(() => loadData())} 
+        />
+      )}
     </div>
   );
 };

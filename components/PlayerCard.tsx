@@ -1,17 +1,38 @@
+
 import React from 'react';
 import { Player } from '../types';
 
 interface PlayerCardProps {
   player: Player;
   onClick: (player: Player) => void;
+  onEdit: (player: Player) => void;
+  onDelete: (id: string) => void;
 }
 
-const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
+const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick, onEdit, onDelete }) => {
   return (
     <div 
       onClick={() => onClick(player)}
       className="card-hover-effect group relative w-full bg-[#080b09] rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl cursor-pointer"
     >
+      {/* Action Buttons (Top Left) */}
+      <div className="absolute top-6 left-6 z-40 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button 
+          onClick={(e) => { e.stopPropagation(); onEdit(player); }}
+          className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-white hover:bg-[#f1c40f] hover:text-black transition-all flex items-center justify-center shadow-lg"
+          title="Editar Atleta"
+        >
+          <i className="fas fa-edit text-xs"></i>
+        </button>
+        <button 
+          onClick={(e) => { e.stopPropagation(); onDelete(player.id); }}
+          className="h-10 w-10 rounded-xl bg-red-600/20 backdrop-blur-md border border-red-600/20 text-red-500 hover:bg-red-600 hover:text-white transition-all flex items-center justify-center shadow-lg"
+          title="Excluir Atleta"
+        >
+          <i className="fas fa-trash-alt text-xs"></i>
+        </button>
+      </div>
+
       {/* Branding Line */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#006837] via-[#f1c40f] to-[#006837] z-30"></div>
 
@@ -55,7 +76,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
         <div className="flex justify-between items-end mb-6">
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] mb-1">{player.position1}</div>
-            <h3 className="font-oswald text-[24px] font-bold uppercase text-white tracking-tight leading-none group-hover:text-[#f1c40f] transition-colors truncate">
+            <h3 className="font-oswald text-xl font-bold uppercase text-white tracking-tight leading-none group-hover:text-[#f1c40f] transition-colors truncate">
               {player.name}
             </h3>
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-2">
