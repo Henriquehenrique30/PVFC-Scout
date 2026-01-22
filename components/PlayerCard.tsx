@@ -50,10 +50,10 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           </div>
         </div>
 
-        {/* Floating Position */}
+        {/* Floating Background Text (Jogos instead of Position) */}
         <div className="absolute bottom-4 left-6 z-20">
-          <span className="text-4xl font-oswald font-black text-white/20 uppercase tracking-tighter leading-none block">
-            {player.position1}
+          <span className="text-4xl font-oswald font-black text-white/10 uppercase tracking-tighter leading-none block">
+            {player.gamesWatched} JGS
           </span>
         </div>
       </div>
@@ -75,15 +75,17 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           </div>
         </div>
 
-        {/* Stats Strip */}
+        {/* Stats Strip - Updated: POSIÇÃO -> JOGOS */}
         <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/5 mb-4">
           <div className="text-center">
-            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">POSIÇÃO</p>
-            <p className="text-[10px] font-bold text-white uppercase">{player.position1}</p>
+            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">JOGOS</p>
+            <p className="text-[10px] font-bold text-white uppercase">{player.gamesWatched}</p>
           </div>
           <div className="text-center border-x border-white/5">
             <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">PERNA</p>
-            <p className="text-[10px] font-bold text-white uppercase">{player.foot === 'Right' ? 'DESTRO' : player.foot === 'Left' ? 'CANHOTO' : 'AMB'}</p>
+            <p className="text-[10px] font-bold text-white uppercase">
+              {player.foot === 'Right' ? 'DESTRO' : player.foot === 'Left' ? 'CANHOTO' : 'AMB'}
+            </p>
           </div>
           <div className="text-center">
             <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">ALTURA</p>
@@ -91,7 +93,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           </div>
         </div>
 
-        {/* Competition Footer */}
+        {/* Competition Footer - Updated: Show only Year */}
         <div className="flex items-center justify-between">
            <div className="flex items-center gap-2">
               <i className="fas fa-trophy text-[#f1c40f] text-[10px]"></i>
@@ -100,7 +102,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
               </span>
            </div>
            <div className="bg-[#006837]/10 px-2 py-1 rounded text-[#006837] text-[8px] font-black uppercase">
-             SC {player.scoutYear}
+             {player.scoutYear}
            </div>
         </div>
       </div>

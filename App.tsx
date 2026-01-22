@@ -92,6 +92,12 @@ const App: React.FC = () => {
     });
   }, [players]);
 
+  // Lista dinâmica de competições para o dropdown
+  const allCompetitions = useMemo(() => {
+    const set = new Set(processedPlayers.map(p => p.competition).filter(Boolean));
+    return Array.from(set).sort();
+  }, [processedPlayers]);
+
   const filteredPlayers = useMemo(() => {
     return processedPlayers.filter(p => {
       const matchSearch = p.name.toLowerCase().includes(filters.search.toLowerCase()) || p.club.toLowerCase().includes(filters.search.toLowerCase());
@@ -110,6 +116,22 @@ const App: React.FC = () => {
       const current = prev[key] as any[];
       return { ...prev, [key]: current.includes(value) ? current.filter(v => v !== value) : [...current, value] };
     });
+  };
+
+  const handleCompetitionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setFilters(prev => ({
+      ...prev,
+      competitions: val === 'all' ? [] : [val]
+    }));
+  };
+
+  const handleFootChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    setFilters(prev => ({
+      ...prev,
+      feet: val === 'all' ? [] : [val as any]
+    }));
   };
 
   if (!currentUser) return <Auth onLogin={setCurrentUser} users={users} onRegister={(u) => dbService.saveUser(u).then(() => loadData())} />;
@@ -149,24 +171,90 @@ const App: React.FC = () => {
           <div className="sticky top-28 glass-panel p-8 rounded-[2.5rem] border border-white/5 space-y-8">
             <div className="flex items-center gap-3 border-b border-white/5 pb-4">
                <i className="fas fa-sliders-h text-[#006837]"></i>
-               <h3 className="text-[12px] font-black text-white uppercase tracking-widest">Parametrizar</h3>
+               <h3 className="text-[12px] font-black text-white uppercase tracking-widest">Parâmetros</h3>
             </div>
             
+            {/* PESQUISA */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Nome ou Clube</label>
-              <input type="text" value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[#f1c40f] outline-none" placeholder="Pesquisar..." />
+              <input 
+                type="text" 
+                value={filters.search} 
+                onChange={e => setFilters({...filters, search: e.target.value})} 
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-[#f1c40f] outline-none transition-all placeholder-slate-700" 
+                placeholder="Pesquisar..." 
+              />
             </section>
 
+            {/* RANGE DE IDADE */}
+            <section>
+              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Idade (Mín - Máx)</label>
+              <div className="flex items-center gap-3">
+                <input 
+                  type="number" 
+                  min="0" max="100"
+                  value={filters.minAge} 
+                  onChange={e => setFilters({...filters, minAge: parseInt(e.target.value) || 0})}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[#f1c40f]" 
+                />
+                <span className="text-slate-600">-</span>
+                <input 
+                  type="number" 
+                  min="0" max="100"
+                  value={filters.maxAge} 
+                  onChange={e => setFilters({...filters, maxAge: parseInt(e.target.value) || 0})}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-[#f1c40f]" 
+                />
+              </div>
+            </section>
+
+            {/* POSIÇÃO */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Posição</label>
               <div className="grid grid-cols-4 gap-1.5">
                 {Object.values(Position).map(pos => (
-                  <button key={pos} onClick={() => toggleFilter('positions', pos)} className={`py-2 rounded-lg text-[10px] font-black transition-all ${filters.positions.includes(pos) ? 'bg-[#f1c40f] text-black shadow-lg' : 'bg-white/5 text-slate-500 hover:text-white'}`}>{pos}</button>
+                  <button 
+                    key={pos} 
+                    onClick={() => toggleFilter('positions', pos)} 
+                    className={`py-2 rounded-lg text-[10px] font-black transition-all ${filters.positions.includes(pos) ? 'bg-[#f1c40f] text-black shadow-lg' : 'bg-white/5 text-slate-500 hover:text-white'}`}
+                  >
+                    {pos}
+                  </button>
                 ))}
               </div>
             </section>
 
-            <button onClick={() => setFilters({search: '', positions: [], minAge: 0, maxAge: 50, recommendations: [], competitions: [], scoutYears: [], feet: []})} className="w-full py-3 text-[10px] font-black text-slate-600 uppercase hover:text-[#f1c40f] transition-colors tracking-widest">Limpar Filtros</button>
+            {/* PERNA DOMINANTE (DROPDOWN) */}
+            <section>
+              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Perna Dominante</label>
+              <select 
+                onChange={handleFootChange}
+                value={filters.feet.length > 0 ? filters.feet[0] : 'all'}
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-[#f1c40f] outline-none appearance-none cursor-pointer"
+              >
+                <option value="all">TODAS</option>
+                <option value="Right">DESTRO</option>
+                <option value="Left">CANHOTO</option>
+                <option value="Both">AMBIDESTRO</option>
+              </select>
+            </section>
+
+            {/* COMPETIÇÃO (DROPDOWN) */}
+            <section>
+              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Competição</label>
+              <select 
+                onChange={handleCompetitionChange}
+                value={filters.competitions.length > 0 ? filters.competitions[0] : 'all'}
+                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-[#f1c40f] outline-none appearance-none cursor-pointer"
+              >
+                <option value="all">TODAS AS COMPETIÇÕES</option>
+                {allCompetitions.map(comp => (
+                  <option key={comp} value={comp}>{comp.toUpperCase()}</option>
+                ))}
+              </select>
+            </section>
+
+            <button onClick={() => setFilters({search: '', positions: [], minAge: 0, maxAge: 50, recommendations: [], competitions: [], scoutYears: [], feet: []})} className="w-full py-3 text-[10px] font-black text-slate-600 uppercase hover:text-[#f1c40f] transition-colors tracking-widest border-t border-white/5 pt-6">Limpar Filtros</button>
           </div>
         </aside>
 
@@ -177,11 +265,20 @@ const App: React.FC = () => {
                <p className="text-[10px] font-black uppercase tracking-widest">Acessando Cloud PVFC...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {filteredPlayers.map(p => (
-                <PlayerCard key={p.id} player={p} onClick={setSelectedPlayer} />
-              ))}
-            </div>
+            <>
+              {filteredPlayers.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {filteredPlayers.map(p => (
+                    <PlayerCard key={p.id} player={p} onClick={setSelectedPlayer} />
+                  ))}
+                </div>
+              ) : (
+                <div className="py-40 text-center border-2 border-dashed border-white/5 rounded-[3rem] opacity-30">
+                   <i className="fas fa-search text-5xl mb-6"></i>
+                   <p className="text-sm font-black uppercase tracking-widest">Nenhum atleta encontrado com estes filtros</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
