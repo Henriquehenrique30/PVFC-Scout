@@ -11,23 +11,26 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
   return (
     <div 
       onClick={() => onClick(player)}
-      className="group relative w-full bg-[#0a0f0d] rounded-[2rem] overflow-hidden border border-white/5 hover:border-[#f1c40f]/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(241,196,15,0.1)] cursor-pointer"
+      className="card-hover-effect group relative w-full bg-[#080b09] rounded-2xl overflow-hidden border border-white/5 shadow-2xl cursor-pointer"
     >
-      {/* --- ÁREA DA FOTO --- */}
-      <div className="relative h-56 w-full bg-[#1a1d1c]">
+      {/* Branding Header */}
+      <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#006837] via-[#f1c40f] to-[#006837] z-30"></div>
+
+      {/* Image Area */}
+      <div className="relative h-72 w-full overflow-hidden">
         <img 
           src={player.photoUrl} 
           alt={player.name}
           loading="lazy"
-          style={{ objectPosition: '50% 15%' }}
-          className="h-full w-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
+          className="h-full w-full object-cover object-top filter contrast-[1.05] brightness-90 group-hover:scale-110 transition-transform duration-700" 
         />
         
-        {/* Degradê inferior */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0d] via-[#0a0f0d]/10 to-transparent"></div>
+        {/* Overlay Gradients */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#080b09] via-transparent to-[#080b09]/40 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#080b09]/60 via-transparent to-transparent z-10"></div>
 
-        {/* Logo do Clube (Branding) */}
-        <div className="absolute top-4 right-4 h-8 w-8 bg-white rounded-lg p-1 shadow-xl border border-white/10 opacity-80 group-hover:opacity-100 transition-opacity">
+        {/* Club Logo Badge */}
+        <div className="absolute top-4 right-4 z-20 h-10 w-10 bg-white/95 backdrop-blur-md rounded-lg p-1.5 shadow-2xl border border-white/20 transform rotate-3 group-hover:rotate-0 transition-transform">
           <img 
             src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" 
             alt="Porto Vitória FC"
@@ -35,45 +38,69 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, onClick }) => {
           />
         </div>
 
-        {/* Badge: Recomendação */}
-        <div className="absolute top-4 left-4">
-          <div className={`px-3 py-1.5 rounded-lg border backdrop-blur-md text-[8px] font-black uppercase tracking-widest shadow-lg flex items-center gap-1.5 ${
-            player.recommendation.includes('Elite') ? 'bg-[#f1c40f] text-black border-[#f1c40f]' : 
-            player.recommendation.includes('Titular') ? 'bg-[#006837] text-white border-[#006837]' :
-            'bg-slate-900/90 text-slate-400 border-white/10'
+        {/* Recommendation Badge */}
+        <div className="absolute top-4 left-4 z-20">
+          <div className={`px-3 py-1 rounded border text-[9px] font-black uppercase tracking-[0.15em] shadow-xl backdrop-blur-md flex items-center gap-2 ${
+            player.recommendation.includes('Elite') ? 'bg-[#f1c40f]/90 text-black border-[#f1c40f]' : 
+            player.recommendation.includes('Titular') ? 'bg-[#006837]/90 text-white border-[#006837]' :
+            'bg-slate-900/90 text-slate-300 border-white/10'
           }`}>
-             <span className={`h-1.5 w-1.5 rounded-full ${player.recommendation.includes('Elite') ? 'bg-black animate-pulse' : 'bg-white'}`}></span>
+             <div className={`h-1.5 w-1.5 rounded-full ${player.recommendation.includes('Elite') ? 'bg-black animate-pulse' : 'bg-white'}`}></div>
              {player.recommendation}
           </div>
         </div>
+
+        {/* Floating Position */}
+        <div className="absolute bottom-4 left-6 z-20">
+          <span className="text-4xl font-oswald font-black text-white/20 uppercase tracking-tighter leading-none block">
+            {player.position1}
+          </span>
+        </div>
       </div>
 
-      {/* --- CONTEÚDO DO CARD --- */}
-      <div className="relative px-6 pb-6 -mt-10">
-        <div className="mb-4">
-           <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-0.5 rounded bg-[#006837] text-white text-[9px] font-black uppercase tracking-wider">{player.position1}</span>
-              <span className="text-[9px] font-black text-slate-500 uppercase">{player.age} Anos</span>
-              <span className="text-[9px] font-black text-slate-500 uppercase border-l border-white/10 pl-2">
-                {player.foot === 'Right' ? 'Destro' : player.foot === 'Left' ? 'Canhoto' : 'Ambi.'}
-              </span>
-           </div>
-           <h3 className="font-oswald text-xl font-bold uppercase text-white leading-none mb-1 group-hover:text-[#f1c40f] transition-colors">{player.name}</h3>
-           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{player.club}</p>
+      {/* Info Content */}
+      <div className="px-6 pb-6 pt-2 relative z-20">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-oswald text-2xl font-bold uppercase text-white tracking-tight leading-tight group-hover:text-[#f1c40f] transition-colors truncate">
+              {player.name}
+            </h3>
+            <p className="text-[10px] font-bold text-[#006837] uppercase tracking-widest mt-1">
+              {player.club}
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-[14px] font-oswald font-bold text-white leading-none block">{player.age}</span>
+            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">ANOS</span>
+          </div>
         </div>
 
-        {/* GRID DE INFO: Competição, Ano e Jogos Vistos */}
-        <div className="flex flex-wrap gap-1.5">
-           {player.competition && (
-             <div className="px-2 py-1 rounded border border-white/5 bg-white/5 text-[7px] font-bold text-[#f1c40f] uppercase tracking-wider flex items-center gap-1">
-                <i className="fas fa-trophy text-[7px]"></i> {player.competition}
-             </div>
-           )}
-           <div className="px-2 py-1 rounded border border-white/5 bg-white/5 text-[7px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <i className="far fa-calendar text-[7px]"></i> {player.scoutYear}
+        {/* Stats Strip */}
+        <div className="grid grid-cols-3 gap-2 py-3 border-y border-white/5 mb-4">
+          <div className="text-center">
+            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">POSIÇÃO</p>
+            <p className="text-[10px] font-bold text-white uppercase">{player.position1}</p>
+          </div>
+          <div className="text-center border-x border-white/5">
+            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">PERNA</p>
+            <p className="text-[10px] font-bold text-white uppercase">{player.foot === 'Right' ? 'DESTRO' : player.foot === 'Left' ? 'CANHOTO' : 'AMB'}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[7px] font-black text-slate-500 uppercase tracking-widest mb-1">ALTURA</p>
+            <p className="text-[10px] font-bold text-white uppercase">{player.height}cm</p>
+          </div>
+        </div>
+
+        {/* Competition Footer */}
+        <div className="flex items-center justify-between">
+           <div className="flex items-center gap-2">
+              <i className="fas fa-trophy text-[#f1c40f] text-[10px]"></i>
+              <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest truncate max-w-[120px]">
+                {player.competition}
+              </span>
            </div>
-           <div className="px-2 py-1 rounded border border-white/5 bg-[#006837]/10 text-[7px] font-bold text-[#006837] uppercase tracking-wider flex items-center gap-1">
-              <i className="fas fa-eye text-[7px]"></i> {player.gamesWatched} Jogos
+           <div className="bg-[#006837]/10 px-2 py-1 rounded text-[#006837] text-[8px] font-black uppercase">
+             SC {player.scoutYear}
            </div>
         </div>
       </div>

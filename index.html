@@ -4,30 +4,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Porto Vitória | Análise de Mercado</title>
+    <title>Porto Vitória | Scout Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --pvfc-green: #006837;
+        --pvfc-gold: #f1c40f;
+        --dark-bg: #020403;
+      }
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #020403;
+        background-color: var(--dark-bg);
         color: #f8fafc;
         background-image: 
-          radial-gradient(circle at 50% -10%, #00683722 0%, transparent 50%),
-          radial-gradient(circle at 0% 0%, #000 0%, transparent 100%);
+          linear-gradient(rgba(2, 4, 3, 0.95), rgba(2, 4, 3, 0.95)),
+          url('https://www.transparenttextures.com/patterns/pinstripe-dark.png');
         background-attachment: fixed;
       }
       .font-oswald { font-family: 'Oswald', sans-serif; }
-      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-      .custom-scrollbar::-webkit-scrollbar-thumb { background: #006837; border-radius: 10px; }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #f1c40f; }
+      
+      /* Scrollbar Profissional */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #050807; }
+      ::-webkit-scrollbar-thumb { background: #1a2e22; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+      ::-webkit-scrollbar-thumb:hover { background: var(--pvfc-green); }
       
       .glass-panel {
-        background: rgba(10, 15, 13, 0.7);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.03);
+        background: rgba(10, 15, 13, 0.6);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+      }
+
+      .text-glow-gold {
+        text-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
+      }
+
+      .premium-border {
+        border: 1px solid rgba(0, 104, 55, 0.3);
+      }
+      
+      input, select {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      
+      .card-hover-effect {
+        transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .card-hover-effect:hover {
+        transform: translateY(-8px) scale(1.02);
       }
     </style>
   <script type="importmap">
