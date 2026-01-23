@@ -1,17 +1,21 @@
 
 import React, { useState, useRef } from 'react';
-import { Player, Position, PlayerStats, Recommendation } from '../types';
+import { Player, Position, PlayerStats, Recommendation, User } from '../types';
 import * as XLSX from 'xlsx';
 
 interface AddPlayerModalProps {
+  currentUser: User;
   player?: Player;
   onClose: () => void;
   onAdd: (player: Player) => void;
   onUpdate: (player: Player) => void;
 }
 
-const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd, onUpdate }) => {
+const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ currentUser, player, onClose, onAdd, onUpdate }) => {
   const isEditing = !!player;
+  const isAdmin = currentUser.role === 'admin';
+  // Scouts só podem editar o histórico de avaliação se o atleta já existir.
+  const canEditFullInfo = !isEditing || isAdmin;
 
   const [name, setName] = useState(player?.name || '');
   const [club, setClub] = useState(player?.club || '');
@@ -39,13 +43,21 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
     pace: 3, shooting: 3, passing: 3, dribbling: 3, defending: 3, physical: 3,
   });
 
+  const handleRestrictedAction = () => {
+    if (!canEditFullInfo) {
+      alert("Acesso Limitado: Somente administradores podem alterar os dados cadastrais e técnicos deste atleta. Entre em contato com o administrador do sistema para solicitar modificações.");
+    }
+  };
+
   const handleGenerateAvatar = () => {
+    if (!canEditFullInfo) return handleRestrictedAction();
     const seed = name ? encodeURIComponent(name) : Math.random().toString();
     const avatarUrl = `https://api.dicebear.com/7.x/notionists/svg?seed=${seed}&backgroundColor=0f172a&shirtColor=006837`;
     setPhotoUrl(avatarUrl);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canEditFullInfo) return handleRestrictedAction();
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -55,6 +67,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
   };
 
   const handleDataFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canEditFullInfo) return handleRestrictedAction();
     const file = e.target.files?.[0];
     if (file) {
       setFileName(file.name);
@@ -115,6 +128,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
               <h2 className="font-oswald text-xl font-bold uppercase tracking-wider text-white">
                 {isEditing ? `Editar Atleta: ${player.name}` : 'Novo Atleta no Porto Vitória'}
               </h2>
+              {!canEditFullInfo && <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest mt-1">Acesso Scout: Apenas histórico de avaliação é editável</p>}
             </div>
           </div>
           <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/5">
@@ -127,7 +141,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
             
             {/* COLUNA ESQUERDA: FOTO E STATS */}
             <div className="md:col-span-4 space-y-8">
-              <section>
+              <section onClick={handleRestrictedAction} className={!canEditFullInfo ? "cursor-not-allowed opacity-80" : ""}>
                 <label className="block text-[10px] font-black text-[#006837] uppercase tracking-widest mb-3">Identidade Visual</label>
                 <div className="relative group h-64 w-full rounded-3xl border-2 border-dashed border-slate-800 bg-slate-900/50 flex flex-col items-center justify-center overflow-hidden transition-all hover:border-[#f1c40f]/30">
                   {photoUrl ? (
@@ -138,15 +152,17 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
                        <p className="text-[8px] font-bold text-slate-600 uppercase">Selecione ou Gere um Avatar</p>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-white text-black text-[9px] font-black uppercase rounded-lg">Upload Foto</button>
-                    <button type="button" onClick={handleGenerateAvatar} className="px-4 py-2 bg-[#f1c40f] text-black text-[9px] font-black uppercase rounded-lg">Gerar Caricatura</button>
-                  </div>
+                  {canEditFullInfo && (
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                      <button type="button" onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-white text-black text-[9px] font-black uppercase rounded-lg">Upload Foto</button>
+                      <button type="button" onClick={handleGenerateAvatar} className="px-4 py-2 bg-[#f1c40f] text-black text-[9px] font-black uppercase rounded-lg">Gerar Caricatura</button>
+                    </div>
+                  )}
                 </div>
-                <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+                <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" disabled={!canEditFullInfo} />
               </section>
 
-              <section className="bg-black/40 rounded-3xl p-6 border border-[#006837]/10">
+              <section onClick={handleRestrictedAction} className={`bg-black/40 rounded-3xl p-6 border border-[#006837]/10 ${!canEditFullInfo ? "cursor-not-allowed opacity-80" : ""}`}>
                 <h3 className="text-[10px] font-black text-[#f1c40f] uppercase tracking-widest mb-6 flex items-center gap-2">
                   <i className="fas fa-chart-line"></i> Atributos (1-5)
                 </h3>
@@ -159,6 +175,7 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
                       </div>
                       <input 
                         type="range" min="1" max="5" step="1"
+                        disabled={!canEditFullInfo}
                         value={stats[key as keyof PlayerStats]}
                         onChange={e => setStats(prev => ({...prev, [key]: parseInt(e.target.value)}))}
                         className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#f1c40f]"
@@ -173,20 +190,20 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
             <div className="md:col-span-8 space-y-10">
               
               {/* BLOCO 1: IDENTIFICAÇÃO E CAMPO */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6" onClick={handleRestrictedAction}>
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Nome Completo do Atleta</label>
-                  <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#f1c40f] outline-none transition-all" />
+                  <input readOnly={!canEditFullInfo} required type="text" value={name} onChange={e => setName(e.target.value)} className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#f1c40f] outline-none transition-all ${!canEditFullInfo ? "opacity-60" : ""}`} />
                 </div>
                 
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Clube Atual</label>
-                  <input required type="text" value={club} onChange={e => setClub(e.target.value)} className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#006837] outline-none" />
+                  <input readOnly={!canEditFullInfo} required type="text" value={club} onChange={e => setClub(e.target.value)} className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#006837] outline-none ${!canEditFullInfo ? "opacity-60" : ""}`} />
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Qualificação (Recomendação)</label>
-                  <select value={recommendation} onChange={e => setRecommendation(e.target.value as Recommendation)} className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#f1c40f] outline-none">
+                  <select disabled={!canEditFullInfo} value={recommendation} onChange={e => setRecommendation(e.target.value as Recommendation)} className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white focus:ring-1 focus:ring-[#f1c40f] outline-none ${!canEditFullInfo ? "opacity-60" : ""}`}>
                     <option value="G1 Elite">G1 - Elite Porto Vitória</option>
                     <option value="G2 Titular">G2 - Potencial Titular</option>
                     <option value="G3 Monitoramento">G3 - Monitoramento</option>
@@ -196,14 +213,14 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
 
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Posição Principal</label>
-                  <select value={position1} onChange={e => setPosition1(e.target.value as Position)} className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none">
+                  <select disabled={!canEditFullInfo} value={position1} onChange={e => setPosition1(e.target.value as Position)} className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none ${!canEditFullInfo ? "opacity-60" : ""}`}>
                     {Object.values(Position).map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Data de Nascimento</label>
-                  <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none" />
+                  <input readOnly={!canEditFullInfo} type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none ${!canEditFullInfo ? "opacity-60" : ""}`} />
                 </div>
 
                 <div>
@@ -212,10 +229,10 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
                     {['Right', 'Left', 'Both'].map((f) => (
                       <button
                         key={f} type="button"
-                        onClick={() => setFoot(f as any)}
+                        onClick={() => canEditFullInfo ? setFoot(f as any) : handleRestrictedAction()}
                         className={`py-3 rounded-xl text-[9px] font-black uppercase border transition-all ${
                           foot === f ? 'bg-[#006837] border-[#006837] text-white' : 'bg-slate-900 border-slate-800 text-slate-500'
-                        }`}
+                        } ${!canEditFullInfo ? "cursor-not-allowed opacity-60" : ""}`}
                       >
                         {f === 'Right' ? 'Destro' : f === 'Left' ? 'Canhoto' : 'Ambi.'}
                       </button>
@@ -225,11 +242,11 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
 
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Altura (cm)</label>
-                  <input type="number" value={height} onChange={e => setHeight(parseInt(e.target.value))} className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none" />
+                  <input readOnly={!canEditFullInfo} type="number" value={height} onChange={e => setHeight(parseInt(e.target.value))} className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none ${!canEditFullInfo ? "opacity-60" : ""}`} />
                 </div>
               </div>
 
-              {/* BLOCO 2: DADOS DE SCOUT */}
+              {/* BLOCO 2: DADOS DE SCOUT (EDITÁVEL POR TODOS) */}
               <div className="bg-white/5 rounded-3xl p-8 space-y-6 border border-white/5">
                 <h3 className="text-[10px] font-black text-[#006837] uppercase tracking-[0.3em] flex items-center gap-2">
                   <i className="fas fa-clipboard-check"></i> Histórico de Avaliação
@@ -253,33 +270,33 @@ const AddPlayerModal: React.FC<AddPlayerModalProps> = ({ player, onClose, onAdd,
               </div>
 
               {/* BLOCO 3: MERCADO E ANALÍTICA */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6" onClick={handleRestrictedAction}>
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Agente / Representante</label>
-                  <input type="text" value={agent} onChange={e => setAgent(e.target.value)} className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none focus:border-[#f1c40f]" />
+                  <input readOnly={!canEditFullInfo} type="text" value={agent} onChange={e => setAgent(e.target.value)} className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none focus:border-[#f1c40f] ${!canEditFullInfo ? "opacity-60" : ""}`} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase mb-2 tracking-widest">Contato / Telefone</label>
-                  <input type="text" value={contact} onChange={e => setContact(e.target.value)} className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none" />
+                  <input readOnly={!canEditFullInfo} type="text" value={contact} onChange={e => setContact(e.target.value)} className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-white outline-none ${!canEditFullInfo ? "opacity-60" : ""}`} />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-[#f1c40f] uppercase mb-2 tracking-widest">Relatório Técnico IA (Anexar Excel/CSV)</label>
                   <div className="flex gap-4">
-                    <button type="button" onClick={() => dataInputRef.current?.click()} className="flex-1 flex items-center justify-center gap-3 rounded-2xl border border-dashed border-[#f1c40f]/40 p-5 text-[10px] text-white font-black uppercase hover:bg-[#f1c40f]/5 transition-all">
+                    <button type="button" disabled={!canEditFullInfo} onClick={() => dataInputRef.current?.click()} className={`flex-1 flex items-center justify-center gap-3 rounded-2xl border border-dashed border-[#f1c40f]/40 p-5 text-[10px] text-white font-black uppercase hover:bg-[#f1c40f]/5 transition-all ${!canEditFullInfo ? "opacity-60 cursor-not-allowed" : ""}`}>
                       <i className="fas fa-file-excel text-lg text-[#f1c40f]"></i>
                       {fileName || "Carregar Dados Métricos"}
                     </button>
-                    {aiContextData && (
+                    {aiContextData && canEditFullInfo && (
                       <button type="button" onClick={() => {setAiContextData(''); setFileName(null);}} className="bg-red-600/20 text-red-500 px-6 rounded-2xl border border-red-600/30 hover:bg-red-600 hover:text-white transition-all">
                         <i className="fas fa-trash"></i>
                       </button>
                     )}
                   </div>
-                  <input type="file" ref={dataInputRef} onChange={handleDataFileUpload} className="hidden" accept=".xlsx, .xls, .csv" />
+                  <input type="file" ref={dataInputRef} onChange={handleDataFileUpload} className="hidden" accept=".xlsx, .xls, .csv" disabled={!canEditFullInfo} />
                 </div>
                 <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input type="text" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="URL do Vídeo (Youtube/Vimeo)" className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-[11px] text-white outline-none" />
-                  <input type="text" value={ogolUrl} onChange={e => setOgolUrl(e.target.value)} placeholder="URL Perfil oGol" className="w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-[11px] text-white outline-none" />
+                  <input readOnly={!canEditFullInfo} type="text" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="URL do Vídeo (Youtube/Vimeo)" className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-[11px] text-white outline-none ${!canEditFullInfo ? "opacity-60" : ""}`} />
+                  <input readOnly={!canEditFullInfo} type="text" value={ogolUrl} onChange={e => setOgolUrl(e.target.value)} placeholder="URL Perfil oGol" className={`w-full rounded-2xl bg-slate-900 border border-slate-800 p-4 text-[11px] text-white outline-none ${!canEditFullInfo ? "opacity-60" : ""}`} />
                 </div>
               </div>
 

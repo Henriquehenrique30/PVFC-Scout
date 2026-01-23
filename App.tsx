@@ -199,7 +199,6 @@ const App: React.FC = () => {
                <span className="text-[10px] font-bold text-white uppercase">{currentUser.name}</span>
             </div>
             
-            {/* BOTÕES COM CORES ATUALIZADAS PARA MELHOR VISUALIZAÇÃO */}
             <button 
               onClick={() => setView('schedule')} 
               className="px-4 py-2 rounded-xl bg-blue-600/15 border-2 border-blue-500/50 text-[10px] font-black uppercase text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-900/20"
@@ -402,6 +401,7 @@ const App: React.FC = () => {
       {selectedPlayer && <PlayerDetails player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
       {isModalOpen && (
         <AddPlayerModal 
+          currentUser={currentUser!}
           player={editingPlayer || undefined} 
           onClose={() => { setIsModalOpen(false); setEditingPlayer(null); }} 
           onAdd={(p) => dbService.savePlayer(p).then(() => loadData())} 
