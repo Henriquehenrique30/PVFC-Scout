@@ -41,7 +41,7 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, player
   const renderUserList = (list: User[]) => (
     <div className="space-y-4">
       {list.map(user => (
-        <div key={user.id} className="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 transition-all hover:border-[#006837]/40">
+        <div key={user.id} className="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 transition-all hover:border-[#006837]/40 group">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h4 className="text-white font-bold flex items-center gap-2">
@@ -56,14 +56,21 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, player
             <div className="flex gap-2">
               {user.status === 'pending' ? (
                 <>
-                  <button onClick={() => onUpdateStatus(user.id, 'rejected')} className="px-3 py-1.5 rounded-lg bg-red-600/10 text-red-500 text-[9px] font-black uppercase">Recusar</button>
-                  <button onClick={() => onUpdateStatus(user.id, 'approved')} className="px-3 py-1.5 rounded-lg bg-[#006837] text-white text-[9px] font-black uppercase">Aprovar</button>
+                  <button onClick={() => onUpdateStatus(user.id, 'rejected')} className="px-3 py-1.5 rounded-lg bg-red-600/10 text-red-500 text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">Recusar</button>
+                  <button onClick={() => onUpdateStatus(user.id, 'approved')} className="px-3 py-1.5 rounded-lg bg-[#006837] text-white text-[9px] font-black uppercase hover:bg-[#008a4a] transition-all">Aprovar</button>
                 </>
               ) : (
                 <>
-                  <button onClick={() => handleToggleRole(user)} className="p-2 text-slate-500 hover:text-[#f1c40f] transition-colors" title="Mudar Acesso"><i className="fas fa-user-shield text-xs"></i></button>
-                  <button onClick={() => setEditingUserId(editingUserId === user.id ? null : user.id)} className="p-2 text-slate-500 hover:text-[#f1c40f] transition-colors" title="Trocar Senha"><i className="fas fa-key text-xs"></i></button>
-                  <button onClick={() => onDeleteUser(user.id)} className="p-2 text-slate-500 hover:text-red-500 transition-colors" title="Excluir Login"><i className="fas fa-trash-alt text-xs"></i></button>
+                  <button onClick={() => handleToggleRole(user)} className="p-2.5 rounded-lg bg-white/5 text-slate-400 hover:text-[#f1c40f] hover:bg-[#f1c40f]/10 transition-all" title="Mudar Nível de Acesso"><i className="fas fa-user-shield text-xs"></i></button>
+                  <button onClick={() => setEditingUserId(editingUserId === user.id ? null : user.id)} className="p-2.5 rounded-lg bg-white/5 text-slate-400 hover:text-[#f1c40f] hover:bg-[#f1c40f]/10 transition-all" title="Alterar Senha"><i className="fas fa-key text-xs"></i></button>
+                  {/* BOTÃO EXCLUIR LOGIN - DESTAQUE EM VERMELHO */}
+                  <button 
+                    onClick={() => onDeleteUser(user.id)} 
+                    className="p-2.5 rounded-lg bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-lg border border-red-600/20" 
+                    title="Excluir Acesso Permanentemente"
+                  >
+                    <i className="fas fa-trash-alt text-xs"></i>
+                  </button>
                 </>
               )}
             </div>
@@ -72,7 +79,7 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, player
           {editingUserId === user.id && (
             <div className="mt-4 pt-4 border-t border-white/5 flex gap-2 animate-in slide-in-from-top-2">
               <input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Nova Senha" className="flex-1 rounded-lg bg-black border border-slate-800 px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-[#f1c40f]" />
-              <button onClick={() => handlePasswordChange(user)} className="px-4 py-2 bg-[#f1c40f] text-slate-950 rounded-lg text-[9px] font-black uppercase">Salvar</button>
+              <button onClick={() => handlePasswordChange(user)} className="px-4 py-2 bg-[#f1c40f] text-slate-950 rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-transform">Salvar</button>
             </div>
           )}
         </div>
@@ -105,7 +112,7 @@ const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ users, player
                 {activeTab === 'pending' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#f1c40f]"></div>}
               </button>
               <button onClick={() => setActiveTab('all')} className={`pb-3 text-[10px] font-black uppercase tracking-widest relative ${activeTab === 'all' ? 'text-[#f1c40f]' : 'text-slate-600'}`}>
-                Logins ({users.length})
+                Todos os Logins ({users.length})
                 {activeTab === 'all' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#f1c40f]"></div>}
               </button>
               <button onClick={() => setActiveTab('database')} className={`pb-3 text-[10px] font-black uppercase tracking-widest relative ${activeTab === 'database' ? 'text-[#f1c40f]' : 'text-slate-600'}`}>

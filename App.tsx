@@ -159,6 +159,12 @@ const App: React.FC = () => {
   };
 
   const handleDeletePlayer = async (id: string) => {
+    // Restrição de Segurança: Somente Admins podem excluir
+    if (currentUser?.role !== 'admin') {
+      alert("Acesso Negado: Somente usuários administradores podem excluir cards de jogadores. Entre em contato com o administrador do sistema para solicitar esta ação.");
+      return;
+    }
+
     if (window.confirm("Tem certeza que deseja excluir este atleta permanentemente do banco de dados?")) {
       try {
         await dbService.deletePlayer(id);
@@ -193,8 +199,21 @@ const App: React.FC = () => {
                <span className="text-[10px] font-bold text-white uppercase">{currentUser.name}</span>
             </div>
             
-            <button onClick={() => setView('schedule')} className="px-4 py-2 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-[10px] font-black uppercase text-indigo-400 hover:bg-indigo-600 hover:text-white transition-all shadow-lg"><i className="fas fa-calendar-alt mr-2"></i> Agenda</button>
-            <button onClick={() => setView('watchlist')} className={`relative px-4 py-2 rounded-xl border text-[10px] font-black uppercase transition-all flex items-center gap-2 shadow-lg ${notificationsCount > 0 ? 'bg-amber-500 text-black border-amber-600 animate-pulse' : 'bg-sky-600/20 border-sky-500/30 text-sky-400 hover:bg-sky-600 hover:text-white'}`}>
+            {/* BOTÕES COM CORES ATUALIZADAS PARA MELHOR VISUALIZAÇÃO */}
+            <button 
+              onClick={() => setView('schedule')} 
+              className="px-4 py-2 rounded-xl bg-blue-600/15 border-2 border-blue-500/50 text-[10px] font-black uppercase text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-900/20"
+            >
+              <i className="fas fa-calendar-alt mr-2"></i> Agenda
+            </button>
+            <button 
+              onClick={() => setView('watchlist')} 
+              className={`relative px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex items-center gap-2 shadow-lg ${
+                notificationsCount > 0 
+                ? 'bg-amber-500 text-black border-amber-600 animate-pulse' 
+                : 'bg-indigo-600/15 border-indigo-500/50 text-indigo-400 hover:bg-indigo-600 hover:text-white shadow-indigo-900/20'
+              }`}
+            >
               <i className="fas fa-binoculars"></i> Radar
               {notificationsCount > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-600 rounded-full border-2 border-black"></span>}
             </button>
