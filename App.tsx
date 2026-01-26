@@ -183,59 +183,59 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="sticky top-0 z-40 glass-panel py-4 shadow-2xl">
-        <div className="mx-auto max-w-[1600px] flex items-center justify-between px-10">
-          <div className="flex items-center gap-6">
-            <div className="h-14 w-14 bg-white rounded-2xl p-2 shadow-xl border border-white/20 transform hover:scale-110 transition-transform">
+      <header className="sticky top-0 z-40 glass-panel py-3 shadow-2xl">
+        <div className="mx-auto max-w-[1600px] flex items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 bg-white rounded-xl p-1.5 shadow-xl border border-white/20 transform hover:scale-110 transition-transform">
                <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-full w-full object-contain" alt="PVFC Logo" />
             </div>
             <div>
-              <h1 className="font-oswald text-2xl font-bold uppercase tracking-tighter text-white">PORTO VITÓRIA <span className="text-[#f1c40f]">FC</span></h1>
-              <p className="text-[9px] font-black text-[#006837] uppercase tracking-[0.4em] mt-1">Departamento de Análise de Mercado</p>
+              <h1 className="font-oswald text-xl font-bold uppercase tracking-tighter text-white leading-none">PORTO VITÓRIA <span className="text-[#f1c40f]">FC</span></h1>
+              <p className="text-[7px] font-black text-[#006837] uppercase tracking-[0.4em] mt-0.5">Análise de Mercado</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <div className="flex flex-col items-end mr-2">
-               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Acesso</span>
-               <span className="text-[10px] font-bold text-white uppercase">{currentUser.name}</span>
+               <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Acesso</span>
+               <span className="text-[9px] font-bold text-white uppercase leading-none">{currentUser.name}</span>
             </div>
             
             <button 
               onClick={() => setView('external')} 
-              className="px-4 py-2 rounded-xl bg-[#f1c40f]/20 border-2 border-[#f1c40f]/50 text-[10px] font-black uppercase text-[#f1c40f] hover:bg-[#f1c40f] hover:text-black transition-all shadow-lg"
+              className="px-3 py-2 rounded-lg bg-[#f1c40f]/20 border border-[#f1c40f]/50 text-[9px] font-black uppercase text-[#f1c40f] hover:bg-[#f1c40f] hover:text-black transition-all shadow-lg whitespace-nowrap"
             >
-              <i className="fas fa-map-marked-alt mr-2"></i> Captação Ext.
+              <i className="fas fa-map-marked-alt mr-1"></i> Captação Ext.
             </button>
 
             <button 
               onClick={() => setView('schedule')} 
-              className="px-4 py-2 rounded-xl bg-blue-600/15 border-2 border-blue-500/50 text-[10px] font-black uppercase text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-900/20"
+              className="px-3 py-2 rounded-lg bg-blue-600/15 border border-blue-500/50 text-[9px] font-black uppercase text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg whitespace-nowrap"
             >
-              <i className="fas fa-calendar-alt mr-2"></i> Agenda
+              <i className="fas fa-calendar-alt mr-1"></i> Agenda
             </button>
             <button 
               onClick={() => setView('watchlist')} 
-              className={`relative px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex items-center gap-2 shadow-lg ${
+              className={`relative px-3 py-2 rounded-lg border text-[9px] font-black uppercase transition-all flex items-center gap-1.5 shadow-lg whitespace-nowrap ${
                 notificationsCount > 0 
                 ? 'bg-amber-500 text-black border-amber-600 animate-pulse' 
                 : 'bg-indigo-600/15 border-indigo-500/50 text-indigo-400 hover:bg-indigo-600 hover:text-white shadow-indigo-900/20'
               }`}
             >
               <i className="fas fa-binoculars"></i> Radar
-              {notificationsCount > 0 && <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-600 rounded-full border-2 border-black"></span>}
+              {notificationsCount > 0 && <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-red-600 rounded-full border-2 border-black"></span>}
             </button>
-            <button onClick={() => setIsComparisonOpen(true)} className="px-4 py-2 rounded-xl bg-slate-900 border border-white/5 text-[10px] font-black uppercase text-slate-300 hover:text-white transition-all"><i className="fas fa-database mr-2"></i> Data Lab</button>
-            <button onClick={() => setIsShadowTeamOpen(true)} className="px-4 py-2 rounded-xl bg-[#006837]/20 border border-[#006837]/40 text-[10px] font-black uppercase text-[#006837] hover:bg-[#006837] hover:text-white transition-all"><i className="fas fa-chess-board mr-2"></i> Shadow Team</button>
+            <button onClick={() => setIsComparisonOpen(true)} className="px-3 py-2 rounded-lg bg-slate-900 border border-white/5 text-[9px] font-black uppercase text-slate-300 hover:text-white transition-all whitespace-nowrap"><i className="fas fa-database mr-1"></i> Data Lab</button>
+            <button onClick={() => setIsShadowTeamOpen(true)} className="px-3 py-2 rounded-lg bg-[#006837]/20 border border-[#006837]/40 text-[9px] font-black uppercase text-[#006837] hover:bg-[#006837] hover:text-white transition-all whitespace-nowrap"><i className="fas fa-chess-board mr-1"></i> Shadow Team</button>
             
             {currentUser.role === 'admin' && (
-              <button onClick={() => setIsAdminPanelOpen(true)} className="px-4 py-2 rounded-xl bg-violet-600/20 border border-violet-500/40 text-[10px] font-black uppercase text-violet-400 hover:bg-violet-600 hover:text-white transition-all">
-                <i className="fas fa-users-cog mr-2"></i> Painel Admin
+              <button onClick={() => setIsAdminPanelOpen(true)} className="px-3 py-2 rounded-lg bg-violet-600/20 border border-violet-500/40 text-[9px] font-black uppercase text-violet-400 hover:bg-violet-600 hover:text-white transition-all whitespace-nowrap">
+                <i className="fas fa-users-cog mr-1"></i> Admin
               </button>
             )}
 
-            <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="px-6 py-2 rounded-xl bg-[#006837] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[#006837]/30">Adicionar Atleta</button>
-            <button onClick={() => setCurrentUser(null)} className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all"><i className="fas fa-power-off"></i></button>
+            <button onClick={() => { setEditingPlayer(null); setIsModalOpen(true); }} className="px-4 py-2 rounded-lg bg-[#006837] text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-[#006837]/30 whitespace-nowrap">Adicionar Atleta</button>
+            <button onClick={() => setCurrentUser(null)} className="h-9 w-9 flex items-center justify-center rounded-lg bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white transition-all"><i className="fas fa-power-off text-sm"></i></button>
           </div>
         </div>
       </header>

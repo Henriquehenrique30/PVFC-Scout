@@ -179,22 +179,22 @@ const ExternalScoutingPage: React.FC<ExternalScoutingPageProps> = ({ onBack }) =
             </div>
 
             <div className="space-y-6">
-              <div className="grid grid-cols-12 gap-4 px-8 py-5 bg-slate-100 rounded-2xl text-[11px] font-black uppercase text-slate-500 tracking-widest">
+              <div className="grid grid-cols-12 gap-4 px-8 py-5 bg-slate-100 rounded-2xl text-[10px] font-black uppercase text-slate-500 tracking-widest">
                 <div className="col-span-2">Data</div>
-                <div className="col-span-1">Período</div>
+                <div className="col-span-2">Período</div>
                 <div className="col-span-3">Projeto / Unidade</div>
-                <div className="col-span-3">Cidade</div>
+                <div className="col-span-2">Cidade</div>
                 <div className="col-span-3">Observador Responsável</div>
               </div>
               {filteredSchedules.map(item => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 px-8 py-7 border-b border-slate-100 items-center">
                   <div className="col-span-2 font-bold text-slate-800 text-sm">{new Date(item.date + 'T00:00:00').toLocaleDateString()}</div>
-                  <div className="col-span-1 text-xs font-black uppercase text-blue-600">{item.period}</div>
-                  <div className="col-span-3 font-black uppercase text-[#006837] text-sm">{item.project_name}</div>
-                  <div className="col-span-3 font-bold text-slate-700 uppercase text-xs">{item.city}</div>
+                  <div className="col-span-2 text-xs font-black uppercase text-blue-600">{item.period}</div>
+                  <div className="col-span-3 font-black uppercase text-[#006837] text-sm break-words">{item.project_name}</div>
+                  <div className="col-span-2 font-bold text-slate-700 uppercase text-xs break-words">{item.city}</div>
                   <div className="col-span-3 font-bold text-slate-700 uppercase flex items-center justify-between">
-                    {item.observer_name}
-                    <button onClick={() => dbService.deleteObservationSchedule(item.id).then(loadData)} className="text-red-500 opacity-0 hover:opacity-100" data-html2canvas-ignore>
+                    <span className="text-xs break-words">{item.observer_name}</span>
+                    <button onClick={() => dbService.deleteObservationSchedule(item.id).then(loadData)} className="text-red-500 opacity-0 hover:opacity-100 p-2" data-html2canvas-ignore>
                       <i className="fas fa-trash"></i>
                     </button>
                   </div>
