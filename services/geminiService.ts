@@ -72,7 +72,7 @@ Linguagem: Técnica, imparcial, direta e sem adjetivos vazios (como "espetacular
         },
       ],
       model: "llama-3.3-70b-versatile", 
-      temperature: 0.4,
+      temperature: 0.5,
       max_tokens: 1024,
     });
 
@@ -137,7 +137,7 @@ export const comparePlayersWithAI = async (candidates: ComparisonCandidate[]): P
         },
       ],
       model: "llama-3.3-70b-versatile", // Modelo potente para análise de dados complexos
-      temperature: 0.3, // Temperatura baixa para máxima precisão matemática
+      temperature: 0.5, // Temperatura baixa para máxima precisão matemática
       max_tokens: 2048,
     });
 

@@ -70,6 +70,26 @@ export interface ScoutingGame {
   createdat: string;
 }
 
+export interface ExternalProject {
+  id: string;
+  name: string;
+  phone: string;
+  responsible: string;
+  created_at: string;
+}
+
+export type ObservationPeriod = 'Manhã' | 'Tarde' | 'Noite';
+
+export interface ObservationSchedule {
+  id: string;
+  project_id: string;
+  project_name: string;
+  date: string;
+  period: ObservationPeriod;
+  observer_name: string;
+  created_at: string;
+}
+
 export interface FilterState {
   search: string;
   positions: Position[];

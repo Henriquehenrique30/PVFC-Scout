@@ -10,6 +10,7 @@ import ShadowTeamModal from './components/ShadowTeamModal';
 import ComparisonModal from './components/ComparisonModal';
 import WatchlistPage from './components/WatchlistPage';
 import ScoutingSchedulePage from './components/ScoutingSchedulePage';
+import ExternalScoutingPage from './components/ExternalScoutingPage';
 import { dbService, isCloudActive, supabase } from './services/database';
 
 const App: React.FC = () => {
@@ -25,7 +26,7 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const [view, setView] = useState<'dashboard' | 'watchlist' | 'schedule'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'watchlist' | 'schedule' | 'external'>('dashboard');
 
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -178,6 +179,7 @@ const App: React.FC = () => {
   if (!currentUser) return <Auth onLogin={setCurrentUser} users={users} onRegister={(u) => dbService.saveUser(u).then(() => loadData())} />;
   if (view === 'watchlist') return <WatchlistPage onBack={() => setView('dashboard')} />;
   if (view === 'schedule') return <ScoutingSchedulePage currentUser={currentUser} onBack={() => setView('dashboard')} />;
+  if (view === 'external') return <ExternalScoutingPage onBack={() => setView('dashboard')} />;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -199,6 +201,13 @@ const App: React.FC = () => {
                <span className="text-[10px] font-bold text-white uppercase">{currentUser.name}</span>
             </div>
             
+            <button 
+              onClick={() => setView('external')} 
+              className="px-4 py-2 rounded-xl bg-[#f1c40f]/20 border-2 border-[#f1c40f]/50 text-[10px] font-black uppercase text-[#f1c40f] hover:bg-[#f1c40f] hover:text-black transition-all shadow-lg"
+            >
+              <i className="fas fa-map-marked-alt mr-2"></i> Captação Ext.
+            </button>
+
             <button 
               onClick={() => setView('schedule')} 
               className="px-4 py-2 rounded-xl bg-blue-600/15 border-2 border-blue-500/50 text-[10px] font-black uppercase text-blue-400 hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-900/20"
