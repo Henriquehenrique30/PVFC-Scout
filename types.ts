@@ -75,6 +75,7 @@ export interface ExternalProject {
   name: string;
   phone: string;
   responsible: string;
+  city: string; // Nova propriedade
   created_at: string;
 }
 
@@ -84,6 +85,7 @@ export interface ObservationSchedule {
   id: string;
   project_id: string;
   project_name: string;
+  city: string; // Nova propriedade para o relatório
   date: string;
   period: ObservationPeriod;
   observer_name: string;
