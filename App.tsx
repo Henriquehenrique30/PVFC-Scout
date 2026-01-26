@@ -71,7 +71,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => loadData(true), 45000);
+    // Aumentado para 5 minutos para economizar banda/egress do Supabase
+    const interval = setInterval(() => loadData(true), 300000);
     return () => clearInterval(interval);
   }, [view]);
 
@@ -160,13 +161,12 @@ const App: React.FC = () => {
   };
 
   const handleDeletePlayer = async (id: string) => {
-    // Restrição de Segurança: Somente Admins podem excluir
     if (currentUser?.role !== 'admin') {
-      alert("Acesso Negado: Somente usuários administradores podem excluir cards de jogadores. Entre em contato com o administrador do sistema para solicitar esta ação.");
+      alert("Acesso Negado: Somente administradores podem excluir cards.");
       return;
     }
 
-    if (window.confirm("Tem certeza que deseja excluir este atleta permanentemente do banco de dados?")) {
+    if (window.confirm("Tem certeza que deseja excluir este atleta?")) {
       try {
         await dbService.deletePlayer(id);
         loadData();
@@ -295,7 +295,6 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* PERNA DOMINANTE (MULTI-SELECT DROPDOWN) */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Perna Dominante</label>
               <div className="space-y-3">
@@ -327,7 +326,6 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* COMPETIÇÕES (MULTI-SELECT DROPDOWN) */}
             <section>
               <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Competições</label>
               <div className="space-y-3">

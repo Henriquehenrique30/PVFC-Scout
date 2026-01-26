@@ -11,10 +11,25 @@ export const isCloudActive = () => !!supabase;
 
 export const dbService = {
   // --- JOGADORES ---
+  // Otimizado: Não seleciona aiContextData para reduzir egress na listagem
   async getPlayers(): Promise<Player[]> {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('players').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('players')
+      .select('id, name, age, birthDate, position1, position2, nationality, club, value, recommendation, competition, scoutYear, gamesWatched, photoUrl, stats, foot, height, contractUntil, videoUrl, ogolUrl, agent, contact')
+      .order('created_at', { ascending: false });
     return data || [];
+  },
+
+  // Busca apenas os dados pesados de um jogador específico para o relatório
+  async getPlayerDetails(id: string): Promise<Partial<Player>> {
+    if (!supabase) return {};
+    const { data, error } = await supabase
+      .from('players')
+      .select('aiContextData')
+      .eq('id', id)
+      .single();
+    return data || {};
   },
 
   async savePlayer(player: Player): Promise<void> {
@@ -75,7 +90,7 @@ export const dbService = {
     if (error) throw error;
   },
 
-  // --- PROJETOS EXTERNOS (TABELA: external_projects) ---
+  // --- PROJETOS EXTERNOS ---
   async getExternalProjects(): Promise<ExternalProject[]> {
     if (!supabase) return [];
     const { data, error } = await supabase.from('external_projects').select('*').order('name', { ascending: true });
@@ -95,7 +110,7 @@ export const dbService = {
     if (error) throw error;
   },
 
-  // --- AGENDA DE OBSERVAÇÃO EXTERNA (TABELA: observation_schedules) ---
+  // --- AGENDA DE OBSERVAÇÃO EXTERNA ---
   async getObservationSchedules(): Promise<ObservationSchedule[]> {
     if (!supabase) return [];
     const { data, error } = await supabase.from('observation_schedules').select('*').order('date', { ascending: true });
@@ -118,7 +133,8 @@ export const dbService = {
   // --- USUÁRIOS ---
   async getUsers(): Promise<User[]> {
     if (!supabase) return [];
-    const { data, error } = await supabase.from('users').select('*');
+    // Fix: Added missing properties 'firstName', 'lastName', and 'email' to the select query to satisfy the User interface requirements.
+    const { data, error } = await supabase.from('users').select('id, firstName, lastName, email, name, username, role, status, createdAt');
     return data || [];
   },
 

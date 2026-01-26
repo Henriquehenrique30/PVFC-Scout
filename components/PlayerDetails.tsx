@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Player } from '../types';
 import { getScoutReport } from '../services/geminiService';
+import { dbService } from '../services/database';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -16,10 +17,14 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   const [isExporting, setIsExporting] = useState(false);
   const reportContainerRef = useRef<HTMLDivElement>(null);
 
-  const fetchReport = async () => {
+  const fetchFullDataAndReport = async () => {
     setLoading(true);
     try {
-      const res = await getScoutReport(player);
+      // Busca os dados pesados que não vieram na listagem para economizar egress
+      const details = await dbService.getPlayerDetails(player.id);
+      const playerWithDetails = { ...player, ...details };
+      
+      const res = await getScoutReport(playerWithDetails);
       setReport(res);
     } catch (err: any) {
       setReport("ERRO NO PROCESSAMENTO: Sistema de IA indisponível no momento.");
@@ -29,8 +34,8 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
   };
 
   useEffect(() => {
-    fetchReport();
-  }, [player]);
+    fetchFullDataAndReport();
+  }, [player.id]);
 
   const handleExportPDF = async () => {
     if (!reportContainerRef.current) return;
@@ -79,7 +84,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
           <i className="fas fa-times text-lg"></i>
         </button>
 
-        {/* Painel Lateral: Visual e Informações Básicas */}
         <div className="md:w-[30%] bg-[#080b09] border-r border-white/10 p-10 flex flex-col h-full shrink-0">
           <div className="flex flex-col items-center mb-10">
             <div className="h-14 w-14 bg-white rounded-xl p-2 shadow-2xl mb-4">
@@ -119,7 +123,6 @@ const PlayerDetails: React.FC<PlayerDetailsProps> = ({ player, onClose }) => {
           </div>
         </div>
 
-        {/* Painel de Conteúdo: Relatório da IA */}
         <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#050807]/40">
           <div className="p-10 pb-6 border-b border-white/5 shrink-0 flex items-center justify-between">
             <div className="flex items-center gap-6">
