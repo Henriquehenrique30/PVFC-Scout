@@ -11,7 +11,6 @@ export const isCloudActive = () => !!supabase;
 
 export const dbService = {
   // --- JOGADORES ---
-  // Otimizado: Não seleciona aiContextData para reduzir egress na listagem
   async getPlayers(): Promise<Player[]> {
     if (!supabase) return [];
     const { data, error } = await supabase
@@ -21,7 +20,6 @@ export const dbService = {
     return data || [];
   },
 
-  // Busca apenas os dados pesados de um jogador específico para o relatório
   async getPlayerDetails(id: string): Promise<Partial<Player>> {
     if (!supabase) return {};
     const { data, error } = await supabase
@@ -45,11 +43,10 @@ export const dbService = {
     if (error) throw error;
   },
 
-  // --- WATCHLIST (CLOUD) ---
+  // --- WATCHLIST ---
   async getWatchlist(): Promise<ObservedPlayer[]> {
     if (!supabase) return [];
     const { data, error } = await supabase.from('watchlist').select('*').order('created_at', { ascending: false });
-    if (error) return [];
     return data || [];
   },
 
@@ -71,7 +68,7 @@ export const dbService = {
     if (error) throw error;
   },
 
-  // --- AGENDA DE SCOUTING ---
+  // --- AGENDA ---
   async getScoutingGames(): Promise<ScoutingGame[]> {
     if (!supabase) return [];
     const { data, error } = await supabase.from('scouting_games').select('*').order('datetime', { ascending: true });
@@ -94,7 +91,6 @@ export const dbService = {
   async getExternalProjects(): Promise<ExternalProject[]> {
     if (!supabase) return [];
     const { data, error } = await supabase.from('external_projects').select('*').order('name', { ascending: true });
-    if (error) console.error("Erro Supabase Projetos:", error);
     return data || [];
   },
 
@@ -104,17 +100,10 @@ export const dbService = {
     if (error) throw error;
   },
 
-  async deleteExternalProject(id: string): Promise<void> {
-    if (!supabase) throw new Error("Nuvem não configurada.");
-    const { error } = await supabase.from('external_projects').delete().eq('id', id);
-    if (error) throw error;
-  },
-
-  // --- AGENDA DE OBSERVAÇÃO EXTERNA ---
+  // --- AGENDA EXTERNA ---
   async getObservationSchedules(): Promise<ObservationSchedule[]> {
     if (!supabase) return [];
     const { data, error } = await supabase.from('observation_schedules').select('*').order('date', { ascending: true });
-    if (error) console.error("Erro Supabase Agenda:", error);
     return data || [];
   },
 
@@ -133,8 +122,8 @@ export const dbService = {
   // --- USUÁRIOS ---
   async getUsers(): Promise<User[]> {
     if (!supabase) return [];
-    // Fix: Added missing properties 'firstName', 'lastName', and 'email' to the select query to satisfy the User interface requirements.
-    const { data, error } = await supabase.from('users').select('id, firstName, lastName, email, name, username, role, status, createdAt');
+    // CRÍTICO: Adicionado 'password' para permitir o login do usuário
+    const { data, error } = await supabase.from('users').select('id, firstName, lastName, email, password, name, username, role, status, createdAt');
     return data || [];
   },
 
