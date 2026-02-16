@@ -159,15 +159,50 @@ const ExternalScoutingPage: React.FC<ExternalScoutingPageProps> = ({ onBack }) =
         </div>
 
         <div className="lg:col-span-8 space-y-6">
+          {/* SELETOR DE PERÍODO DO RELATÓRIO */}
+          <div className="glass-panel p-6 rounded-3xl border border-white/5 flex gap-4">
+            <div className="flex-1 space-y-2">
+              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Data Início</label>
+              <input 
+                type="date" 
+                value={filterStartDate} 
+                onChange={e => setFilterStartDate(e.target.value)} 
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#f1c40f]" 
+              />
+            </div>
+            <div className="flex-1 space-y-2">
+              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Data Fim</label>
+              <input 
+                type="date" 
+                value={filterEndDate} 
+                onChange={e => setFilterEndDate(e.target.value)} 
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#f1c40f]" 
+              />
+            </div>
+            <div className="flex items-end">
+              <button 
+                onClick={() => { setFilterStartDate(''); setFilterEndDate(''); }}
+                className="h-10 px-4 rounded-xl bg-white/5 border border-white/10 text-[8px] font-black uppercase text-slate-500 hover:text-white transition-all"
+              >
+                Limpar
+              </button>
+            </div>
+          </div>
+
           <div ref={reportRef} className="bg-white text-black p-12 rounded-[2rem] shadow-2xl min-h-[800px]">
             <div className="text-center mb-10 border-b-4 border-[#006837] pb-8">
                <img src="https://cdn-img.zerozero.pt/img/logos/equipas/102019_imgbank.png" className="h-24 mx-auto mb-4" />
                <h1 className="text-3xl font-oswald font-bold uppercase text-[#006837]">Departamento de Captação</h1>
                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Agenda de Observação Externa</p>
+               {/* Indicação do período no PDF se filtrado */}
+               {(filterStartDate || filterEndDate) && (
+                 <p className="text-[10px] font-black text-[#006837] uppercase tracking-[0.2em] mt-3">
+                   Período: {filterStartDate ? new Date(filterStartDate + 'T00:00:00').toLocaleDateString() : 'Início'} — {filterEndDate ? new Date(filterEndDate + 'T00:00:00').toLocaleDateString() : 'Atual'}
+                 </p>
+               )}
             </div>
 
             <div className="space-y-4">
-              {/* Ajuste de Grid: Data(2), Período(2), Projeto(3), Cidade(2), Observador(3) */}
               <div className="grid grid-cols-12 gap-2 px-6 py-4 bg-slate-100 rounded-xl text-[9px] font-black uppercase text-slate-500 tracking-widest">
                 <div className="col-span-2">Data</div>
                 <div className="col-span-2">Período</div>
@@ -189,7 +224,7 @@ const ExternalScoutingPage: React.FC<ExternalScoutingPageProps> = ({ onBack }) =
                   </div>
                 </div>
               ))}
-              {filteredSchedules.length === 0 && <p className="text-center py-20 text-slate-300 uppercase font-black text-[10px]">Sem agendamentos</p>}
+              {filteredSchedules.length === 0 && <p className="text-center py-20 text-slate-300 uppercase font-black text-[10px]">Sem agendamentos no período selecionado</p>}
             </div>
 
             <div className="mt-16 pt-8 border-t border-slate-100 text-center">
